@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <WorkflowBuilder Version="2.3.0">
-  <Workflow xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q1="clr-namespace:Bonsai.Shaders;assembly=Bonsai.Shaders" xmlns:q2="clr-namespace:Bonsai.VideoAnnotations;assembly=Bonsai.VideoAnnotations" xmlns:q3="clr-namespace:Bonsai.Shaders.Input;assembly=Bonsai.Shaders" xmlns:q4="clr-namespace:Bonsai.IO;assembly=Bonsai.System" xmlns:q5="clr-namespace:SurpriseIntelligence;assembly=SurpriseIntelligence" xmlns:q6="clr-namespace:Bonsai.Windows.Input;assembly=Bonsai.Windows.Input" xmlns="https://horizongir.org/bonsai">
+  <Workflow xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q1="clr-namespace:Bonsai.Shaders;assembly=Bonsai.Shaders" xmlns:q2="clr-namespace:Bonsai.VideoAnnotations;assembly=Bonsai.VideoAnnotations" xmlns:q3="clr-namespace:Bonsai.Shaders.Input;assembly=Bonsai.Shaders" xmlns:q4="clr-namespace:Bonsai.IO;assembly=Bonsai.System" xmlns:q5="clr-namespace:Bonsai.Windows.Input;assembly=Bonsai.Windows.Input" xmlns="https://horizongir.org/bonsai">
     <Nodes>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q1:RenderFrame" />
@@ -818,8 +818,8 @@
           </Edges>
         </Workflow>
       </Expression>
-      <Expression xsi:type="q5:SortByBuilder">
-        <q5:KeySelector>Source.Item2,Source.Item1</q5:KeySelector>
+      <Expression xsi:type="q2:SortByBuilder">
+        <q2:KeySelector>Source.Item2,Source.Item1</q2:KeySelector>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="Merge" />
@@ -835,13 +835,13 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q6:KeyDown">
-          <q6:Filter>A</q6:Filter>
+        <Combinator xsi:type="q5:KeyDown">
+          <q5:Filter>A</q5:Filter>
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q6:KeyDown">
-          <q6:Filter>L</q6:Filter>
+        <Combinator xsi:type="q5:KeyDown">
+          <q5:Filter>L</q5:Filter>
         </Combinator>
       </Expression>
     </Nodes>
@@ -1019,7 +1019,7 @@
     <Type>Bonsai.Reactive.ToList, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.IO.CsvWriter, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.Concat, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>SurpriseIntelligence.SortByBuilder, SurpriseIntelligence, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.VideoAnnotations.SortByBuilder, Bonsai.VideoAnnotations, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Expressions.IntProperty, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Windows.Input.KeyDown, Bonsai.Windows.Input, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null</Type>
   </ExtensionTypes>
