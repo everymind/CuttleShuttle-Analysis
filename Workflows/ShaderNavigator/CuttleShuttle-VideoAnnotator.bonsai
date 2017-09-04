@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <WorkflowBuilder Version="2.3.0">
-  <Workflow xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q1="clr-namespace:Bonsai.Shaders;assembly=Bonsai.Shaders" xmlns:q2="clr-namespace:Bonsai.VideoAnnotations;assembly=Bonsai.VideoAnnotations" xmlns:q3="clr-namespace:Bonsai.Shaders.Input;assembly=Bonsai.Shaders" xmlns:q4="clr-namespace:Bonsai.IO;assembly=Bonsai.System" xmlns:q5="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting" xmlns:q6="clr-namespace:Bonsai.Windows.Input;assembly=Bonsai.Windows.Input" xmlns="https://horizongir.org/bonsai">
+  <Workflow xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q1="clr-namespace:Bonsai.Shaders;assembly=Bonsai.Shaders" xmlns:q2="clr-namespace:Bonsai.VideoAnnotations;assembly=Bonsai.VideoAnnotations" xmlns:q3="clr-namespace:Bonsai.Shaders.Input;assembly=Bonsai.Shaders" xmlns:q4="clr-namespace:Bonsai.IO;assembly=Bonsai.System" xmlns:q5="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting" xmlns="https://horizongir.org/bonsai">
     <Nodes>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q1:RenderFrame" />
@@ -13,7 +13,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q2:VideoNavigator">
-          <q2:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\thesis\BrightonSeaLifeCenter\SurprisingMinds\Summer2017Prototype\dataset_10-07-2017--13-08-2017\SurpriseIntelligence_2017-08-04\2017-08-04-sync-anon\2017-08-04_10-19-50_stimuli027-static_sync-anonymized.avi</q2:FileName>
+          <q2:FileName>F:\MBL\experiments\L1-H2013-02\2014-09-11\session_video2014-09-11T11_12_58.avi</q2:FileName>
           <q2:PlaybackRate>20</q2:PlaybackRate>
           <q2:StartPosition>4142</q2:StartPosition>
           <q2:PositionUnits>Frames</q2:PositionUnits>
@@ -61,13 +61,14 @@
         <Combinator xsi:type="q1:LatestOnUpdateFrame" />
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="FloatProperty">
-          <Value>0.01</Value>
+        <Combinator xsi:type="q1:CreateVector2">
+          <q1:X>0.03</q1:X>
+          <q1:Y>0.03</q1:Y>
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q1:UpdateUniform">
-          <q1:UniformName>radius</q1:UniformName>
+          <q1:UniformName>scale</q1:UniformName>
           <q1:ShaderName>Dot</q1:ShaderName>
         </Combinator>
       </Expression>
@@ -77,6 +78,7 @@
       </Expression>
       <Expression xsi:type="NestedWorkflow">
         <Name>MantleCenter</Name>
+        <Description>human-estimated center of cuttlefish mantle</Description>
         <Workflow>
           <Nodes>
             <Expression xsi:type="Combinator">
@@ -229,6 +231,7 @@
       </Expression>
       <Expression xsi:type="NestedWorkflow">
         <Name>Tail</Name>
+        <Description>human-estimated tip of cuttlefish tail</Description>
         <Workflow>
           <Nodes>
             <Expression xsi:type="Combinator">
@@ -261,13 +264,13 @@
                   </Expression>
                   <Expression xsi:type="Equal">
                     <Operand xsi:type="WorkflowPropertyOfKey">
-                      <Value>T</Value>
+                      <Value>V</Value>
                     </Operand>
                   </Expression>
                   <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
                     <MemberName>Value</MemberName>
                     <Name>Value</Name>
-                    <Value>T</Value>
+                    <Value>V</Value>
                   </Expression>
                 </Nodes>
                 <Edges>
@@ -305,7 +308,7 @@
             <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
               <MemberName>Value</MemberName>
               <Name>Key</Name>
-              <Value>T</Value>
+              <Value>V</Value>
             </Expression>
             <Expression xsi:type="WorkflowOutput" />
             <Expression xsi:type="Combinator">
@@ -433,7 +436,7 @@
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="q1:UpdateUniform">
-                <q1:UniformName>center</q1:UniformName>
+                <q1:UniformName>shift</q1:UniformName>
                 <q1:ShaderName>Dot</q1:ShaderName>
               </Combinator>
             </Expression>
@@ -475,7 +478,7 @@
             </Expression>
             <Expression xsi:type="Equal">
               <Operand xsi:type="StringProperty">
-                <Value>Head</Value>
+                <Value>MantleCenter</Value>
               </Operand>
             </Expression>
             <Expression xsi:type="Combinator">
@@ -687,13 +690,232 @@
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="TakeUntil" />
       </Expression>
-      <Expression xsi:type="q4:CsvReader">
-        <q4:FileName>annotations.csv</q4:FileName>
-        <q4:ScanPattern>%s %i %f %f </q4:ScanPattern>
-        <q4:SkipRows>0</q4:SkipRows>
-      </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q1:WindowClosed" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Take">
+          <Count>1</Count>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ToList" />
+      </Expression>
+      <Expression xsi:type="SelectMany">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="q4:CsvWriter">
+              <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L1-H2013-02\session_video2014-09-11T11_12_58.csv</q4:FileName>
+              <q4:Append>false</q4:Append>
+              <q4:Overwrite>true</q4:Overwrite>
+              <q4:Suffix>None</q4:Suffix>
+              <q4:IncludeHeader>false</q4:IncludeHeader>
+              <q4:Selector>Source.Item1,Source.Item2,Source.Item3.X,Source.Item3.Y</q4:Selector>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="Concat" />
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>VideoName</Name>
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfStringCsvWriter">
+              <MemberName>FileName</MemberName>
+              <Name>CsvFile</Name>
+              <Value>annotations.csv</Value>
+            </Expression>
+            <Expression xsi:type="q5:PythonTransform">
+              <q5:Script>from System.IO import Path, File, Directory
+from System import Array
+
+@returns(str)
+def process(value):
+  vidName = Path.GetFileName(value)
+  vidPath = Directory.GetParent(value)
+  vidPathChunksReversed = vidPath.FullName.split('\\')[::-1]
+  vidDate = vidPathChunksReversed[0]
+  vidAnimal = vidPathChunksReversed[1]
+  annotationsDir = Path.Combine(Directory.GetCurrentDirectory(), "annotations", vidAnimal)
+  if not Directory.Exists(annotationsDir): 
+    Directory.CreateDirectory(annotationsDir)
+  annotationsName = Path.ChangeExtension(vidName, ".csv")
+  annotations = Path.Combine(annotationsDir, annotationsName)
+  if not File.Exists(annotations):
+    File.WriteAllLines(annotations, Array.CreateInstance(str,0))
+  return annotations</q5:Script>
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>1</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>3</From>
+              <To>2</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>6</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>2</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>6</From>
+              <To>5</To>
+              <Label>Source1</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="q2:SortByBuilder">
+        <q2:KeySelector>Source.Item2,Source.Item1</q2:KeySelector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Merge" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>-1</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>1</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="NestedWorkflow">
+        <Name>KeyDown</Name>
+        <Description>a key press in the shader window</Description>
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="Condition">
+              <Name>Equal</Name>
+              <Workflow>
+                <Nodes>
+                  <Expression xsi:type="WorkflowInput">
+                    <Name>Source1</Name>
+                  </Expression>
+                  <Expression xsi:type="WorkflowOutput" />
+                  <Expression xsi:type="MemberSelector">
+                    <Selector>Source.EventArgs.Key</Selector>
+                  </Expression>
+                  <Expression xsi:type="Equal">
+                    <Operand xsi:type="WorkflowPropertyOfKey">
+                      <Value>C</Value>
+                    </Operand>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+                    <MemberName>Value</MemberName>
+                    <Name>Value</Name>
+                    <Value>C</Value>
+                  </Expression>
+                </Nodes>
+                <Edges>
+                  <Edge>
+                    <From>0</From>
+                    <To>2</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>2</From>
+                    <To>3</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>3</From>
+                    <To>1</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>4</From>
+                    <To>3</To>
+                    <Label>Source2</Label>
+                  </Edge>
+                </Edges>
+              </Workflow>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:KeyDown" />
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+              <MemberName>Value</MemberName>
+              <Name>Key</Name>
+              <Value>C</Value>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="TakeUntil" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q1:WindowClosed" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>0</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>0</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source2</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="ExternalizedPropertyOfStringVideoNavigator">
+        <MemberName>FileName</MemberName>
+        <Name>VideoFile</Name>
+        <Value>C:\Users\KAMPFF-LAB-VIDEO\Documents\thesis\BrightonSeaLifeCenter\SurprisingMinds\Summer2017Prototype\dataset_10-07-2017--13-08-2017\SurpriseIntelligence_2017-07-10\2017-07-10-sync-anon\2017-07-10_11-39-40_stimuli022_sync-anonymized.avi</Value>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="StringProperty">
+          <Value>F:\MBL\experiments\L1-H2013-02\2014-09-11\session_video2014-09-11T11_12_58.avi</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="SubscribeSubject">
+        <Name>VideoName</Name>
+      </Expression>
+      <Expression xsi:type="ExternalizedPropertyOfStringCsvReader">
+        <MemberName>FileName</MemberName>
+        <Name>CsvFile</Name>
+        <Value />
+      </Expression>
+      <Expression xsi:type="q4:CsvReader">
+        <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L1-H2013-02\session_video2014-09-11T11_12_58.csv</q4:FileName>
+        <q4:ScanPattern>%s %i %f %f </q4:ScanPattern>
+        <q4:SkipRows>0</q4:SkipRows>
       </Expression>
       <Expression xsi:type="NestedWorkflow">
         <Name>LoadedAnnotations</Name>
@@ -710,8 +932,8 @@
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="q1:CreateVector2">
-                <q1:X>0.16875</q1:X>
-                <q1:Y>-0.2916667</q1:Y>
+                <q1:X>0.3359873</q1:X>
+                <q1:Y>-0.5177515</q1:Y>
               </Combinator>
             </Expression>
             <Expression xsi:type="InputMapping">
@@ -778,128 +1000,562 @@
         </Workflow>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ToList" />
-      </Expression>
-      <Expression xsi:type="SelectMany">
-        <Workflow>
-          <Nodes>
-            <Expression xsi:type="WorkflowInput">
-              <Name>Source1</Name>
-            </Expression>
-            <Expression xsi:type="WorkflowOutput" />
-            <Expression xsi:type="q4:CsvWriter">
-              <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\thesis\BrightonSeaLifeCenter\SurprisingMinds\Summer2017Prototype\dataset_10-07-2017--13-08-2017\SurpriseIntelligence_2017-08-04\2017-08-04-sync-anon\2017-08-04_10-19-50_stimuli027-static_sync-anonymized.csv</q4:FileName>
-              <q4:Append>false</q4:Append>
-              <q4:Overwrite>true</q4:Overwrite>
-              <q4:Suffix>None</q4:Suffix>
-              <q4:IncludeHeader>false</q4:IncludeHeader>
-              <q4:Selector>Source.Item1,Source.Item2,Source.Item3.X,Source.Item3.Y</q4:Selector>
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="Concat" />
-            </Expression>
-            <Expression xsi:type="SubscribeSubject">
-              <Name>VideoName</Name>
-            </Expression>
-            <Expression xsi:type="ExternalizedPropertyOfStringCsvWriter">
-              <MemberName>FileName</MemberName>
-              <Name>FileName</Name>
-              <Value>annotations.csv</Value>
-            </Expression>
-            <Expression xsi:type="q5:ExpressionTransform">
-              <q5:Expression>it.Replace(".avi", ".csv")</q5:Expression>
-            </Expression>
-          </Nodes>
-          <Edges>
-            <Edge>
-              <From>0</From>
-              <To>3</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>2</From>
-              <To>1</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>3</From>
-              <To>2</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>4</From>
-              <To>6</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>5</From>
-              <To>2</To>
-              <Label>Source2</Label>
-            </Edge>
-            <Edge>
-              <From>6</From>
-              <To>5</To>
-              <Label>Source1</Label>
-            </Edge>
-          </Edges>
-        </Workflow>
-      </Expression>
-      <Expression xsi:type="q2:SortByBuilder">
-        <q2:KeySelector>Source.Item2,Source.Item1</q2:KeySelector>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="Merge" />
-      </Expression>
-      <Expression xsi:type="Combinator">
         <Combinator xsi:type="IntProperty">
-          <Value>-1</Value>
+          <Value>-100</Value>
         </Combinator>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Sender.ClientSize</Selector>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="IntProperty">
-          <Value>1</Value>
+        <Combinator xsi:type="q1:UpdateUniform">
+          <q1:UniformName>aspectRatio</q1:UniformName>
+          <q1:ShaderName>Dot</q1:ShaderName>
         </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q6:KeyDown">
-          <q6:Filter>A</q6:Filter>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q6:KeyDown">
-          <q6:Filter>E</q6:Filter>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="ExternalizedPropertyOfStringVideoNavigator">
-        <MemberName>FileName</MemberName>
-        <Name>VideoFile</Name>
-        <Value>C:\Users\KAMPFF-LAB-VIDEO\Documents\thesis\BrightonSeaLifeCenter\SurprisingMinds\Summer2017Prototype\dataset_10-07-2017--13-08-2017\SurpriseIntelligence_2017-07-10\2017-07-10-sync-anon\2017-07-10_11-39-40_stimuli022_sync-anonymized.avi</Value>
       </Expression>
       <Expression xsi:type="ReplaySubject">
         <Name>VideoName</Name>
         <BufferSize xsi:nil="true" />
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="StringProperty">
-          <Value>C:\Users\KAMPFF-LAB-VIDEO\Documents\thesis\BrightonSeaLifeCenter\SurprisingMinds\Summer2017Prototype\dataset_10-07-2017--13-08-2017\SurpriseIntelligence_2017-08-04\2017-08-04-sync-anon\2017-08-04_10-19-50_stimuli027-static_sync-anonymized.avi</Value>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="ExternalizedPropertyOfStringCsvReader">
-        <MemberName>FileName</MemberName>
-        <Name>CsvFile</Name>
-        <Value>annotations.csv</Value>
+      <Expression xsi:type="q5:PythonTransform">
+        <q5:Script>from System.IO import Path, File, Directory
+from System import Array
+
+@returns(str)
+def process(value):
+  vidName = Path.GetFileName(value)
+  vidPath = Directory.GetParent(value)
+  vidPathChunksReversed = vidPath.FullName.split('\\')[::-1]
+  vidDate = vidPathChunksReversed[0]
+  vidAnimal = vidPathChunksReversed[1]
+  annotationsDir = Path.Combine(Directory.GetCurrentDirectory(), "annotations", vidAnimal)
+  if not Directory.Exists(annotationsDir): 
+    Directory.CreateDirectory(annotationsDir)
+  annotationsName = Path.ChangeExtension(vidName, ".csv")
+  annotations = Path.Combine(annotationsDir, annotationsName)
+  if not File.Exists(annotations):
+    File.WriteAllLines(annotations, Array.CreateInstance(str,0))
+  return annotations</q5:Script>
       </Expression>
       <Expression xsi:type="q5:ExpressionTransform">
-        <q5:Expression>it.Replace(".avi", ".csv")</q5:Expression>
+        <q5:Expression>single(Height)/Width</q5:Expression>
       </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>VideoName</Name>
+      <Expression xsi:type="InputMapping">
+        <PropertyMappings>
+          <Property name="X" selector="Source" />
+        </PropertyMappings>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q1:CreateVector2">
+          <q1:X>0.538216531</q1:X>
+          <q1:Y>1</q1:Y>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="NestedWorkflow">
+        <Name>KeyDown</Name>
+        <Description>a key press in the shader window</Description>
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="Condition">
+              <Name>Equal</Name>
+              <Workflow>
+                <Nodes>
+                  <Expression xsi:type="WorkflowInput">
+                    <Name>Source1</Name>
+                  </Expression>
+                  <Expression xsi:type="WorkflowOutput" />
+                  <Expression xsi:type="MemberSelector">
+                    <Selector>Source.EventArgs.Key</Selector>
+                  </Expression>
+                  <Expression xsi:type="Equal">
+                    <Operand xsi:type="WorkflowPropertyOfKey">
+                      <Value>Z</Value>
+                    </Operand>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+                    <MemberName>Value</MemberName>
+                    <Name>Value</Name>
+                    <Value>Z</Value>
+                  </Expression>
+                </Nodes>
+                <Edges>
+                  <Edge>
+                    <From>0</From>
+                    <To>2</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>2</From>
+                    <To>3</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>3</From>
+                    <To>1</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>4</From>
+                    <To>3</To>
+                    <Label>Source2</Label>
+                  </Edge>
+                </Edges>
+              </Workflow>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:KeyDown" />
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+              <MemberName>Value</MemberName>
+              <Name>Key</Name>
+              <Value>Z</Value>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="TakeUntil" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q1:WindowClosed" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>0</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>0</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source2</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="NestedWorkflow">
+        <Name>KeyDown</Name>
+        <Description>a key press in the shader window</Description>
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="Condition">
+              <Name>Equal</Name>
+              <Workflow>
+                <Nodes>
+                  <Expression xsi:type="WorkflowInput">
+                    <Name>Source1</Name>
+                  </Expression>
+                  <Expression xsi:type="WorkflowOutput" />
+                  <Expression xsi:type="MemberSelector">
+                    <Selector>Source.EventArgs.Key</Selector>
+                  </Expression>
+                  <Expression xsi:type="Equal">
+                    <Operand xsi:type="WorkflowPropertyOfKey">
+                      <Value>A</Value>
+                    </Operand>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+                    <MemberName>Value</MemberName>
+                    <Name>Value</Name>
+                    <Value>A</Value>
+                  </Expression>
+                </Nodes>
+                <Edges>
+                  <Edge>
+                    <From>0</From>
+                    <To>2</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>2</From>
+                    <To>3</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>3</From>
+                    <To>1</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>4</From>
+                    <To>3</To>
+                    <Label>Source2</Label>
+                  </Edge>
+                </Edges>
+              </Workflow>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:KeyDown" />
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+              <MemberName>Value</MemberName>
+              <Name>Key</Name>
+              <Value>A</Value>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="TakeUntil" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q1:WindowClosed" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>0</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>0</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source2</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>100</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="NestedWorkflow">
+        <Name>KeyDown</Name>
+        <Description>a key press in the shader window</Description>
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="Condition">
+              <Name>Equal</Name>
+              <Workflow>
+                <Nodes>
+                  <Expression xsi:type="WorkflowInput">
+                    <Name>Source1</Name>
+                  </Expression>
+                  <Expression xsi:type="WorkflowOutput" />
+                  <Expression xsi:type="MemberSelector">
+                    <Selector>Source.EventArgs.Key</Selector>
+                  </Expression>
+                  <Expression xsi:type="Equal">
+                    <Operand xsi:type="WorkflowPropertyOfKey">
+                      <Value>D</Value>
+                    </Operand>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+                    <MemberName>Value</MemberName>
+                    <Name>Value</Name>
+                    <Value>D</Value>
+                  </Expression>
+                </Nodes>
+                <Edges>
+                  <Edge>
+                    <From>0</From>
+                    <To>2</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>2</From>
+                    <To>3</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>3</From>
+                    <To>1</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>4</From>
+                    <To>3</To>
+                    <Label>Source2</Label>
+                  </Edge>
+                </Edges>
+              </Workflow>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:KeyDown" />
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+              <MemberName>Value</MemberName>
+              <Name>Key</Name>
+              <Value>D</Value>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="TakeUntil" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q1:WindowClosed" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>0</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>0</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source2</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>-1000</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="NestedWorkflow">
+        <Name>KeyDown</Name>
+        <Description>a key press in the shader window</Description>
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="Condition">
+              <Name>Equal</Name>
+              <Workflow>
+                <Nodes>
+                  <Expression xsi:type="WorkflowInput">
+                    <Name>Source1</Name>
+                  </Expression>
+                  <Expression xsi:type="WorkflowOutput" />
+                  <Expression xsi:type="MemberSelector">
+                    <Selector>Source.EventArgs.Key</Selector>
+                  </Expression>
+                  <Expression xsi:type="Equal">
+                    <Operand xsi:type="WorkflowPropertyOfKey">
+                      <Value>Q</Value>
+                    </Operand>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+                    <MemberName>Value</MemberName>
+                    <Name>Value</Name>
+                    <Value>Q</Value>
+                  </Expression>
+                </Nodes>
+                <Edges>
+                  <Edge>
+                    <From>0</From>
+                    <To>2</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>2</From>
+                    <To>3</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>3</From>
+                    <To>1</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>4</From>
+                    <To>3</To>
+                    <Label>Source2</Label>
+                  </Edge>
+                </Edges>
+              </Workflow>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:KeyDown" />
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+              <MemberName>Value</MemberName>
+              <Name>Key</Name>
+              <Value>Q</Value>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="TakeUntil" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q1:WindowClosed" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>0</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>0</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source2</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>1000</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="NestedWorkflow">
+        <Name>KeyDown</Name>
+        <Description>a key press in the shader window</Description>
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="Condition">
+              <Name>Equal</Name>
+              <Workflow>
+                <Nodes>
+                  <Expression xsi:type="WorkflowInput">
+                    <Name>Source1</Name>
+                  </Expression>
+                  <Expression xsi:type="WorkflowOutput" />
+                  <Expression xsi:type="MemberSelector">
+                    <Selector>Source.EventArgs.Key</Selector>
+                  </Expression>
+                  <Expression xsi:type="Equal">
+                    <Operand xsi:type="WorkflowPropertyOfKey">
+                      <Value>E</Value>
+                    </Operand>
+                  </Expression>
+                  <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+                    <MemberName>Value</MemberName>
+                    <Name>Value</Name>
+                    <Value>E</Value>
+                  </Expression>
+                </Nodes>
+                <Edges>
+                  <Edge>
+                    <From>0</From>
+                    <To>2</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>2</From>
+                    <To>3</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>3</From>
+                    <To>1</To>
+                    <Label>Source1</Label>
+                  </Edge>
+                  <Edge>
+                    <From>4</From>
+                    <To>3</To>
+                    <Label>Source2</Label>
+                  </Edge>
+                </Edges>
+              </Workflow>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:KeyDown" />
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
+              <MemberName>Value</MemberName>
+              <Name>Key</Name>
+              <Value>E</Value>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="TakeUntil" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q1:WindowClosed" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>0</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>0</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source2</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
       </Expression>
     </Nodes>
     <Edges>
       <Edge>
         <From>0</From>
         <To>1</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>0</From>
+        <To>37</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
@@ -974,7 +1630,7 @@
       </Edge>
       <Edge>
         <From>19</From>
-        <To>24</To>
+        <To>23</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
@@ -989,82 +1645,147 @@
       </Edge>
       <Edge>
         <From>21</From>
-        <To>23</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>22</From>
         <To>20</To>
         <Label>Source2</Label>
       </Edge>
       <Edge>
-        <From>23</From>
-        <To>17</To>
-        <Label>Source3</Label>
-      </Edge>
-      <Edge>
-        <From>24</From>
-        <To>26</To>
+        <From>22</From>
+        <To>39</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
-        <From>26</From>
+        <From>23</From>
         <To>25</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
-        <From>27</From>
+        <From>25</From>
+        <To>24</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>26</From>
         <To>2</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>27</From>
+        <To>26</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
         <From>28</From>
-        <To>27</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>29</From>
-        <To>27</To>
+        <To>26</To>
         <Label>Source2</Label>
       </Edge>
       <Edge>
-        <From>30</From>
+        <From>29</From>
         <To>28</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
-        <From>31</From>
-        <To>29</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>32</From>
+        <From>30</From>
         <To>2</To>
         <Label>Source2</Label>
       </Edge>
       <Edge>
+        <From>31</From>
+        <To>22</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>32</From>
+        <To>30</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
         <From>33</From>
-        <To>32</To>
+        <To>34</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
         <From>34</From>
-        <To>33</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>35</From>
-        <To>21</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>36</From>
         <To>35</To>
         <Label>Source1</Label>
       </Edge>
       <Edge>
+        <From>35</From>
+        <To>17</To>
+        <Label>Source3</Label>
+      </Edge>
+      <Edge>
+        <From>36</From>
+        <To>26</To>
+        <Label>Source3</Label>
+      </Edge>
+      <Edge>
         <From>37</From>
+        <To>41</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>39</From>
+        <To>40</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>40</From>
+        <To>33</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>41</From>
+        <To>42</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>42</From>
+        <To>43</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>43</From>
+        <To>38</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>44</From>
+        <To>27</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>45</From>
         <To>36</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>46</From>
+        <To>26</To>
+        <Label>Source4</Label>
+      </Edge>
+      <Edge>
+        <From>47</From>
+        <To>46</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>48</From>
+        <To>26</To>
+        <Label>Source5</Label>
+      </Edge>
+      <Edge>
+        <From>49</From>
+        <To>48</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>50</From>
+        <To>26</To>
+        <Label>Source6</Label>
+      </Edge>
+      <Edge>
+        <From>51</From>
+        <To>50</To>
         <Label>Source1</Label>
       </Edge>
     </Edges>
@@ -1079,7 +1800,7 @@
     <Type>Bonsai.Shaders.Input.MouseMove, Bonsai.Shaders, Version=0.18.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Shaders.Input.NormalizedDeviceCoordinates, Bonsai.Shaders, Version=0.18.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Shaders.LatestOnUpdateFrame, Bonsai.Shaders, Version=0.18.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Expressions.FloatProperty, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Shaders.CreateVector2, Bonsai.Shaders, Version=0.18.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.Sample, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.CombineLatest, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Expressions.StringProperty, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
@@ -1094,18 +1815,18 @@
     <Type>Bonsai.Reactive.GroupByBuilder, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.Last, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.Zip, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.IO.CsvReader, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Shaders.CreateVector2, Bonsai.Shaders, Version=0.18.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Expressions.InputMappingBuilder, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Reactive.Take, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.ToList, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.IO.CsvWriter, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Reactive.Concat, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Expressions.ExternalizedProperty`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[Bonsai.IO.CsvWriter, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null]], Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Scripting.ExpressionTransform, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Scripting.PythonTransform, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.VideoAnnotations.SortByBuilder, Bonsai.VideoAnnotations, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Expressions.IntProperty, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Windows.Input.KeyDown, Bonsai.Windows.Input, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Expressions.ExternalizedProperty`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[Bonsai.VideoAnnotations.VideoNavigator, Bonsai.VideoAnnotations, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null]], Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
     <Type>Bonsai.Expressions.ExternalizedProperty`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[Bonsai.IO.CsvReader, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null]], Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.IO.CsvReader, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Expressions.InputMappingBuilder, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Scripting.ExpressionTransform, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
   </ExtensionTypes>
 </WorkflowBuilder>
