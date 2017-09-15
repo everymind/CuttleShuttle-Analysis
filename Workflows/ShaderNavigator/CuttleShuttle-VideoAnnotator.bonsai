@@ -1661,7 +1661,7 @@ from System import Array, Tuple
 @returns(Tuple[str,IplImage])
 def process(value):
   frameNumber = value.Item1.Index
-  vidName = Path.GetFileNameWithoutExtension(value.Item2) + frameNumber.ToString("D7")
+  vidName = Path.GetFileNameWithoutExtension(value.Item2) + "_f" + frameNumber.ToString("D7")
   vidPath = Directory.GetParent(value.Item2)
   vidPathChunksReversed = vidPath.FullName.split('\\')[::-1]
   vidDate = vidPathChunksReversed[0]
@@ -1677,7 +1677,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\snapshots\L7-H2013-03\session_video2014-09-17T15_38_340003867.png</q6:FileName>
+          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0003868.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
