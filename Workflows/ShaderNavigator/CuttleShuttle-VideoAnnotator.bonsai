@@ -1677,7 +1677,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0003868.png</q6:FileName>
+          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0005384.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
