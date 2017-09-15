@@ -15,7 +15,7 @@
         <Combinator xsi:type="q2:VideoNavigator">
           <q2:FileName>F:\MBL\experiments\L7-H2013-03\2014-09-17\session_video2014-09-17T15_38_34.avi</q2:FileName>
           <q2:PlaybackRate>20</q2:PlaybackRate>
-          <q2:StartPosition>6648</q2:StartPosition>
+          <q2:StartPosition>3848</q2:StartPosition>
           <q2:PositionUnits>Frames</q2:PositionUnits>
           <q2:Loop>true</q2:Loop>
           <q2:Playing>false</q2:Playing>
@@ -1564,13 +1564,13 @@ def process(value):
                   </Expression>
                   <Expression xsi:type="Equal">
                     <Operand xsi:type="WorkflowPropertyOfKey">
-                      <Value>E</Value>
+                      <Value>G</Value>
                     </Operand>
                   </Expression>
                   <Expression xsi:type="ExternalizedPropertyOfKeyEqualBuilder">
                     <MemberName>Value</MemberName>
                     <Name>Value</Name>
-                    <Value>E</Value>
+                    <Value>G</Value>
                   </Expression>
                 </Nodes>
                 <Edges>
@@ -1677,6 +1677,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
+          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\snapshots\L7-H2013-03\session_video2014-09-17T15_38_340003867.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
