@@ -1658,6 +1658,9 @@ from OpenCV.Net import IplImage
 from System.IO import Path, File, Directory
 from System import Array, Tuple
 
+basepath = "C:\Users\KAMPFF-LAB-VIDEO\Dropbox\CuttleShuttle\CuttleShuttle-Analysis" 
+# basepath = Directory.GetCurrentDirectory()
+
 @returns(Tuple[str,IplImage])
 def process(value):
   frameNumber = value.Item1.Index
@@ -1666,7 +1669,7 @@ def process(value):
   vidPathChunksReversed = vidPath.FullName.split('\\')[::-1]
   vidDate = vidPathChunksReversed[0]
   vidAnimal = vidPathChunksReversed[1]
-  snapshotDir = Path.Combine(Directory.GetCurrentDirectory(), "snapshots", vidAnimal)
+  snapshotDir = Path.Combine(basepath, "snapshots", vidAnimal)
   if not Directory.Exists(snapshotDir): 
     Directory.CreateDirectory(snapshotDir)
   snapshotName = Path.ChangeExtension(vidName, ".png")
@@ -1677,7 +1680,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0005384.png</q6:FileName>
+          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0003927.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
