@@ -13,7 +13,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q2:VideoNavigator">
-          <q2:FileName>F:\MBL\experiments\L1-H2013-03\2014-09-22\session_video2014-09-22T15_30_16.avi</q2:FileName>
+          <q2:FileName>F:\MBL\experiments\L1-H2013-03\2014-09-16\session_video2014-09-16T14_45_26.avi</q2:FileName>
           <q2:PlaybackRate>20</q2:PlaybackRate>
           <q2:StartPosition>3848</q2:StartPosition>
           <q2:PositionUnits>Frames</q2:PositionUnits>
@@ -897,11 +897,11 @@ def process(value):
       <Expression xsi:type="ExternalizedPropertyOfStringVideoNavigator">
         <MemberName>FileName</MemberName>
         <Name>VideoFile</Name>
-        <Value>F:\MBL\experiments\L1-H2013-03\2014-09-22\session_video2014-09-22T15_30_16.avi</Value>
+        <Value>F:\MBL\experiments\L1-H2013-03\2014-09-16\session_video2014-09-16T14_45_26.avi</Value>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="StringProperty">
-          <Value>F:\MBL\experiments\L1-H2013-03\2014-09-22\session_video2014-09-22T15_30_16.avi</Value>
+          <Value>F:\MBL\experiments\L1-H2013-03\2014-09-16\session_video2014-09-16T14_45_26.avi</Value>
         </Combinator>
       </Expression>
       <Expression xsi:type="SubscribeSubject">
@@ -913,7 +913,7 @@ def process(value):
         <Value />
       </Expression>
       <Expression xsi:type="q4:CsvReader">
-        <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L1-H2013-03\session_video2014-09-22T15_30_16.csv</q4:FileName>
+        <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L1-H2013-03\session_video2014-09-16T14_45_26.csv</q4:FileName>
         <q4:ScanPattern>%s %i %f %f </q4:ScanPattern>
         <q4:SkipRows>0</q4:SkipRows>
       </Expression>
@@ -1680,7 +1680,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0003927.png</q6:FileName>
+          <q6:FileName>C:\Users\KAMPFF-LAB-VIDEO\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L1-H2013-03\session_video2014-09-16T14_45_26_f0003849.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
