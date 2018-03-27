@@ -1680,7 +1680,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>D:\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L1-H2013-03\session_video2014-10-21T13_31_09_f0053509.png</q6:FileName>
+          <q6:FileName>D:\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L1-H2013-03\session_video2014-10-21T13_31_09_f0077263.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
