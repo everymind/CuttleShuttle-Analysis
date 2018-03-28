@@ -13,7 +13,7 @@ This workflow is used to hand-annotate the location of the center of the cuttlef
 
 To mark the center of the cuttlefish's mantle, move the mouse cursor until the tip of it points to the spot you believe to be the mantle center, then hit the "F" key. To mark the tail, move the mouse cursor until the tip of it points to the very tip of the cuttlefish's tail, then hit the "V" key. To save a snapshot of that frame, hit the "G" key. 
 
-To ensure that the annotations are correctly saved into a .csv file, exit the VideoNavigator visualizer window (where you are seeing the video frames) before stopping the entire workflow. 
+To ensure that the annotations are correctly saved into a .csv file, exit the VideoNavigator visualizer window (where you are annotating the video frames) before stopping the entire workflow. 
 
 When changing the video file you wish to annotate or view, make sure to check all nodes labeled "VideoFile", "VideoNavigator", "String", and "CsvReader" to make sure the file names are consistent. 
 
