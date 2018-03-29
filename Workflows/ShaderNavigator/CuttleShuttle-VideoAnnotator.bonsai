@@ -13,7 +13,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q2:VideoNavigator">
-          <q2:FileName>F:\MBL\experiments\L1-H2013-03\2014-10-20\session_video2014-10-20T14_24_35.avi</q2:FileName>
+          <q2:FileName>F:\MBL\experiments\L7-H2013-03\2014-09-17\session_video2014-09-17T15_38_34.avi</q2:FileName>
           <q2:PlaybackRate>20</q2:PlaybackRate>
           <q2:StartPosition>3848</q2:StartPosition>
           <q2:PositionUnits>Frames</q2:PositionUnits>
@@ -709,7 +709,7 @@
             </Expression>
             <Expression xsi:type="WorkflowOutput" />
             <Expression xsi:type="q4:CsvWriter">
-              <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L1-H2013-03\session_video2014-10-20T14_24_35.csv</q4:FileName>
+              <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L7-H2013-03\session_video2014-09-17T15_38_34.csv</q4:FileName>
               <q4:Append>false</q4:Append>
               <q4:Overwrite>true</q4:Overwrite>
               <q4:Suffix>None</q4:Suffix>
@@ -901,7 +901,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="StringProperty">
-          <Value>F:\MBL\experiments\L1-H2013-03\2014-10-20\session_video2014-10-20T14_24_35.avi</Value>
+          <Value>F:\MBL\experiments\L7-H2013-03\2014-09-17\session_video2014-09-17T15_38_34.avi</Value>
         </Combinator>
       </Expression>
       <Expression xsi:type="SubscribeSubject">
@@ -913,7 +913,7 @@ def process(value):
         <Value />
       </Expression>
       <Expression xsi:type="q4:CsvReader">
-        <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L1-H2013-03\session_video2014-10-20T14_24_35.csv</q4:FileName>
+        <q4:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\ShaderNavigator\annotations\L7-H2013-03\session_video2014-09-17T15_38_34.csv</q4:FileName>
         <q4:ScanPattern>%s %i %f %f </q4:ScanPattern>
         <q4:SkipRows>0</q4:SkipRows>
       </Expression>
@@ -932,8 +932,8 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="q1:CreateVector2">
-                <q1:X>-0.2802548</q1:X>
-                <q1:Y>-0.2751479</q1:Y>
+                <q1:X>0.2468153</q1:X>
+                <q1:Y>-0.591716</q1:Y>
               </Combinator>
             </Expression>
             <Expression xsi:type="InputMapping">
@@ -1680,7 +1680,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>D:\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L1-H2013-03\session_video2014-10-20T14_24_35_f0022765.png</q6:FileName>
+          <q6:FileName>D:\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0015348.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
