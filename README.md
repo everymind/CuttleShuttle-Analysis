@@ -15,7 +15,7 @@ To mark the center of the cuttlefish's mantle, move the mouse cursor until the t
 
 To ensure that the annotations are correctly saved into a .csv file, exit the VideoNavigator visualizer window (where you are annotating the video frames) before stopping the entire workflow. 
 
-When changing the video file you wish to annotate or view, make sure to check all nodes labeled "VideoFile", "VideoNavigator", "String", and "CsvReader" to make sure the file names are consistent. 
+When changing the video file you wish to annotate or view, change the filepath in the node labeled "String". To double check that the workflow made all of the correct updates, check all nodes labeled "VideoFile", "VideoNavigator", and "CsvReader" to make sure the file names are consistent. 
 
 This workflow can also be used to visualize previous annotations and add more annotations. 
 
