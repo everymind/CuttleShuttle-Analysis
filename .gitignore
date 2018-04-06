@@ -3,3 +3,4 @@ Bonsai.VideoAnnotations/.vs
 Bonsai.VideoAnnotations/packages
 Bonsai.VideoAnnotations/Bonsai.VideoAnnotations/bin
 Bonsai.VideoAnnotations/Bonsai.VideoAnnotations/obj
+*.ipynb_checkpoints*
