@@ -901,7 +901,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="StringProperty">
-          <Value>F:\MBL\experiments\L7-H2013-03\2014-09-17\session_video2014-09-17T15_38_34.avi</Value>
+          <Value>F:\MBL\experiments\L7-H2013-03\2014-09-25\session_video2014-09-25T15_19_11.avi</Value>
         </Combinator>
       </Expression>
       <Expression xsi:type="SubscribeSubject">
@@ -932,8 +932,8 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="q1:CreateVector2">
-                <q1:X>0.2468153</q1:X>
-                <q1:Y>-0.591716</q1:Y>
+                <q1:X>0.2022293</q1:X>
+                <q1:Y>-0.05325444</q1:Y>
               </Combinator>
             </Expression>
             <Expression xsi:type="InputMapping">
@@ -1680,7 +1680,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="q6:SaveImage">
-          <q6:FileName>D:\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0015348.png</q6:FileName>
+          <q6:FileName>D:\Dropbox\CuttleShuttle\CuttleShuttle-Analysis\snapshots\L7-H2013-03\session_video2014-09-17T15_38_34_f0014648.png</q6:FileName>
           <q6:Suffix>None</q6:Suffix>
         </Combinator>
       </Expression>
