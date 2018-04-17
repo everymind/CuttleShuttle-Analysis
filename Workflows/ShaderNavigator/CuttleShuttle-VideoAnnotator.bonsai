@@ -901,7 +901,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="StringProperty">
-          <Value>F:\MBL\experiments\L7-H2013-03\2014-09-25\session_video2014-09-25T15_19_11.avi</Value>
+          <Value>F:\MBL\experiments\L7-H2013-03\2014-09-15\session_video2014-09-15T19_12_00.avi</Value>
         </Combinator>
       </Expression>
       <Expression xsi:type="SubscribeSubject">
