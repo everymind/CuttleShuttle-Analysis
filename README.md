@@ -10,7 +10,7 @@ A new instance of Bonsai will open. From inside this instance, open the Bonsai w
 
 This workflow is used to hand-annotate the location of the center of the cuttlefish's mantle and the tip of its tail, then save a [snapshot](https://www.dropbox.com/sh/hlrvut5y4v0wqau/AABfFOVhv5kH2ZYa_FIozr-Pa?dl=0) of the annotated frame. 
 
-To mark the center of the cuttlefish's mantle, move the mouse cursor until the tip of it points to the spot you believe to be the mantle center, then hit the "F" key. To mark the tail, move the mouse cursor until the tip of it points to the very tip of the cuttlefish's tail, then hit the "V" key. To save a snapshot of that frame, hit the "G" key. 
+To mark the center of the cuttlefish's mantle, move the mouse cursor until the tip of it points to the spot you believe to be the mantle center, then hit the "F" key. To mark the tail, move the mouse cursor until the tip of it points to the very tip of the cuttlefish's tail, then hit the "V" key. To save a snapshot of that frame, hit the "G" key. All keys noted here are in the QWERTY layout. 
 
 To ensure that the annotations are correctly saved into a .csv file, exit the VideoNavigator visualizer window (where you are annotating the video frames) before stopping the entire workflow. 
 
