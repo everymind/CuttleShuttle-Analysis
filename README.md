@@ -21,5 +21,13 @@ This workflow can also be used to visualize previous annotations and add more an
 ## Training dataset for machine learning
 [Frame snapshots](https://www.dropbox.com/sh/hlrvut5y4v0wqau/AABfFOVhv5kH2ZYa_FIozr-Pa?dl=0) and [annotations](https://github.com/everymind/CuttleShuttle-Analysis/tree/master/Workflows/ShaderNavigator/annotations).
  
- 
+# Potentially relevant and useful other projects 
+
+## Deep Lab Cut: markerless tracking of user-defined features in videos of animal behaviour
+
+https://github.com/AlexEMG/DeepLabCut
+
+https://arxiv.org/abs/1804.03142v1
+
+
 
