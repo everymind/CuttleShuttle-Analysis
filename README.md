@@ -1,5 +1,5 @@
 # CuttleShuttle-Analysis
-Analysis code for the Cuttle Shuttle video dataset. Requires Visual Studio (2012 or later) and Bonsai. 
+Analysis code for the Cuttle Shuttle video dataset. Requires Visual Studio Code (2012 or later) and Bonsai. 
 
 Project website: http://www.everymind.online/CuttleShuttle/
 
