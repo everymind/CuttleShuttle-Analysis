@@ -1,0 +1,241 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.3.0">
+  <Workflow xmlns:q2="clr-namespace:Bonsai.Dsp;assembly=Bonsai.Dsp" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:q3="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q4="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting" xmlns:q1="clr-namespace:Bonsai.IO;assembly=Bonsai.System" xmlns="https://horizongir.org/bonsai">
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Concat" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q1:GetFiles">
+          <q1:Path>C:\Users\KAMPFF-LAB-VIDEO\Documents\CuttleShuttle\analysis\CroppedAligned\TentacleShots</q1:Path>
+          <q1:SearchPattern>*.avi</q1:SearchPattern>
+          <q1:SearchOption>AllDirectories</q1:SearchOption>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Concat" />
+      </Expression>
+      <Expression xsi:type="SelectMany">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="RepeatCount">
+                <Count>1</Count>
+              </Combinator>
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>2</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>1</To>
+              <Label>Source1</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="WindowWorkflow">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="ReplaySubject">
+              <Name>FileName</Name>
+              <BufferSize xsi:nil="true" />
+            </Expression>
+            <Expression xsi:type="q1:CsvWriter">
+              <q1:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\CuttleShuttle\analysis\CroppedAligned\L1-H2013-03\HDClips\TentacleShots\mantleZoom\CA_L1-H2013-03_2014-09-24_TS03_catch_60fps.csv</q1:FileName>
+              <q1:Append>false</q1:Append>
+              <q1:Overwrite>false</q1:Overwrite>
+              <q1:Suffix>Timestamp</q1:Suffix>
+              <q1:IncludeHeader>false</q1:IncludeHeader>
+              <q1:Selector />
+            </Expression>
+            <Expression xsi:type="MemberSelector">
+              <Selector>Source.Val0</Selector>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q2:Sum" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Canny">
+                <q3:Threshold1>7500</q3:Threshold1>
+                <q3:Threshold2>2000</q3:Threshold2>
+                <q3:ApertureSize>7</q3:ApertureSize>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Crop">
+                <q3:RegionOfInterest>
+                  <q3:X>798</q3:X>
+                  <q3:Y>108</q3:Y>
+                  <q3:Width>1050</q3:Width>
+                  <q3:Height>873</q3:Height>
+                </q3:RegionOfInterest>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Grayscale" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:FileCapture">
+                <q3:FileName>C:\Users\KAMPFF-LAB-VIDEO\Documents\CuttleShuttle\analysis\CroppedAligned\L1-H2013-03\HDClips\TentacleShots\mantleZoom\CA_L1-H2013-03_2014-09-24_TS03_catch_60fps.avi</q3:FileName>
+                <q3:PlaybackRate>10</q3:PlaybackRate>
+                <q3:StartPosition>0</q3:StartPosition>
+                <q3:PositionUnits>Frames</q3:PositionUnits>
+                <q3:Loop>false</q3:Loop>
+                <q3:Playing>true</q3:Playing>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfStringFileCapture">
+              <MemberName>FileName</MemberName>
+              <Name>VideoFileName</Name>
+              <Value>C:\Users\KAMPFF-LAB-VIDEO\Documents\CuttleShuttle\analysis\CroppedAligned\L1-H2013-03\HDClips\TentacleShots\tentacleZoom\CA_TZ_L1-H2013-03_2014-09-09_TS01_miss.avi</Value>
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>FileName</Name>
+            </Expression>
+            <Expression xsi:type="q4:PythonTransform">
+              <q4:Script>@returns(str)
+def process(value):
+  global output
+  L = len(value)-4
+  output = value[0:L] + ".csv"
+  return output</q4:Script>
+            </Expression>
+            <Expression xsi:type="ExternalizedPropertyOfStringCsvWriter">
+              <MemberName>FileName</MemberName>
+              <Name>FileName</Name>
+              <Value>CuttleShuttle\analysis\Bonsai\CannyData\test.csv</Value>
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>FileName</Name>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:ImageHistogram" />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>2</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>1</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>3</To>
+              <Label>Source2</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>4</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>6</From>
+              <To>5</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>7</From>
+              <To>6</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>7</From>
+              <To>15</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>8</From>
+              <To>7</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>9</From>
+              <To>8</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>10</From>
+              <To>9</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>11</From>
+              <To>12</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>12</From>
+              <To>13</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>13</From>
+              <To>3</To>
+              <Label>Source1</Label>
+            </Edge>
+            <Edge>
+              <From>14</From>
+              <To>10</To>
+              <Label>Source1</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge>
+        <From>1</From>
+        <To>2</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>2</From>
+        <To>3</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>3</From>
+        <To>4</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>4</From>
+        <To>0</To>
+        <Label>Source1</Label>
+      </Edge>
+    </Edges>
+  </Workflow>
+  <ExtensionTypes>
+    <Type>Bonsai.Reactive.Concat, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.IO.GetFiles, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Reactive.RepeatCount, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.IO.CsvWriter, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Dsp.Sum, Bonsai.Dsp, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Canny, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Crop, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Grayscale, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.FileCapture, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Expressions.ExternalizedProperty`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[Bonsai.Vision.FileCapture, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null]], Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Scripting.PythonTransform, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Expressions.ExternalizedProperty`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[Bonsai.IO.CsvWriter, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null]], Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.ImageHistogram, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+  </ExtensionTypes>
+</WorkflowBuilder>
