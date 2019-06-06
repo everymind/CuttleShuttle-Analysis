@@ -37,11 +37,6 @@ for TGB_file in TGB_files:
     TGB_animal = TGB_name.split("_")[1]
     TGB_type = TGB_name.split("_")[4]
     TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
-    for frame in range(len(TGB_moment)):
-        if TGB_moment[frame] <= 0: 
-            TGB_moment[frame] = np.nan
-    TGB_baseline = np.nanmean(TGB_moment[0:4])
-    TGB_normalized = TGB_moment/TGB_baseline
     # downsample 
     TGB_window = 10 
     downsample_buckets = int(np.ceil(len(TGB_moment)/TGB_window))
@@ -51,16 +46,21 @@ for TGB_file in TGB_files:
     for bucket in range(downsample_buckets): 
         start = counter
         end = counter + TGB_window - 1
-        this_bucket = np.nanmean(TGB_normalized[start:end])
+        this_bucket = np.mean(TGB_moment[start:end])
         TGB_smooth.append(this_bucket)
         counter = counter + TGB_window
     if TGB_type == "catch":
         canny_catch[TGB_animal].append(TGB_smooth)
     if TGB_type == "miss": 
         canny_miss[TGB_animal].append(TGB_smooth)
+    # if TGB_type == "catch":
+    #      canny_catch[TGB_animal].append(TGB_moment)
+    # if TGB_type == "miss": 
+    #     canny_miss[TGB_animal].append(TGB_moment)
+
+all_canny = [canny_catch, canny_miss]
 
 # make average canny count for each animal in catch versus miss conditions
-all_canny = [canny_catch, canny_miss]
 for canny_type in all_canny: 
     for key in canny_type: 
         TGB_avg = np.nanmean(canny_type[key], axis=0)
@@ -91,6 +91,7 @@ for key in canny_catch:
     plt.suptitle(figure_title, fontsize=12, y=0.98)
     plt.ylabel("Number of edges")
     plt.xlabel("Time Buckets (1 time bucket = " + str(TGB_window) + " frames (~0.0833 seconds), original framerate = 60fps)")
+    #plt.xlabel("Frame number, original framerate = 60fps")
     plt.grid(b=True, which='major', linestyle='-')
 
     plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8])
@@ -102,6 +103,8 @@ for key in canny_catch:
     ymin, ymax = plt.ylim()
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
     plt.text(TGB_bucket-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    # plt.plot((180, 180), (ymin, ymax), 'g--', linewidth=1)
+    # plt.text(180-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
 
     plt.savefig(figure_path)
     plt.show(block=False)
