@@ -28,8 +28,14 @@ TGB_files = glob.glob(canny_counts_folder + os.sep + "*.csv")
 canny_catch = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 canny_miss = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 
-canny_catch_avg = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-canny_miss_avg = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+canny_catch_baseline = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+canny_miss_baseline = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+
+canny_catch_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+canny_miss_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+
+canny_catch_normed_avg = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+canny_miss_normed_avg = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 
 # collect all canny counts and categorize by animal and type (catch vs miss)
 for TGB_file in TGB_files: 
@@ -60,51 +66,75 @@ for TGB_file in TGB_files:
 
 all_canny = [canny_catch, canny_miss]
 
-# make average canny count for each animal in catch versus miss conditions
+# make average baselined canny count for each animal in catch versus miss conditions
+baseline_no_of_buckets = 15
+# make baseline for each animal, catch vs miss
 for canny_type in all_canny: 
     for key in canny_type: 
         TGB_avg = np.nanmean(canny_type[key], axis=0)
+        TGB_baseline = np.nanmean(TGB_avg[0:baseline_no_of_buckets])
         if canny_type == canny_catch:
-            canny_catch_avg[key].append(TGB_avg)
+            canny_catch_baseline[key].append(TGB_baseline)
         if canny_type == canny_miss:
-            canny_miss_avg[key].append(TGB_avg)
+            canny_miss_baseline[key].append(TGB_baseline)
+# normalize each trial
+    for key in canny_type: 
+        if canny_type == canny_catch:
+            this_baseline = canny_catch_baseline[key][0]
+            for trial in canny_type[key]:
+                normed_trial = [(float(x-this_baseline)/this_baseline)*100 for x in trial]
+                canny_catch_norm[key].append(normed_trial)
+        else:
+            this_baseline = canny_miss_baseline[key][0]
+            for trial in canny_type[key]:
+                normed_trial = [(float(x-this_baseline)/this_baseline)*100 for x in trial]
+                canny_miss_norm[key].append(normed_trial)
+# find normalized avg for each animal, catch vs miss
+    for key in canny_type:
+        if canny_type == canny_catch: 
+            normed_avg = np.nanmean(canny_catch_norm[key], axis=0)
+            canny_catch_normed_avg[key] = normed_avg
+        if canny_type == canny_miss: 
+            normed_avg = np.nanmean(canny_miss_norm[key], axis=0)
+            canny_miss_normed_avg[key] = normed_avg
 
-# plot
+# plot individual animals
 image_type_options = ['.png', '.pdf']
 for key in canny_catch: 
-    canny_stddev_catch = np.nanstd(canny_catch[key], axis=0)
-    canny_N_catch = len(canny_catch[key])
-    canny_stddev_miss = np.nanstd(canny_miss[key], axis=0)
-    canny_N_miss = len(canny_miss[key])
+    canny_stddev_catch = np.nanstd(canny_catch_norm[key], axis=0)
+    canny_N_catch = len(canny_catch_norm[key])
+    canny_stddev_miss = np.nanstd(canny_miss_norm[key], axis=0)
+    canny_N_miss = len(canny_miss_norm[key])
     z_val = 1.96 # Z value for 95% confidence interval
     error_catch = z_val*(canny_stddev_catch/np.sqrt(canny_N_catch))
     error_miss = z_val*(canny_stddev_miss/np.sqrt(canny_N_miss))
 
-    catches_mean = canny_catch_avg[key][0]
-    misses_mean = canny_miss_avg[key][0]
+    catches_mean = canny_catch_normed_avg[key]
+    misses_mean = canny_miss_normed_avg[key]
 
-    figure_name = 'CannyEdgeDetector_' + key + "_" + todays_datetime + '.png'
+    figure_name = 'CannyEdgeDetector_' + key + "_PercentChange_" + todays_datetime + '.png'
     figure_path = os.path.join(plots_folder, figure_name)
-    figure_title = "Average number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Animal: " + key + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
+    figure_title = "Average percent change in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Animal: " + key + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
 
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.98)
-    plt.ylabel("Number of edges")
-    plt.xlabel("Time Buckets (1 time bucket = " + str(TGB_window) + " frames (~0.0833 seconds), original framerate = 60fps)")
+    plt.ylabel("Percent change in number of edges")
+    plot_xticks = np.arange(0, len(canny_catch_normed_avg[key]), step=6)
+    plt.xticks(plot_xticks, ['%.1f'%((x*10)/60) for x in plot_xticks])
+    plt.xlabel("Seconds")
     #plt.xlabel("Frame number, original framerate = 60fps")
     plt.grid(b=True, which='major', linestyle='-')
 
-    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8])
+    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
     plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, alpha=0.5)
 
-    plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8])
+    plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
     plt.fill_between(range(len(misses_mean)), misses_mean-error_catch, misses_mean+error_catch, alpha=0.5)
 
     ymin, ymax = plt.ylim()
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
     plt.text(TGB_bucket-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-    # plt.plot((180, 180), (ymin, ymax), 'g--', linewidth=1)
-    # plt.text(180-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
 
     plt.savefig(figure_path)
     plt.show(block=False)
