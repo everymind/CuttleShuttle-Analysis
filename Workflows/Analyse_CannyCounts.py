@@ -25,6 +25,23 @@ plots_folder = r"C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analys
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
 TGB_files = glob.glob(canny_counts_folder + os.sep + "*.csv")
+
+# categorize tentacle shots according to prey movement
+TGB_natural = []
+TGB_patterned = []
+TGB_causal = []
+for TGB_file in TGB_files: 
+    csv_name = TGB_file.split(os.sep)[-1]
+    trial_date = csv_name.split('_')[2]
+    trial_datetime = datetime.datetime.strptime(trial_date, '%Y-%m-%d')
+    if trial_datetime < datetime.datetime(2014, 9, 13, 0, 0):
+        TGB_natural.append(TGB_file)
+    elif trial_datetime > datetime.datetime(2014, 10, 18, 0, 0):
+        TGB_causal.append(TGB_file)
+    else: 
+        TGB_patterned.append(TGB_file)
+
+# organize canny count data
 canny_catch = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 canny_miss = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 
@@ -80,7 +97,7 @@ for canny_type in all_canny:
             canny_catch_baseline[animal].append(TGB_baseline)
         if canny_type == canny_miss:
             canny_miss_baseline[animal].append(TGB_baseline)
-# normalize each trial
+    # normalize each trial
     for animal in canny_type: 
         if canny_type == canny_catch:
             this_baseline = canny_catch_baseline[animal][0]
@@ -92,7 +109,7 @@ for canny_type in all_canny:
             for trial in canny_type[animal]:
                 normed_trial = [(float(x-this_baseline)/this_baseline)*100 for x in trial]
                 canny_miss_norm[animal].append(normed_trial)
-# find normalized avg for each animal, catch vs miss
+    # find normalized avg for each animal, catch vs miss
     for animal in canny_type:
         if canny_type == canny_catch: 
             normed_avg = np.nanmean(canny_catch_norm[animal], axis=0)
@@ -132,10 +149,10 @@ for animal in canny_catch:
     plt.grid(b=True, which='major', linestyle='-')
 
     plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-    plt.fill_between(range(len(misses_mean)), misses_mean-error_miss, misses_mean+error_miss, alpha=0.5)
+    plt.fill_between(range(len(misses_mean)), misses_mean-error_miss, misses_mean+error_miss, color=[1.0, 0.0, 0.0, 0.3])
 
     plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-    plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, alpha=0.5)
+    plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, color=[0.0, 0.0, 1.0, 0.3])
 
     ymin, ymax = plt.ylim()
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
@@ -184,10 +201,10 @@ plt.xlabel("Seconds")
 plt.grid(b=True, which='major', linestyle='-')
 
 plt.plot(all_misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-plt.fill_between(range(len(all_misses_mean)), all_misses_mean-error_all_misses, all_misses_mean+error_all_misses, alpha=0.5)
+plt.fill_between(range(len(all_misses_mean)), all_misses_mean-error_all_misses, all_misses_mean+error_all_misses, color=[1.0, 0.0, 0.0, 0.3])
 
 plt.plot(all_catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-plt.fill_between(range(len(all_catches_mean)), all_catches_mean-error_all_catches, all_catches_mean+error_all_catches, alpha=0.5)
+plt.fill_between(range(len(all_catches_mean)), all_catches_mean-error_all_catches, all_catches_mean+error_all_catches, color=[0.0, 0.0, 1.0, 0.3])
 
 ymin, ymax = plt.ylim()
 plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
