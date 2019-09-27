@@ -34,8 +34,11 @@ canny_miss_baseline = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], 
 canny_catch_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 canny_miss_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 
-canny_catch_normed_avg = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-canny_miss_normed_avg = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+canny_catch_normed_avg = {}
+canny_miss_normed_avg = {}
+
+canny_catch_std_error = {}
+canny_miss_std_error = {}
 
 # collect all canny counts and categorize by animal and type (catch vs miss)
 for TGB_file in TGB_files: 
@@ -101,13 +104,16 @@ for canny_type in all_canny:
 # plot individual animals
 image_type_options = ['.png', '.pdf']
 for key in canny_catch: 
-    canny_stddev_catch = np.nanstd(canny_catch_norm[key], axis=0)
+    canny_std_catch = np.nanstd(canny_catch_norm[key], axis=0)
     canny_N_catch = len(canny_catch_norm[key])
-    canny_stddev_miss = np.nanstd(canny_miss_norm[key], axis=0)
+    canny_std_miss = np.nanstd(canny_miss_norm[key], axis=0)
     canny_N_miss = len(canny_miss_norm[key])
     z_val = 1.96 # Z value for 95% confidence interval
-    error_catch = z_val*(canny_stddev_catch/np.sqrt(canny_N_catch))
-    error_miss = z_val*(canny_stddev_miss/np.sqrt(canny_N_miss))
+    error_catch = z_val*(canny_std_catch/np.sqrt(canny_N_catch))
+    error_miss = z_val*(canny_std_miss/np.sqrt(canny_N_miss))
+
+    canny_catch_std_error[key] = [canny_std_catch, error_catch]
+    canny_miss_std_error[key] = [canny_std_miss, error_miss]
 
     catches_mean = canny_catch_normed_avg[key]
     misses_mean = canny_miss_normed_avg[key]
@@ -140,5 +146,13 @@ for key in canny_catch:
     plt.show(block=False)
     plt.pause(1)
     plt.close()
+
+### POOL ACROSS ANIMALS ### 
+
+total_N_catch = 0
+total_N_miss = 0
+for canny_type in all_canny:
+    for key in canny_type: 
+
 
 ## FIN
