@@ -73,59 +73,59 @@ all_canny = [canny_catch, canny_miss]
 baseline_no_of_buckets = 15
 # make baseline for each animal, catch vs miss
 for canny_type in all_canny: 
-    for key in canny_type: 
-        TGB_avg = np.nanmean(canny_type[key], axis=0)
+    for animal in canny_type: 
+        TGB_avg = np.nanmean(canny_type[animal], axis=0)
         TGB_baseline = np.nanmean(TGB_avg[0:baseline_no_of_buckets])
         if canny_type == canny_catch:
-            canny_catch_baseline[key].append(TGB_baseline)
+            canny_catch_baseline[animal].append(TGB_baseline)
         if canny_type == canny_miss:
-            canny_miss_baseline[key].append(TGB_baseline)
+            canny_miss_baseline[animal].append(TGB_baseline)
 # normalize each trial
-    for key in canny_type: 
+    for animal in canny_type: 
         if canny_type == canny_catch:
-            this_baseline = canny_catch_baseline[key][0]
-            for trial in canny_type[key]:
+            this_baseline = canny_catch_baseline[animal][0]
+            for trial in canny_type[animal]:
                 normed_trial = [(float(x-this_baseline)/this_baseline)*100 for x in trial]
-                canny_catch_norm[key].append(normed_trial)
+                canny_catch_norm[animal].append(normed_trial)
         else:
-            this_baseline = canny_miss_baseline[key][0]
-            for trial in canny_type[key]:
+            this_baseline = canny_miss_baseline[animal][0]
+            for trial in canny_type[animal]:
                 normed_trial = [(float(x-this_baseline)/this_baseline)*100 for x in trial]
-                canny_miss_norm[key].append(normed_trial)
+                canny_miss_norm[animal].append(normed_trial)
 # find normalized avg for each animal, catch vs miss
-    for key in canny_type:
+    for animal in canny_type:
         if canny_type == canny_catch: 
-            normed_avg = np.nanmean(canny_catch_norm[key], axis=0)
-            canny_catch_normed_avg[key] = normed_avg
+            normed_avg = np.nanmean(canny_catch_norm[animal], axis=0)
+            canny_catch_normed_avg[animal] = normed_avg
         if canny_type == canny_miss: 
-            normed_avg = np.nanmean(canny_miss_norm[key], axis=0)
-            canny_miss_normed_avg[key] = normed_avg
+            normed_avg = np.nanmean(canny_miss_norm[animal], axis=0)
+            canny_miss_normed_avg[animal] = normed_avg
 
 # plot individual animals
 image_type_options = ['.png', '.pdf']
-for key in canny_catch: 
-    canny_std_catch = np.nanstd(canny_catch_norm[key], axis=0)
-    canny_N_catch = len(canny_catch_norm[key])
-    canny_std_miss = np.nanstd(canny_miss_norm[key], axis=0)
-    canny_N_miss = len(canny_miss_norm[key])
+for animal in canny_catch: 
+    canny_std_catch = np.nanstd(canny_catch_norm[animal], axis=0)
+    canny_N_catch = len(canny_catch_norm[animal])
+    canny_std_miss = np.nanstd(canny_miss_norm[animal], axis=0)
+    canny_N_miss = len(canny_miss_norm[animal])
     z_val = 1.96 # Z value for 95% confidence interval
     error_catch = z_val*(canny_std_catch/np.sqrt(canny_N_catch))
     error_miss = z_val*(canny_std_miss/np.sqrt(canny_N_miss))
 
-    canny_catch_std_error[key] = [canny_std_catch, error_catch]
-    canny_miss_std_error[key] = [canny_std_miss, error_miss]
+    canny_catch_std_error[animal] = [canny_std_catch, error_catch]
+    canny_miss_std_error[animal] = [canny_std_miss, error_miss]
 
-    catches_mean = canny_catch_normed_avg[key]
-    misses_mean = canny_miss_normed_avg[key]
+    catches_mean = canny_catch_normed_avg[animal]
+    misses_mean = canny_miss_normed_avg[animal]
 
-    figure_name = 'CannyEdgeDetector_' + key + "_PercentChange_" + todays_datetime + '.png'
+    figure_name = 'CannyEdgeDetector_' + animal + "_PercentChange_" + todays_datetime + '.png'
     figure_path = os.path.join(plots_folder, figure_name)
-    figure_title = "Average percent change in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Animal: " + key + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
+    figure_title = "Average percent change in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Animal: " + animal + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
 
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.98)
     plt.ylabel("Percent change in number of edges")
-    plot_xticks = np.arange(0, len(canny_catch_normed_avg[key]), step=6)
+    plot_xticks = np.arange(0, len(canny_catch_normed_avg[animal]), step=6)
     plt.xticks(plot_xticks, ['%.1f'%((x*10)/60) for x in plot_xticks])
     plt.xlabel("Seconds")
     #plt.xlabel("Frame number, original framerate = 60fps")
@@ -152,7 +152,14 @@ for key in canny_catch:
 total_N_catch = 0
 total_N_miss = 0
 for canny_type in all_canny:
-    for key in canny_type: 
+    for animal in canny_type: 
+        this_animal_N_catches = len(canny_type[animal])
+        if canny_type == canny_catch:
+            total_N_catch = total_N_catch + this_animal_N_catches
+        else:
+            total_N_miss = total_N_miss + this_animal_N_catches
+    for animal in canny_type: 
+
 
 
 ## FIN
