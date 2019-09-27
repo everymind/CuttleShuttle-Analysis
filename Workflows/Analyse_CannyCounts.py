@@ -135,7 +135,7 @@ for animal in canny_catch:
     plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, alpha=0.5)
 
     plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-    plt.fill_between(range(len(misses_mean)), misses_mean-error_catch, misses_mean+error_catch, alpha=0.5)
+    plt.fill_between(range(len(misses_mean)), misses_mean-error_miss, misses_mean+error_miss, alpha=0.5)
 
     ymin, ymax = plt.ylim()
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
@@ -148,18 +148,56 @@ for animal in canny_catch:
     plt.close()
 
 ### POOL ACROSS ANIMALS ### 
-
-total_N_catch = 0
-total_N_miss = 0
+all_catches = []
+all_misses = []
 for canny_type in all_canny:
     for animal in canny_type: 
-        this_animal_N_catches = len(canny_type[animal])
+        this_animal_N = len(canny_type[animal])
         if canny_type == canny_catch:
-            total_N_catch = total_N_catch + this_animal_N_catches
-        else:
-            total_N_miss = total_N_miss + this_animal_N_catches
-    for animal in canny_type: 
+            for trial in canny_catch_norm[animal]:
+                all_catches.append(trial)
+        else: 
+            for trial in canny_miss_norm[animal]:
+                all_misses.append(trial)
+total_N_catch = len(all_catches)
+total_N_miss = len(all_misses)
+all_catches_mean = np.nanmean(all_catches, axis=0)
+all_catches_std = np.nanstd(all_catches, axis=0)
+all_misses_mean = np.nanmean(all_misses, axis=0)
+all_misses_std = np.nanstd(all_misses, axis=0)
 
+z_val = 1.96 # Z value for 95% confidence interval
+error_all_catches = z_val*(all_catches_std/np.sqrt(total_N_catch))
+error_all_misses = z_val*(all_misses_std/np.sqrt(total_N_miss))
+
+figure_name = 'CannyEdgeDetector_AllAnimals_PercentChange_' + todays_datetime + '.png'
+figure_path = os.path.join(plots_folder, figure_name)
+figure_title = "Average percent change in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Pooled across all animals \n Number of catches: " + str(total_N_catch) + ", Number of misses: " + str(total_N_miss)
+
+plt.figure(figsize=(16,9), dpi=200)
+plt.suptitle(figure_title, fontsize=12, y=0.98)
+plt.ylabel("Percent change in number of edges")
+plot_xticks = np.arange(0, len(canny_catch_normed_avg[animal]), step=6)
+plt.xticks(plot_xticks, ['%.1f'%((x*10)/60) for x in plot_xticks])
+plt.xlabel("Seconds")
+#plt.xlabel("Frame number, original framerate = 60fps")
+plt.grid(b=True, which='major', linestyle='-')
+
+plt.plot(all_catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+plt.fill_between(range(len(all_catches_mean)), all_catches_mean-error_all_catches, all_catches_mean+error_all_catches, alpha=0.5)
+
+plt.plot(all_misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+plt.fill_between(range(len(all_misses_mean)), all_misses_mean-error_all_misses, all_misses_mean+error_all_misses, alpha=0.5)
+
+ymin, ymax = plt.ylim()
+plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+plt.text(TGB_bucket-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+plt.legend(loc='upper left')
+
+plt.savefig(figure_path)
+plt.show(block=False)
+plt.pause(1)
+plt.close()
 
 
 ## FIN
