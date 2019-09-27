@@ -131,11 +131,11 @@ for animal in canny_catch:
     #plt.xlabel("Frame number, original framerate = 60fps")
     plt.grid(b=True, which='major', linestyle='-')
 
-    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-    plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, alpha=0.5)
-
     plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
     plt.fill_between(range(len(misses_mean)), misses_mean-error_miss, misses_mean+error_miss, alpha=0.5)
+
+    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+    plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, alpha=0.5)
 
     ymin, ymax = plt.ylim()
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
@@ -183,11 +183,11 @@ plt.xlabel("Seconds")
 #plt.xlabel("Frame number, original framerate = 60fps")
 plt.grid(b=True, which='major', linestyle='-')
 
-plt.plot(all_catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-plt.fill_between(range(len(all_catches_mean)), all_catches_mean-error_all_catches, all_catches_mean+error_all_catches, alpha=0.5)
-
 plt.plot(all_misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
 plt.fill_between(range(len(all_misses_mean)), all_misses_mean-error_all_misses, all_misses_mean+error_all_misses, alpha=0.5)
+
+plt.plot(all_catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+plt.fill_between(range(len(all_catches_mean)), all_catches_mean-error_all_catches, all_catches_mean+error_all_catches, alpha=0.5)
 
 ymin, ymax = plt.ylim()
 plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
