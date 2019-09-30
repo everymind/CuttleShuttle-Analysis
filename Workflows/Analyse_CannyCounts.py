@@ -34,7 +34,7 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
             miss_dict[TGB_animal].append(TGB_smooth)
     return TGB_bucket
 
-def normed_avg_canny_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, norm_catch, norm_miss, normed_avg_catch, normed_avg_miss):
+def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, norm_catch, norm_miss, normed_avg_catch, normed_avg_miss):
     # make baseline for each animal, catch vs miss
     for canny_type in range(len(prey_type)): 
         for animal in prey_type[canny_type]: 
@@ -111,19 +111,73 @@ def plot_indiv_animals(prey_type, catches_dict, catches_norm, misses_norm, catch
         except Exception:
             print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type))
 
-def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, catches_normed_avg, misses_normed_avg, TGB_bucket, plots_dir, todays_dt): 
+def mult_to_list(input_list, multiplier):
+    if not np.isnan(input_list).any(): 
+        return [x*multiplier for x in input_list]
+
+def square_list(input_list):
+    return [x**2 for x in input_list]
+
+def subtract_from_tupled_list(list_of_tuples, list_to_subtract):
+    list_of_lists = []
+    for this_tuple in list_of_tuples:
+        list_of_lists.append(this_tuple[0])
+    for x in list_of_lists:
+        
+
+###
+prey_type = nat
+prey_type_str = "natural"
+catches_norm = nat_catches_norm
+misses_norm = nat_misses_norm
+catches_normed_avg = nat_catches_normed_avg
+misses_normed_avg = nat_misses_normed_avg
+catches_std = nat_catches_std_error
+misses_std = nat_misses_std_error
+TGB_bucket = TGB_bucket_nat
+plots_dir = plots_folder
+todays_dt = todays_datetime
+def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, catches_normed_avg, misses_normed_avg, catches_std, misses_std, TGB_bucket, plots_dir, todays_dt): 
     ### POOL ACROSS ANIMALS ### 
-    all_catches = []
-    all_misses = []
+    all_catches = [] #(normed_avg, number_of_catches)
+    all_catches_std_sq = [] #(std, number of catches)
+    all_misses = [] #(normed_avg, number_of_misses)
+    all_misses_std_sq = [] #(std, number of misses)
     for canny_type in range(len(prey_type)):
         for animal in prey_type[canny_type]: 
-            this_animal_N = len(prey_type[canny_type][animal])
-            if canny_type == 0:
-                for trial in catches_norm[animal]:
-                    all_catches.append(trial)
-            else: 
-                for trial in misses_norm[animal]:
-                    all_misses.append(trial)
+            this_animal_N_TS = len(prey_type[canny_type][animal])
+            if this_animal_N_TS != 0:
+                if canny_type == 0:
+                    this_animal_M = catches_normed_avg[animal]
+                    this_animal_std = catches_std[animal][0]
+                    all_catches.append((this_animal_M, this_animal_N_TS))
+                    all_catches_std.append((this_animal_std**2, this_animal_N_TS))
+                else: 
+                    this_animal_M = misses_normed_avg[animal]
+                    this_animal_std = misses_std[animal][0]
+                    all_misses.append((this_animal_M, this_animal_N_TS))
+                    all_misses_std.append((this_animal_std**2, this_animal_N_TS))
+    # combined mean
+    catches_combined_mean = list(itertools.starmap(mult_to_list, all_catches))
+    catches_combined_mean_filtered = list(filter(lambda x: isinstance(x, list), catches_combined_mean))
+    catches_combined_mean_num = [sum(x) for x in zip(*catches_combined_mean_filtered)]
+    catches_combined_mean_denom = sum([x[1] for x in all_catches])
+    catches_combined_mean = [x/catches_combined_mean_denom for x in catches_combined_mean_num]
+    misses_combined_mean = list(itertools.starmap(mult_to_list, all_misses))
+    misses_combined_mean_filtered = list(filter(lambda x: isinstance(x, list), misses_combined_mean))
+    misses_combined_mean_num = [sum(x) for x in zip(*misses_combined_mean_filtered)]
+    misses_combined_mean_denom = sum([x[1] for x in all_misses])
+    misses_combined_mean = [x/misses_combined_mean_denom for x in misses_combined_mean_num]
+    # combined std
+    catches_weighted_stds = list(itertools.starmap(mult_to_list, all_catches_std_sq))
+    catches_weighted_stds_filtered = list(filter(lambda x: isinstance(x, list), catches_weighted_stds))
+    catches_sum_stds = [sum(x) for x in zip(*catches_weighted_stds_filtered)]
+    catches_mean_diffs = []
+    misses_weighted_stds = list(itertools.starmap(mult_to_list, all_misses_std_sq))
+    misses_weighted_stds_filtered = list(filter(lambda x: isinstance(x, list), misses_weighted_stds))
+    misses_sum_stds = [sum(x) for x in zip(*misses_weighted_stds_filtered)]
+
+
     total_N_catch = len(all_catches)
     total_N_miss = len(all_misses)
     all_catches_mean = np.nanmean(all_catches, axis=0)
@@ -196,87 +250,87 @@ for TGB_file in TGB_all:
 
 # organize canny count data
 # all
-all_catches_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_misses_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_catches_canny_baseline = {}
-all_misses_canny_baseline = {}
-all_catches_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_misses_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_catches_canny_normed_avg = {}
-all_misses_canny_normed_avg = {}
-all_catches_canny_std_error = {}
-all_misses_canny_std_error = {}
+all_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_catches_baseline = {}
+all_misses_baseline = {}
+all_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_catches_normed_avg = {}
+all_misses_normed_avg = {}
+all_catches_std_error = {}
+all_misses_std_error = {}
 # natural
-nat_catches_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_misses_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_catches_canny_baseline = {}
-nat_misses_canny_baseline = {}
-nat_catches_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_misses_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_catches_canny_normed_avg = {}
-nat_misses_canny_normed_avg = {}
-nat_catches_canny_std_error = {}
-nat_misses_canny_std_error = {}
+nat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+nat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+nat_catches_baseline = {}
+nat_misses_baseline = {}
+nat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+nat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+nat_catches_normed_avg = {}
+nat_misses_normed_avg = {}
+nat_catches_std_error = {}
+nat_misses_std_error = {}
 # patterned
-pat_catches_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_misses_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_catches_canny_baseline = {}
-pat_misses_canny_baseline = {}
-pat_catches_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_misses_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_catches_canny_normed_avg = {}
-pat_misses_canny_normed_avg = {}
-pat_catches_canny_std_error = {}
-pat_misses_canny_std_error = {}
+pat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+pat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+pat_catches_baseline = {}
+pat_misses_baseline = {}
+pat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+pat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+pat_catches_normed_avg = {}
+pat_misses_normed_avg = {}
+pat_catches_std_error = {}
+pat_misses_std_error = {}
 # causal
-caus_catches_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_misses_canny = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_catches_canny_baseline = {}
-caus_misses_canny_baseline = {}
-caus_catches_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_misses_canny_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_catches_canny_normed_avg = {}
-caus_misses_canny_normed_avg = {}
-caus_catches_canny_std_error = {}
-caus_misses_canny_std_error = {}
+caus_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+caus_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+caus_catches_baseline = {}
+caus_misses_baseline = {}
+caus_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+caus_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+caus_catches_normed_avg = {}
+caus_misses_normed_avg = {}
+caus_catches_std_error = {}
+caus_misses_std_error = {}
 
 # collect all canny counts and categorize by animal and type (catch vs miss)
-TGB_bucket_all = categorize_by_animal_catchVmiss(TGB_all, all_catches_canny, all_misses_canny)
-TGB_bucket_nat = categorize_by_animal_catchVmiss(TGB_natural, nat_catches_canny, nat_misses_canny)
-TGB_bucket_pat = categorize_by_animal_catchVmiss(TGB_patterned, pat_catches_canny, pat_misses_canny)
-TGB_bucket_caus = categorize_by_animal_catchVmiss(TGB_causal, caus_catches_canny, caus_misses_canny)
+TGB_bucket_all = categorize_by_animal_catchVmiss(TGB_all, all_catches, all_misses)
+TGB_bucket_nat = categorize_by_animal_catchVmiss(TGB_natural, nat_catches, nat_misses)
+TGB_bucket_pat = categorize_by_animal_catchVmiss(TGB_patterned, pat_catches, pat_misses)
+TGB_bucket_caus = categorize_by_animal_catchVmiss(TGB_causal, caus_catches, caus_misses)
 
-all_canny = [all_catches_canny, all_misses_canny]
-nat_canny = [nat_catches_canny, nat_misses_canny]
-pat_canny = [pat_catches_canny, pat_misses_canny]
-caus_canny = [caus_catches_canny, caus_misses_canny]
+allTS = [all_catches, all_misses]
+nat = [nat_catches, nat_misses]
+pat = [pat_catches, pat_misses]
+caus = [caus_catches, caus_misses]
 
 # make average baselined canny count for each animal in catch versus miss conditions
 baseline_buckets = 15
 # make baseline for each animal, catch vs miss
-normed_avg_canny_count(all_canny, "all", baseline_buckets, all_catches_canny_baseline, all_misses_canny_baseline, all_catches_canny_norm, all_misses_canny_norm, all_catches_canny_normed_avg, all_misses_canny_normed_avg)
-normed_avg_canny_count(nat_canny, "natural", baseline_buckets, nat_catches_canny_baseline, nat_misses_canny_baseline, nat_catches_canny_norm, nat_misses_canny_norm, nat_catches_canny_normed_avg, nat_misses_canny_normed_avg)
-normed_avg_canny_count(pat_canny, "patterned", baseline_buckets, pat_catches_canny_baseline, pat_misses_canny_baseline, pat_catches_canny_norm, pat_misses_canny_norm, pat_catches_canny_normed_avg, pat_misses_canny_normed_avg)
-normed_avg_canny_count(caus_canny, "causal", baseline_buckets, caus_catches_canny_baseline, caus_misses_canny_baseline, caus_catches_canny_norm, caus_misses_canny_norm, caus_catches_canny_normed_avg, caus_misses_canny_normed_avg)
+normed_avg_count(allTS, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg)
+normed_avg_count(nat, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg)
+normed_avg_count(pat, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg)
+normed_avg_count(caus, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg)
 
 # plot individual animals
 # all
-plot_indiv_animals("all", all_catches_canny, all_catches_canny_norm, all_misses_canny_norm, all_catches_canny_normed_avg, all_misses_canny_normed_avg, all_catches_canny_std_error, all_misses_canny_std_error, TGB_bucket_all, plots_folder, todays_datetime)
+plot_indiv_animals("all", all_catches, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_all, plots_folder, todays_datetime)
 # natural
-plot_indiv_animals("natural", nat_catches_canny, nat_catches_canny_norm, nat_misses_canny_norm, nat_catches_canny_normed_avg, nat_misses_canny_normed_avg, nat_catches_canny_std_error, nat_misses_canny_std_error, TGB_bucket_nat, plots_folder, todays_datetime)
+plot_indiv_animals("natural", nat_catches, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg, nat_catches_std_error, nat_misses_std_error, TGB_bucket_nat, plots_folder, todays_datetime)
 # patterned
-plot_indiv_animals("patterned", pat_catches_canny, pat_catches_canny_norm, pat_misses_canny_norm, pat_catches_canny_normed_avg, pat_misses_canny_normed_avg, pat_catches_canny_std_error, pat_misses_canny_std_error, TGB_bucket_pat, plots_folder, todays_datetime)
+plot_indiv_animals("patterned", pat_catches, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg, pat_catches_std_error, pat_misses_std_error, TGB_bucket_pat, plots_folder, todays_datetime)
 # causal
-plot_indiv_animals("causal", caus_catches_canny, caus_catches_canny_norm, caus_misses_canny_norm, caus_catches_canny_normed_avg, caus_misses_canny_normed_avg, caus_catches_canny_std_error, caus_misses_canny_std_error, TGB_bucket_caus, plots_folder, todays_datetime)
+plot_indiv_animals("causal", caus_catches, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg, caus_catches_std_error, caus_misses_std_error, TGB_bucket_caus, plots_folder, todays_datetime)
 
 ### POOL ACROSS ANIMALS ### 
 # all
-plot_pool_all_animals(all_canny, "all", all_catches_canny_norm, all_misses_canny_norm, all_catches_canny_normed_avg, all_misses_canny_normed_avg, TGB_bucket_all, plots_folder, todays_datetime)
+plot_pool_all_animals(allTS, "all", all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg, TGB_bucket_all, plots_folder, todays_datetime)
 # natural
-plot_pool_all_animals(nat_canny, "natural", nat_catches_canny_norm, nat_misses_canny_norm, nat_catches_canny_normed_avg, nat_misses_canny_normed_avg, TGB_bucket_nat, plots_folder, todays_datetime)
+plot_pool_all_animals(nat, "natural", nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg, TGB_bucket_nat, plots_folder, todays_datetime)
 # patterned
-plot_pool_all_animals(pat_canny, "patterned", pat_catches_canny_norm, pat_misses_canny_norm, pat_catches_canny_normed_avg, pat_misses_canny_normed_avg, TGB_bucket_pat, plots_folder, todays_datetime)
+plot_pool_all_animals(pat, "patterned", pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg, TGB_bucket_pat, plots_folder, todays_datetime)
 # causal
-plot_pool_all_animals(caus_canny, "patterned", caus_catches_canny_norm, caus_misses_canny_norm, caus_catches_canny_normed_avg, caus_misses_canny_normed_avg, TGB_bucket_caus, plots_folder, todays_datetime)
+plot_pool_all_animals(caus, "patterned", caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg, TGB_bucket_caus, plots_folder, todays_datetime)
 
 ## FIN
