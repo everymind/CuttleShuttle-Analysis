@@ -19,7 +19,7 @@ def categorize_by_animal(TGB_files, all_animals_dict):
         TGB_type = TGB_name.split("_")[4]
         TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
         # downsample 
-        TGB_window = 10 
+        TGB_window = 5 
         downsample_buckets = int(np.ceil(len(TGB_moment)/TGB_window))
         TGB_smooth = []
         counter = 0 
@@ -41,7 +41,7 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
         TGB_type = TGB_name.split("_")[4]
         TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
         # downsample 
-        TGB_window = 10 
+        TGB_window = 5 
         downsample_buckets = int(np.ceil(len(TGB_moment)/TGB_window))
         TGB_smooth = []
         counter = 0 
@@ -84,6 +84,24 @@ def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, bas
                     print("{a} made no catches during {p} prey movement".format(a=animal,p=prey_type_str))
                 if canny_type == 1:
                     print("{a} made no misses during {p} prey movement".format(a=animal,p=prey_type_str))
+
+def shuffle_test(Group1, Group2, N_Shuffles):
+    # Observed performance
+    OPerf = np.mean(Group1) - np.mean(Group2)
+    # Shuffle the dataset and compare means again
+    num_of_shuffles = N_Shuffles
+    SPerf = np.zeros((num_of_shuffles,1))
+    All_Group = np.concatenate([Group1, Group2])
+    for shuff in range(num_of_shuffles):
+        shuff_response = np.random.permutation(All_Group)
+        SPerf[shuff] = np.mean(shuff_response[0:len(Group1)]) - np.mean(shuff_response[len(Group1)+1:len(All_Group)])
+    # p-value of shuffle test
+    pVal = np.mean(SPerf**2 >= OPerf**2)
+    # for 50,000 shuffles, pVal = 0.00588
+    # sigma
+    sigma_shuff = (OPerf - np.mean(SPerf))/np.std(SPerf)
+    # for 50,000 shuffles, sigma_shuff = -2.743751836042521
+    return pVal, sigma_shuff
 
 def plot_indiv_animals(prey_type, catches_dict, catches_norm, misses_norm, catches_normed_avg, misses_normed_avg, catches_std_error, misses_std_error, TGB_bucket, plots_dir, todays_dt):
     # plot individual animals
@@ -238,15 +256,15 @@ def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, c
 now = datetime.datetime.now()
 todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
 current_working_directory = os.getcwd()
-# List relevant data locations: these are for KAMPFF-LAB-VIDEO
-#root_folder = r"C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-#canny_counts_folder = r"C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-#plots_folder = r"C:\Users\KAMPFF-LAB-VIDEO\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
+# List relevant data locations: these are for KAMPFF-LAB
+root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
+canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
 
 # List relevant data locations: these are for taunsquared
-root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
+#root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
+#canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+#plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
 TGB_all = glob.glob(canny_counts_folder + os.sep + "*.csv")
@@ -376,7 +394,7 @@ all_TS_all_animals_raw = np.concatenate([all_catches_all_animals_raw, all_misses
 ## combined histogram of edge counts from all trials
 
 # make average baselined canny count for each animal in catch versus miss conditions
-baseline_buckets = 15
+baseline_buckets = 30
 # make baseline for each animal, catch vs miss
 normed_avg_count(allTS, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg)
 normed_avg_count(nat, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg)
@@ -401,21 +419,8 @@ for canny_type in range(len(all_norm)):
                         all_animals_normed_avg_misses.append(binned_count)
 Catch_Group = np.array(all_animals_normed_avg_catches)
 Miss_Group = np.array(all_animals_normed_avg_misses)
-# Observed performance
-OPerf = np.mean(Catch_Group) - np.mean(Miss_Group)
-# Shuffle the dataset and compare means again
-num_of_shuffles = 50000
-SPerf = np.zeros((num_of_shuffles,1))
-All_Group = np.concatenate([Catch_Group, Miss_Group])
-for shuff in range(num_of_shuffles):
-    shuff_response = np.random.permutation(All_Group)
-    SPerf[shuff] = np.mean(shuff_response[0:len(Catch_Group)]) - np.mean(shuff_response[len(Catch_Group)+1:len(All_Group)])
-# p-value of shuffle test
-pVal = np.mean(SPerf**2 >= OPerf**2)
-# for 50,000 shuffles, pVal = 0.00588
-# sigma
-sigma_shuff = (OPerf - np.mean(SPerf))/np.std(SPerf)
-# for 50,000 shuffles, sigma_shuff = -2.743751836042521
+# count of times I've run the shuffle test on all TS = 3
+pVal_all_animals_allTS, sigma_all_animals_allTS = shuffle_test(Catch_Group, Miss_Group, 50000)
 
 # plot individual animals
 # all
