@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import math
 import sys
 import itertools
+import scipy
 from fitter import Fitter
 from scipy.stats import recipinvgauss
 
@@ -18,20 +19,7 @@ def categorize_by_animal(TGB_files, all_animals_dict):
         TGB_animal = TGB_name.split("_")[1]
         TGB_type = TGB_name.split("_")[4]
         TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
-        # downsample 
-        TGB_window = 5 
-        downsample_buckets = int(np.ceil(len(TGB_moment)/TGB_window))
-        TGB_smooth = []
-        counter = 0 
-        TGB_buckets = int(np.ceil((len(TGB_moment)/2)/TGB_window))
-        for bucket in range(downsample_buckets): 
-            start = counter
-            end = counter + TGB_window - 1
-            this_bucket = np.mean(TGB_moment[start:end])
-            TGB_smooth.append(this_bucket)
-            counter = counter + TGB_window
-        all_animals_dict[TGB_animal].append(TGB_smooth)
-    return TGB_buckets
+        all_animals_dict[TGB_animal].append(TGB_moment)
 
 def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
     # collect all canny counts and categorize by animal and type (catch vs miss)
@@ -40,25 +28,12 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
         TGB_animal = TGB_name.split("_")[1]
         TGB_type = TGB_name.split("_")[4]
         TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
-        # downsample 
-        TGB_window = 5 
-        downsample_buckets = int(np.ceil(len(TGB_moment)/TGB_window))
-        TGB_smooth = []
-        counter = 0 
-        TGB_buckets = int(np.ceil((len(TGB_moment)/2)/TGB_window))
-        for bucket in range(downsample_buckets): 
-            start = counter
-            end = counter + TGB_window - 1
-            this_bucket = np.mean(TGB_moment[start:end])
-            TGB_smooth.append(this_bucket)
-            counter = counter + TGB_window
         if TGB_type == "catch":
-            catch_dict[TGB_animal].append(TGB_smooth)
+            catch_dict[TGB_animal].append(TGB_moment)
         if TGB_type == "miss": 
-            miss_dict[TGB_animal].append(TGB_smooth)
-    return TGB_buckets
+            miss_dict[TGB_animal].append(TGB_moment)
 
-def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, norm_catch, norm_miss, normed_avg_catch, normed_avg_miss):
+def normed_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, norm_catch, norm_miss):
     # make baseline for each animal, catch vs miss
     for canny_type in range(len(prey_type)): 
         for animal in prey_type[canny_type]: 
@@ -69,16 +44,12 @@ def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, bas
                 for trial in prey_type[canny_type][animal]:
                     normed_trial = [(float(x-TGB_baseline)/TGB_baseline)*100 for x in trial]
                     all_normed_trials.append(normed_trial)
-                # find normalized avg for each animal
-                normed_avg = np.nanmean(all_normed_trials, axis=0)
                 if canny_type == 0:
                     baseline_catch[animal] = TGB_baseline
                     norm_catch[animal] = all_normed_trials
-                    normed_avg_catch[animal] = normed_avg
                 if canny_type == 1:
                     baseline_miss[animal] = TGB_baseline
                     norm_miss[animal] = all_normed_trials
-                    normed_avg_miss[animal] = normed_avg
             except Exception:
                 if canny_type == 0:
                     print("{a} made no catches during {p} prey movement".format(a=animal,p=prey_type_str))
@@ -296,8 +267,6 @@ all_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7
 all_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 all_catches_normed_avg = {}
 all_misses_normed_avg = {}
-all_catches_std_error = {}
-all_misses_std_error = {}
 # natural, by catches v misses
 nat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
@@ -307,8 +276,6 @@ nat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7
 nat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_catches_normed_avg = {}
 nat_misses_normed_avg = {}
-nat_catches_std_error = {}
-nat_misses_std_error = {}
 # patterned, by catches v misses
 pat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
@@ -318,8 +285,6 @@ pat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7
 pat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_catches_normed_avg = {}
 pat_misses_normed_avg = {}
-pat_catches_std_error = {}
-pat_misses_std_error = {}
 # causal, by catches v misses
 caus_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
@@ -329,22 +294,32 @@ caus_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L
 caus_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_catches_normed_avg = {}
 caus_misses_normed_avg = {}
-caus_catches_std_error = {}
-caus_misses_std_error = {}
 
 # collect all canny counts and categorize by animal
-TGB_bucket_all = categorize_by_animal(TGB_all, all_TS)
-
+categorize_by_animal(TGB_all, all_TS)
 # collect all canny counts and categorize by animal and type (catch vs miss)
-TGB_bucket_all_CM = categorize_by_animal_catchVmiss(TGB_all, all_catches, all_misses)
-TGB_bucket_nat_CM = categorize_by_animal_catchVmiss(TGB_natural, nat_catches, nat_misses)
-TGB_bucket_pat_CM = categorize_by_animal_catchVmiss(TGB_patterned, pat_catches, pat_misses)
-TGB_bucket_caus_CM = categorize_by_animal_catchVmiss(TGB_causal, caus_catches, caus_misses)
+categorize_by_animal_catchVmiss(TGB_all, all_catches, all_misses)
+categorize_by_animal_catchVmiss(TGB_natural, nat_catches, nat_misses)
+categorize_by_animal_catchVmiss(TGB_patterned, pat_catches, pat_misses)
+categorize_by_animal_catchVmiss(TGB_causal, caus_catches, caus_misses)
 
-allTS = [all_catches, all_misses]
+all_CM = [all_catches, all_misses]
 nat = [nat_catches, nat_misses]
 pat = [pat_catches, pat_misses]
 caus = [caus_catches, caus_misses]
+
+# make baselined canny count for each animal in catch versus miss conditions
+baseline_buckets = 150
+# make baseline for each animal, catch vs miss
+normed_count(all_CM, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_norm, all_misses_norm)
+normed_count(nat, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm)
+normed_count(pat, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm)
+normed_count(caus, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm)
+
+all_norm = [all_catches_norm, all_misses_norm]
+nat_norm = [nat_catches_norm, nat_misses_norm]
+pat_norm = [pat_catches_norm, pat_misses_norm]
+caus_norm = [caus_catches_norm, caus_misses_norm]
 
 all_catches_all_animals_raw = []
 all_misses_all_animals_raw = []
@@ -359,50 +334,41 @@ all_misses_all_animals_raw = np.array(all_misses_all_animals_raw)
 all_TS_all_animals_raw = np.concatenate([all_catches_all_animals_raw, all_misses_all_animals_raw])
 
 ## fit raw data to a statistical distribution
-#f_catches = Fitter(all_catches_all_animals_raw)
-#f_catches.fit()
-#f_catches.summary()
+f_catches = Fitter(all_catches_all_animals_raw)
+f_catches.fit()
+f_catches.summary()
 ## f_catches.summary()
-##               sumsquare_error
-## recipinvgauss     5.034673e-12
-## halfgennorm       5.264162e-12
-## exponpow          6.477840e-12
-## gamma             7.005844e-12
-## erlang            7.109439e-12
-#f_misses = Fitter(all_misses_all_animals_raw)
-#f_misses.fit()
-#f_misses.summary()
+##           sumsquare_error
+##gengamma      7.793988e-12
+##levy          7.988078e-12
+##exponpow      8.425763e-12
+##gamma         1.065244e-11
+##exponweib     1.070720e-11
+f_misses = Fitter(all_misses_all_animals_raw)
+f_misses.fit()
+f_misses.summary()
 ## f_misses.summary()
-##               sumsquare_error
-## recipinvgauss     3.725484e-12
-## exponweib         3.869671e-12
-## beta              5.570691e-12
-## gengamma          5.616730e-12
-## erlang            5.632132e-12
-#f_all = Fitter(all_TS_all_animals_raw)
-#f_all.fit()
-#f_all.summary()
-#f_all.summary()
-##               sumsquare_error
-##halfgennorm       2.824153e-12
-##exponpow          2.859841e-12
-##chi               3.343348e-12
-##recipinvgauss     3.430147e-12
-##johnsonsu         3.533115e-12
+##          sumsquare_error
+##expon        2.741688e-11
+##gumbel_r     3.666497e-11
+##cauchy       3.876534e-11
+##norm         3.905432e-11
+##gumbel_l     4.161271e-11
+f_all = Fitter(all_TS_all_animals_raw)
+f_all.fit()
+f_all.summary()
+##f_all.summary()
+##          sumsquare_error
+##erlang       6.205514e-12
+##gengamma     7.076662e-12
+##beta         8.769084e-12
+##levy         9.046809e-12
+##chi          9.261221e-12
+
 
 # plot histograms for each animal to check distribution of dataset
 ## combined histogram of edge counts from all trials
 
-# make average baselined canny count for each animal in catch versus miss conditions
-baseline_buckets = 30
-# make baseline for each animal, catch vs miss
-normed_avg_count(allTS, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg)
-normed_avg_count(nat, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg)
-normed_avg_count(pat, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg)
-normed_avg_count(caus, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg)
-
-all_norm = [all_catches_norm, all_misses_norm]
-all_normed_avg = [all_catches_normed_avg, all_misses_normed_avg]
 # shuffle test
 ### POOL ACROSS ANIMALS and TIME BINS ### 
 all_animals_normed_avg_catches = [] 
@@ -423,6 +389,18 @@ Miss_Group = np.array(all_animals_normed_avg_misses)
 pVal_all_animals_allTS, sigma_all_animals_allTS = shuffle_test(Catch_Group, Miss_Group, 50000)
 
 # plot individual animals
+# downsample 
+TGB_window = 5 
+downsample_buckets = int(np.ceil(len(TGB_moment)/TGB_window))
+TGB_smooth = []
+counter = 0 
+TGB_buckets = int(np.ceil((len(TGB_moment)/2)/TGB_window))
+for bucket in range(downsample_buckets): 
+    start = counter
+    end = counter + TGB_window - 1
+    this_bucket = np.mean(TGB_moment[start:end])
+    TGB_smooth.append(this_bucket)
+    counter = counter + TGB_window
 # all
 plot_indiv_animals("all", all_catches, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_all_CM, plots_folder, todays_datetime)
 # natural
