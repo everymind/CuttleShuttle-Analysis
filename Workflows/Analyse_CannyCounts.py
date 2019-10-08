@@ -33,6 +33,15 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
         if TGB_type == "miss": 
             miss_dict[TGB_animal].append(TGB_moment)
 
+prey_type = all_raw
+prey_type_str = "all"
+baseline_len = baseline_buckets
+baseline_catch = all_catches_baseline
+baseline_miss = all_misses_baseline
+norm_catch = all_catches_norm
+norm_miss = all_misses_norm
+normed_avg_catch = all_catches_normed_avg
+normed_avg_miss = all_misses_normed_avg
 def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, norm_catch, norm_miss, normed_avg_catch, normed_avg_miss):
     # make baseline for each animal, catch vs miss
     for canny_type in range(len(prey_type)): 
@@ -42,7 +51,8 @@ def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, bas
                 all_normed_trials = []
                 for trial in prey_type[canny_type][animal]:
                     TGB_baseline = np.nanmean(trial[0:baseline_len])
-                    normed_trial = [float(x-TGB_baseline) for x in trial]
+                    print(canny_type, animal, TGB_baseline)
+                    normed_trial = [float(x-TGB_baseline)/TGB_baseline for x in trial]
                     all_normed_trials.append(normed_trial)
                 normed_avg = np.nanmean(all_normed_trials, axis=0)
                 if canny_type == 0:
@@ -208,6 +218,38 @@ def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, c
     plt.pause(1)
     plt.close()
 
+def normedRaw_Hist(dict_to_plot, data_type_str, plots_dir, todays_dt):
+    for animal in dict_to_plot:
+        figure_name = 'NormedRawHist_'+ animal + '_' + data_type_str + '_' + todays_dt + '.png'
+        figure_path = os.path.join(plots_dir, figure_name)
+        figure_title = "Frequency histogram of baseline subtracted edge counts, raw \n Data type: " + data_type_str + "\n Baseline: mean of edge counts from t=0 to t=2 seconds \n Animal: " + animal
+        plt.figure(figsize=(16,9), dpi=200)
+        plt.suptitle(figure_title, fontsize=12, y=0.98)
+        plt.ylabel("Frequency")
+        plt.xlabel("Raw edge counts")
+        plt.grid(b=True, which='major', linestyle='-')
+        plt.hist(dict_to_plot[animal])
+        plt.savefig(figure_path)
+        plt.show(block=False)
+        plt.pause(1)
+        plt.close()
+
+def zScore_Hist(dict_to_plot, data_type_str, plots_dir, todays_dt):
+    for animal in dict_to_plot:
+        figure_name = 'zScoreHist_'+ animal + '_' + data_type_str + '_' + todays_dt + '.png'
+        figure_path = os.path.join(plots_dir, figure_name)
+        figure_title = "Frequency histogram of baseline subtracted edge counts, z-scored \n Data type: " + data_type_str + "\n Baseline: mean of edge counts from t=0 to t=2 seconds \n Animal: " + animal
+        plt.figure(figsize=(16,9), dpi=200)
+        plt.suptitle(figure_title, fontsize=12, y=0.98)
+        plt.ylabel("Frequency")
+        plt.xlabel("z-score")
+        plt.grid(b=True, which='major', linestyle='-')
+        plt.hist(dict_to_plot[animal])
+        plt.savefig(figure_path)
+        plt.show(block=False)
+        plt.pause(1)
+        plt.close()
+
 def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, Group2_N, plots_dir, todays_dt):
     # Observed performance
     OPerf = np.mean(Group1) - np.mean(Group2)
@@ -244,14 +286,14 @@ now = datetime.datetime.now()
 todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
 current_working_directory = os.getcwd()
 # List relevant data locations: these are for KAMPFF-LAB
-#root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
-#canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-#plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
+root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
+canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
 
 # List relevant data locations: these are for taunsquared
-root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
+#root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
+#canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+#plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
 TGB_all = glob.glob(canny_counts_folder + os.sep + "*.csv")
@@ -337,101 +379,13 @@ baseline_buckets = 120
 # make baseline for each animal, catch vs miss
 normed_avg_count(all_raw, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg)
 normed_avg_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg)
-normed_avg_count(pat_raw "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg)
-normed_avg_count(caus_raw "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg)
+normed_avg_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg)
+normed_avg_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg)
 
 all_norm = [all_catches_norm, all_misses_norm]
 nat_norm = [nat_catches_norm, nat_misses_norm]
 pat_norm = [pat_catches_norm, pat_misses_norm]
 caus_norm = [caus_catches_norm, caus_misses_norm]
-
-"""# plot all traces
-for canny_type in range(len(all_norm)):
-    for animal in all_norm[canny_type]:
-        for trial in all_norm[canny_type][animal]:
-            if canny_type == 0:
-                plt.plot(trial, color='blue', alpha=0.1)
-            else:
-                plt.plot(trial, color='red', alpha=0.1)
-plt.show()"""
-
-"""# pool raw data to find distribution of data
-all_catches_all_animals_raw = []
-all_misses_all_animals_raw = []
-for animal in all_catches:
-    for trial in all_catches[animal]:
-        all_catches_all_animals_raw.append(trial)
-for animal in all_misses:
-    for trial in all_misses[animal]:
-        all_misses_all_animals_raw.append(trial)
-all_catches_all_animals_raw = np.array(all_catches_all_animals_raw)
-all_catches_raw_zeros_excluded = all_catches_all_animals_raw[all_catches_all_animals_raw != 0]
-all_misses_all_animals_raw = np.array(all_misses_all_animals_raw)
-all_misses_raw_zeros_excluded = all_misses_all_animals_raw[all_misses_all_animals_raw != 0]
-all_TS_all_animals_raw = np.concatenate([all_catches_all_animals_raw, all_misses_all_animals_raw])
-all_TS_raw_zeros_excluded = all_TS_all_animals_raw[all_TS_all_animals_raw != 0]
-
-## fit raw data to a statistical distribution
-f_catches = Fitter(all_catches_all_animals_raw)
-f_catches.fit()
-f_catches.summary()
-## f_catches.summary()
-##           sumsquare_error
-##gengamma      7.793988e-12
-##levy          7.988078e-12
-##exponpow      8.425763e-12
-##gamma         1.065244e-11
-##exponweib     1.070720e-11
-f_catches_zeros_excluded = Fitter(all_catches_raw_zeros_excluded)
-f_catches_zeros_excluded.fit()
-f_catches_zeros_excluded.summary()
-## f_catches_zeros_excluded.summary()
-##            sumsquare_error
-##johnsonsb      7.126538e-13
-##chi            1.051106e-12
-##gausshyper     1.214453e-12
-##chi2           1.302191e-12
-##erlang         1.315014e-12
-f_misses = Fitter(all_misses_all_animals_raw)
-f_misses.fit()
-f_misses.summary()
-## f_misses.summary()
-##          sumsquare_error
-##expon        2.741688e-11
-##gumbel_r     3.666497e-11
-##cauchy       3.876534e-11
-##norm         3.905432e-11
-##gumbel_l     4.161271e-11
-f_misses_zeros_excluded = Fitter(all_misses_raw_zeros_excluded)
-f_misses_zeros_excluded.fit()
-f_misses_zeros_excluded.summary()
-##f_misses_zeros_excluded.summary()
-##              sumsquare_error
-##expon            1.973342e-12
-##halfcauchy       2.779816e-12
-##halflogistic     2.831054e-12
-##halfnorm         3.153319e-12
-##levy             4.085157e-12
-f_all = Fitter(all_TS_all_animals_raw)
-f_all.fit()
-f_all.summary()
-##f_all.summary()
-##          sumsquare_error
-##erlang       6.205514e-12
-##gengamma     7.076662e-12
-##beta         8.769084e-12
-##levy         9.046809e-12
-##chi          9.261221e-12
-f_all_zeros_excluded = Fitter(all_TS_raw_zeros_excluded)
-f_all_zeros_excluded.fit()
-f_all_zeros_excluded.summary()
-##f_all_zeros_excluded.summary()
-##           sumsquare_error
-##expon         2.046319e-12
-##halfnorm      3.919703e-12
-##moyal         5.549140e-12
-##kstwobign     5.999799e-12
-##gumbel_r      6.054823e-12 """
 
 ## visualize the data
 TGB_bucket_raw = 180
@@ -454,20 +408,68 @@ plot_pool_all_animals(pat_raw "patterned", pat_catches_norm, pat_misses_norm, pa
 # causal
 plot_pool_all_animals(caus_raw "causal", caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg, caus_catches_std_error, caus_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
 
-# Z score the data
-# first: z-score for each animal, across all timebins and trials
-allTS_normed_perAnimal = {}
-zScore_perAnimal = {}
+"""
+# plot all traces
 for canny_type in range(len(all_norm)):
     for animal in all_norm[canny_type]:
         for trial in all_norm[canny_type][animal]:
-            allTS_normed_perAnimal.setdefault(animal,[]).append(trial)
+            if canny_type == 0:
+                plt.plot(trial, color='blue', alpha=0.1)
+            else:
+                plt.plot(trial, color='red', alpha=0.1)
+plt.show()"""
+
+# pool all normed data to find distribution of data
+allTS_normed = []
+for animal in all_catches_norm:
+    for trial in all_catches_norm[animal]:
+        for timebin in trial:
+            allTS_normed.append(timebin)
+for animal in all_misses_norm:
+    for trial in all_misses_norm[animal]:
+        for timebin in trial:
+            allTS_normed.append(timebin)
+# Z score full dataset, find mean and std
+allTS_normed_zScore = stats.zscore(allTS_normed, ddof=1)
+allTS_normed_zScore_mean = np.nanmean(allTS_normed_zScore)
+allTS_normed_zScore_std = np.nanstd(allTS_normed_zScore, ddof=1)
+
+# z-score for each animal, across all timebins and trials
+allTS_normed_perAnimal = {}
+allTS_normed_perAnimal_trials = {}
+zScore_perAnimal = {}
+zScore_perAnimal_trials = {}
+for canny_type in range(len(all_norm)):
+    for animal in all_norm[canny_type]:
+        for trial in all_norm[canny_type][animal]:
+            for timebin in trial:
+                allTS_normed_perAnimal.setdefault(animal,[]).append(timebin)
+for canny_type in range(len(all_norm)):
+    for animal in all_norm[canny_type]:
+        if canny_type == 0:
+            allTS_normed_perAnimal_trials[animal] = [[],[]]
+        for trial in all_norm[canny_type][animal]:
+            allTS_normed_perAnimal_trials[animal][canny_type].append(trial)
+for animal in allTS_normed_perAnimal:        
+    allTS_normed_perAnimal[animal] = np.array(allTS_normed_perAnimal[animal])
+    allTS_normed_perAnimal_trials[animal] = np.array(allTS_normed_perAnimal_trials[animal])
 for animal in allTS_normed_perAnimal:
-    zScore_perAnimal[animal] = stats.zscore(allTS_normed_perAnimal[animal], axis=1, ddof=1)
+    zScore_perAnimal[animal] = stats.zscore(allTS_normed_perAnimal[animal], ddof=1)
+    len_catches = len(allTS_normed_perAnimal_trials[animal][0])
+    len_misses = len(allTS_normed_perAnimal_trials[animal][1])
+    allTrials_thisAnimal = np.concatenate((allTS_normed_perAnimal_trials[animal][0], allTS_normed_perAnimal_trials[animal][1]), axis=0)
+    zScore_thisAnimal = stats.zscore(allTrials_thisAnimal, axis=None, ddof=1)
+    zScore_perAnimal_trials[animal] = np.array([zScore_thisAnimal[0:len_catches-1],zScore_thisAnimal[len_catches:]])
 ## visualize
-for animal in zScore_perAnimal:
-    for trial in zScore_perAnimal[animal]:
-        plt.plot(trial, alpha=0.2)
+normedRaw_Hist(allTS_normed_perAnimal, "AcrossAllTimebinsAndTrials", plots_folder, todays_datetime)
+normedRaw_Hist(allTS_normed_perAnimal_trials, "AcrossAllTimebinsByTrial", plots_folder, todays_datetime)
+zScore_Hist(zScore_perAnimal, "AcrossAllTimebinsAndTrials", plots_folder, todays_datetime)
+zScore_Hist(zScore_perAnimal_trials, "AcrossAllTimebinsByTrial", plots_folder, todays_datetime)
+## find mean zscore of each trial
+for animal in zScore_perAnimal_trials: 
+    for canny_type in zScore_perAnimal_trials[animal]:
+        for 
+        plt.plot(trial)
     plt.show()
 
 # zscore within each animal, for each time bin, pooled across all trials
@@ -479,15 +481,13 @@ for canny_type in range(len(all_norm)):
             for timebin in range(len(trial)):
                 allTS_normed_perA_perTB.setdefault(animal,{}).setdefault(timebin,[]).append(trial[timebin])
 for animal in allTS_normed_perA_perTB:
+    for timebin in allTS_normed_perA_perTB[animal]:
+        allTS_normed_perA_perTB[animal][timebin] = np.array(allTS_normed_perA_perTB[animal][timebin])
+for animal in allTS_normed_perA_perTB:
     zScore_perA_perTB[animal] = {}
     for timebin in allTS_normed_perA_perTB[animal]:
-        zScore_perA_perTB[animal][timebin] = stats.zscore(allTS_normed_perA_perTB[animal][timebin], ddof=1)
+        zScore_perA_perTB[animal][timebin] = stats.zscore(allTS_normed_perA_perTB[animal][timebin], axis=0, ddof=1)
 ## visualize
-for animal in zScore_perA_perTB:
-    for timebin in zScore_perA_perTB[animal]:
-        x_pos = np.array([timebin]*len(zScore_perA_perTB[animal][timebin]))
-        plt.scatter(x_pos, zScore_perA_perTB[animal][timebin], alpha=0.2)
-    plt.show()
 
 
 # shuffle test
