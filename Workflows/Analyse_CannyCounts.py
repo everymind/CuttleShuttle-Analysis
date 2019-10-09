@@ -4,11 +4,12 @@ import cv2
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 import math
 import sys
 import itertools
 import scipy
-#from fitter import Fitter
+from fitter import Fitter
 from scipy import stats
 
 ### FUNCTIONS ###
@@ -33,69 +34,52 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
         if TGB_type == "miss": 
             miss_dict[TGB_animal].append(TGB_moment)
 
-prey_type = all_raw
-prey_type_str = "all"
-baseline_len = baseline_buckets
-baseline_catch = all_catches_baseline
-baseline_miss = all_misses_baseline
-norm_catch = all_catches_norm
-norm_miss = all_misses_norm
-normed_avg_catch = all_catches_normed_avg
-normed_avg_miss = all_misses_normed_avg
-def normed_avg_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, norm_catch, norm_miss, normed_avg_catch, normed_avg_miss):
+def baseline_sub_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, basesub_catch, basesub_miss):
     # make baseline for each animal, catch vs miss
     for canny_type in range(len(prey_type)): 
         for animal in prey_type[canny_type]: 
             try:
                 # normalize each trial
-                all_normed_trials = []
+                all_basesub_trials = []
                 for trial in prey_type[canny_type][animal]:
                     TGB_baseline = np.nanmean(trial[0:baseline_len])
                     print(canny_type, animal, TGB_baseline)
-                    normed_trial = [float(x-TGB_baseline)/TGB_baseline for x in trial]
-                    all_normed_trials.append(normed_trial)
-                normed_avg = np.nanmean(all_normed_trials, axis=0)
+                    basesub_trial = [float(x-TGB_baseline) for x in trial]
+                    all_basesub_trials.append(basesub_trial)
+                
                 if canny_type == 0:
                     baseline_catch[animal] = TGB_baseline
-                    norm_catch[animal] = all_normed_trials
-                    normed_avg_catch[animal] = normed_avg
+                    basesub_catch[animal] = all_basesub_trials
                 if canny_type == 1:
                     baseline_miss[animal] = TGB_baseline
-                    norm_miss[animal] = all_normed_trials
-                    normed_avg_miss[animal] = normed_avg
+                    basesub_miss[animal] = all_basesub_trials
             except Exception:
                 if canny_type == 0:
                     print("{a} made no catches during {p} prey movement".format(a=animal,p=prey_type_str))
                 if canny_type == 1:
                     print("{a} made no misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
-def plot_indiv_animals(prey_type, catches_dict, catches_norm, misses_norm, catches_normed_avg, misses_normed_avg, catches_std_error, misses_std_error, TGB_bucket, plots_dir, todays_dt):
+def plot_indiv_animals(plot_type_str, prey_type, catches_dict, catches_basesub, misses_basesub, catches_basesub_avg, misses_basesub_avg, prob_aboveThresh_catch, prob_aboveThresh_miss, TGB_bucket, baseline_len, plots_dir, todays_dt):
     # plot individual animals
     image_type_options = ['.png', '.pdf']
     for animal in catches_dict.keys(): 
         try: 
-            canny_std_catch = np.nanstd(catches_norm[animal], axis=0, ddof=1)
-            canny_N_catch = len(catches_norm[animal])
-            canny_std_miss = np.nanstd(misses_norm[animal], axis=0, ddof=1)
-            canny_N_miss = len(misses_norm[animal])
-            z_val = 1.96 # Z value for 95% confidence interval
-            error_catch = z_val*(canny_std_catch/np.sqrt(canny_N_catch))
-            error_miss = z_val*(canny_std_miss/np.sqrt(canny_N_miss))
+            canny_std_catch = np.nanstd(catches_basesub[animal], axis=0, ddof=1)
+            canny_N_catch = len(catches_basesub[animal])
+            canny_std_miss = np.nanstd(misses_basesub[animal], axis=0, ddof=1)
+            canny_N_miss = len(misses_basesub[animal])
+            catches_mean = catches_basesub_avg[animal]
+            misses_mean = misses_basesub_avg[animal]
 
-            catches_std_error[animal] = [canny_std_catch, error_catch]
-            misses_std_error[animal] = [canny_std_miss, error_miss]
-
-            catches_mean = catches_normed_avg[animal]
-            misses_mean = misses_normed_avg[animal]
-
-            figure_name = 'CannyEdgeDetector_'+ prey_type + 'Trials_' + animal + "_PercentChange_" + todays_dt + '.png'
+            figure_name = 'CannyEdgeDetector_'+ prey_type + 'Trials_' + animal + "_" + plot_type_str + "_" + todays_dt + '.png'
             figure_path = os.path.join(plots_dir, figure_name)
-            figure_title = "Average change from baseline in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Baseline: mean of edge counts from t=0 to t=2 seconds \n Prey Movement type: " + prey_type + ", Animal: " + animal + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
+            figure_title = "Average change from baseline in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Baseline: mean of edge counts from t=0 to t=" + str(baseline_len/60) + "seconds \n Prey Movement type: " + prey_type + ", Animal: " + animal + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
             plt.figure(figsize=(16,9), dpi=200)
             plt.suptitle(figure_title, fontsize=12, y=0.98)
             plt.ylabel("Change from baseline in number of edges")
-            plot_xticks = np.arange(0, len(catches_normed_avg[animal]), step=60)
+            plot_xticks = np.arange(0, len(catches_basesub_avg[animal]), step=60)
             plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+            plt.ylim(-500000,3000000)
             plt.xlabel("Seconds")
             #plt.xlabel("Frame number, original framerate = 60fps")
             plt.grid(b=True, which='major', linestyle='-')
@@ -123,7 +107,7 @@ def mult_to_list(input_list, multiplier):
     if not np.isnan(input_list).any(): 
         return [x*multiplier for x in input_list]
 
-def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, catches_normed_avg, misses_normed_avg, catches_std, misses_std, TGB_bucket, plots_dir, todays_dt): 
+def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, catches_basesub_avg, misses_basesub_avg, catches_std, misses_std, TGB_bucket, plots_dir, todays_dt): 
     ### POOL ACROSS ANIMALS ### 
     all_catches = [] #(normed_avg, number_of_catches)
     all_misses = [] #(normed_avg, number_of_misses)
@@ -134,12 +118,12 @@ def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, c
             this_animal_N_TS = len(prey_type[canny_type][animal])
             if this_animal_N_TS != 0:
                 if canny_type == 0:
-                    this_animal_M = catches_normed_avg[animal]
+                    this_animal_M = catches_basesub_avg[animal]
                     this_animal_std = catches_std[animal][0]
                     all_catches.append((this_animal_M, this_animal_N_TS))
                     catches_std_sq[animal] = (this_animal_std**2, this_animal_N_TS)
                 else: 
-                    this_animal_M = misses_normed_avg[animal]
+                    this_animal_M = misses_basesub_avg[animal]
                     this_animal_std = misses_std[animal][0]
                     all_misses.append((this_animal_M, this_animal_N_TS))
                     misses_std_sq[animal] = (this_animal_std**2, this_animal_N_TS)
@@ -161,10 +145,10 @@ def plot_pool_all_animals(prey_type, prey_type_str, catches_norm, misses_norm, c
         for animal in prey_type[canny_type]: 
             if len(prey_type[canny_type][animal]) != 0:
                 if canny_type == 0:
-                    this_deviation = catches_normed_avg[animal] - catches_combined_mean
+                    this_deviation = catches_basesub_avg[animal] - catches_combined_mean
                     catches_deviations_sq[animal] = this_deviation**2
                 else:
-                    this_deviation = misses_normed_avg[animal] - misses_combined_mean
+                    this_deviation = misses_basesub_avg[animal] - misses_combined_mean
                     misses_deviations_sq[animal] = this_deviation**2
     # combined std (formula from https://youtu.be/SHqWL6G3E08)
     # numerator: n*(std^2 + deviation^2) for each animal
@@ -286,14 +270,14 @@ now = datetime.datetime.now()
 todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
 current_working_directory = os.getcwd()
 # List relevant data locations: these are for KAMPFF-LAB
-root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
-canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
+#root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
+#canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+#plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
 
 # List relevant data locations: these are for taunsquared
-#root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-#canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-#plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
+root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
+canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
 TGB_all = glob.glob(canny_counts_folder + os.sep + "*.csv")
@@ -321,10 +305,10 @@ all_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H201
 all_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 all_catches_baseline = {}
 all_misses_baseline = {}
-all_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_catches_normed_avg = {}
-all_misses_normed_avg = {}
+all_catches_basesub= {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_misses_basesub= {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_catches_basesub_avg = {}
+all_misses_basesub_avg = {}
 all_catches_std_error = {}
 all_misses_std_error = {}
 # natural, by catches v misses
@@ -334,8 +318,8 @@ nat_catches_baseline = {}
 nat_misses_baseline = {}
 nat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_catches_normed_avg = {}
-nat_misses_normed_avg = {}
+nat_catches_basesub_avg = {}
+nat_misses_basesub_avg = {}
 nat_catches_std_error = {}
 nat_misses_std_error = {}
 # patterned, by catches v misses
@@ -345,8 +329,8 @@ pat_catches_baseline = {}
 pat_misses_baseline = {}
 pat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_catches_normed_avg = {}
-pat_misses_normed_avg = {}
+pat_catches_basesub_avg = {}
+pat_misses_basesub_avg = {}
 pat_catches_std_error = {}
 pat_misses_std_error = {}
 # causal, by catches v misses
@@ -356,8 +340,8 @@ caus_catches_baseline = {}
 caus_misses_baseline = {}
 caus_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_catches_normed_avg = {}
-caus_misses_normed_avg = {}
+caus_catches_basesub_avg = {}
+caus_misses_basesub_avg = {}
 caus_catches_std_error = {}
 caus_misses_std_error = {}
 
@@ -374,41 +358,159 @@ nat_raw= [nat_catches, nat_misses]
 pat_raw= [pat_catches, pat_misses]
 caus_raw= [caus_catches, caus_misses]
 
-# make baselined canny count for each animal in catch versus miss conditions
-baseline_buckets = 120
-# make baseline for each animal, catch vs miss
-normed_avg_count(all_raw, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg)
-normed_avg_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg)
-normed_avg_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg)
-normed_avg_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg)
+TGB_bucket_raw = 180
 
-all_norm = [all_catches_norm, all_misses_norm]
+# make min-max normalization of all tentacle shots for each animal
+all_MinMaxNormed = {}
+all_MinMaxNormed_preTGB = {}
+all_MinMaxNormed_postTGB = {}
+for animal in all_TS:
+    min_thisAnimal = min(np.hstack(all_TS[animal]))
+    max_thisAnimal = max(np.hstack(all_TS[animal]))
+    all_MinMaxNormed[animal] = {'catches': [], 'misses': []}
+    all_MinMaxNormed_preTGB[animal] = {'catches': [], 'misses': []}
+    all_MinMaxNormed_postTGB[animal] = {'catches': [], 'misses': []}
+    for trial in all_catches[animal]:
+        rescaled_trial = [(x-min_thisAnimal)/(max_thisAnimal - min_thisAnimal) for x in trial]
+        all_MinMaxNormed[animal]['catches'].append(rescaled_trial)
+        all_MinMaxNormed_preTGB[animal]['catches'].append(rescaled_trial[:TGB_bucket_raw-1])
+        all_MinMaxNormed_postTGB[animal]['catches'].append(rescaled_trial[TGB_bucket_raw:])
+    for trial in all_misses[animal]:
+        rescaled_trial = [(x-min_thisAnimal)/(max_thisAnimal - min_thisAnimal) for x in trial]
+        all_MinMaxNormed[animal]['misses'].append(rescaled_trial)
+        all_MinMaxNormed_preTGB[animal]['misses'].append(rescaled_trial[:TGB_bucket_raw-1])
+        all_MinMaxNormed_postTGB[animal]['misses'].append(rescaled_trial[TGB_bucket_raw:])
+
+for animal in all_MinMaxNormed:
+    figure_name = 'MinMaxNormed_'+ animal + "_" + todays_datetime + '.png'
+    figure_path = os.path.join(plots_folder, figure_name)
+    figure_title = "Min-max normalized change in number of edges in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Animal: " + animal + "\n Number of catches: " + str(len(all_MinMaxNormed[animal]['catches'])) + ", Number of misses: " + str(len(all_MinMaxNormed[animal]['misses']))
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.98)
+    plt.ylabel("Min-max normalized change in number of edges")
+    plot_xticks = np.arange(0, len(all_TS[animal][0]), step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.xlabel("Seconds")
+    #plt.xlabel("Frame number, original framerate = 60fps")
+    plt.grid(b=True, which='major', linestyle='-')
+    for trial in all_MinMaxNormed[animal]['catches']:
+        plt.plot(trial, color='blue', alpha=0.2, label='Catch')
+    for trial in all_MinMaxNormed[animal]['misses']:
+        plt.plot(trial, color='red', alpha=0.2, label='Miss')
+    ymin, ymax = plt.ylim()
+    plt.plot((TGB_bucket_raw, TGB_bucket_raw), (ymin, ymax), 'g--', linewidth=1)
+    plt.text(TGB_bucket_raw-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
+allO_allA_postTGB = []
+for animal in all_MinMaxNormed_postTGB:
+    allObservations_thisAnimal = []
+    for trial in all_MinMaxNormed_postTGB[animal]['catches']:
+        for timebin in trial:
+            allObservations_thisAnimal.append(timebin)
+    for trial in all_MinMaxNormed_postTGB[animal]['misses']:
+        for timebin in trial:
+            allObservations_thisAnimal.append(timebin)
+    allO_allA_postTGB.append(allObservations_thisAnimal)
+
+# plot distribution of edge counts post TGB
+allO_thisA_postTGB_mean = np.nanmean(np.hstack(allO_allA_postTGB))
+allO_thisA_postTGB_std = np.nanstd(np.hstack(allO_allA_postTGB), ddof=1)
+figure_name = 'MinMaxNormedHist_postTGB_allObservations_' + todays_datetime + '.png'
+figure_path = os.path.join(plots_folder, figure_name)
+figure_title = "Frequency histogram of Min-max normalized edge counts in cuttlefish mantle pattern AFTER tentacle shots, as detected by Canny Edge Detector \n All animals \n Number of catches: " + str(len(all_MinMaxNormed[animal]['catches'])) + ", Number of misses: " + str(len(all_MinMaxNormed[animal]['misses'])) + "\n Mean: " + str(allO_thisA_mean) + ", Standard dev: " + str(allO_thisA_std)
+plt.figure(figsize=(16,9), dpi=200)
+plt.suptitle(figure_title, fontsize=12, y=0.98)
+plt.ylabel("Frequency")
+plt.xlabel("Min-max normalized edge count")
+#plt.xlabel("Frame number, original framerate = 60fps")
+plt.grid(b=True, which='major', linestyle='-')
+plt.hist(np.hstack(allO_allA_postTGB))
+plt.savefig(figure_path)
+plt.show(block=False)
+plt.pause(1)
+plt.close()
+
+f = Fitter(np.hstack(allO_allA_postTGB))
+f.fit()
+plt.hist(np.hstack(allO_allA_postTGB))
+f.summary()
+#>>> f.summary()
+##            sumsquare_error
+##levy             129.317025
+##invgauss         239.201950
+##invgamma         248.078092
+##halfcauchy       344.966041
+##expon            360.504135
+plt.show()
+
+# make baselined canny count for each animal in catch versus miss conditions
+baseline_buckets = 150
+# make baseline for each animal, catch vs miss
+baseline_sub_count(all_raw, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_basesub, all_misses_basesub)
+
+baseline_sub_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm)
+baseline_sub_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm)
+baseline_sub_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm)
+
+all_basesub = [all_catches_basesub, all_misses_norm]
+
+
 nat_norm = [nat_catches_norm, nat_misses_norm]
 pat_norm = [pat_catches_norm, pat_misses_norm]
 caus_norm = [caus_catches_norm, caus_misses_norm]
 
 ## visualize the data
-TGB_bucket_raw = 180
 # all
-plot_indiv_animals("all", all_catches, all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_indiv_animals("BaselineSub", "all", all_catches, all_catches_basesub, all_misses_basesub, all_catches_basesub_avg, all_misses_basesub_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+
+# calculate probability of edge counts increasing by at least 1 mil
+## at 0.5 sec after TGB, aka 30 time buckets after TGB
+timebins_to_check = [210, 240, 300, 360]
+moments_postTGB_catches = {}
+moments_postTGB_misses = {}
+prob_plus1mil_catches = {}
+prob_plus1mil_misses = {}
+for timebin in timebins_to_check:
+    moments_postTGB_catches[timebin] = {}
+    moments_postTGB_misses[timebin] = {}
+    prob_plus1mil_catches[timebin] = {}
+    prob_plus1mil_misses[timebin] = {}
+    for animal in all_catches_basesub:
+        moments_postTGB_catches[timebin][animal] = []
+        moments_postTGB_misses[timebin][animal] = []
+        for trial in all_catches_basesub[animal]:
+            moments_postTGB_catches[timebin][animal].append(trial[timebin-1])
+        for trial in all_misses_basesub[animal]:
+            moments_postTGB_misses[timebin][animal].append(trial[timebin-1])
+    for animal in moments_postTGB_catches[timebin]:
+        plus1mil_catches = [x>1000000 for x in moments_postTGB_catches[timebin][animal]]
+        prob_plus1mil_catches[timebin][animal] = sum(plus1mil_catches)/len(plus1mil_catches)
+        plus1mil_misses = [x>1000000 for x in moments_postTGB_misses[timebin][animal]]
+        prob_plus1mil_misses[timebin][animal] = sum(plus1mil_misses)/len(plus1mil_misses)
+
 # natural
-plot_indiv_animals("natural", nat_catches, nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg, nat_catches_std_error, nat_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_indiv_animals("natural", nat_catches, nat_catches_norm, nat_misses_norm, nat_catches_basesub_avg, nat_misses_basesub_avg, nat_catches_std_error, nat_misses_std_error, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 # patterned
-plot_indiv_animals("patterned", pat_catches, pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg, pat_catches_std_error, pat_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_indiv_animals("patterned", pat_catches, pat_catches_norm, pat_misses_norm, pat_catches_basesub_avg, pat_misses_basesub_avg, pat_catches_std_error, pat_misses_std_error, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 # causal
-plot_indiv_animals("causal", caus_catches, caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg, caus_catches_std_error, caus_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_indiv_animals("causal", caus_catches, caus_catches_norm, caus_misses_norm, caus_catches_basesub_avg, caus_misses_basesub_avg, caus_catches_std_error, caus_misses_std_error, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ### POOL ACROSS ANIMALS ### 
 # all
-plot_pool_all_animals(all_raw, "all", all_catches_norm, all_misses_norm, all_catches_normed_avg, all_misses_normed_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_pool_all_animals(all_raw, "all", all_catches_basesub, all_misses_basesub, all_catches_basesub_avg, all_misses_basesub_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
 # natural
-plot_pool_all_animals(nat_raw "natural", nat_catches_norm, nat_misses_norm, nat_catches_normed_avg, nat_misses_normed_avg, nat_catches_std_error, nat_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_pool_all_animals(nat_raw "natural", nat_catches_norm, nat_misses_norm, nat_catches_basesub_avg, nat_misses_basesub_avg, nat_catches_std_error, nat_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
 # patterned
-plot_pool_all_animals(pat_raw "patterned", pat_catches_norm, pat_misses_norm, pat_catches_normed_avg, pat_misses_normed_avg, pat_catches_std_error, pat_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_pool_all_animals(pat_raw "patterned", pat_catches_norm, pat_misses_norm, pat_catches_basesub_avg, pat_misses_basesub_avg, pat_catches_std_error, pat_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
 # causal
-plot_pool_all_animals(caus_raw "causal", caus_catches_norm, caus_misses_norm, caus_catches_normed_avg, caus_misses_normed_avg, caus_catches_std_error, caus_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
+plot_pool_all_animals(caus_raw "causal", caus_catches_norm, caus_misses_norm, caus_catches_basesub_avg, caus_misses_basesub_avg, caus_catches_std_error, caus_misses_std_error, TGB_bucket_raw, plots_folder, todays_datetime)
 
-"""
+
 # plot all traces
 for canny_type in range(len(all_norm)):
     for animal in all_norm[canny_type]:
@@ -417,7 +519,7 @@ for canny_type in range(len(all_norm)):
                 plt.plot(trial, color='blue', alpha=0.1)
             else:
                 plt.plot(trial, color='red', alpha=0.1)
-plt.show()"""
+plt.show()
 
 # pool all normed data to find distribution of data
 allTS_normed = []
