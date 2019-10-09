@@ -9,6 +9,7 @@ import math
 import sys
 import itertools
 import scipy
+import scipy.signal
 from fitter import Fitter
 from scipy import stats
 
@@ -34,19 +35,19 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
         if TGB_type == "miss": 
             miss_dict[TGB_animal].append(TGB_moment)
 
-def baseline_sub_count(prey_type, prey_type_str, baseline_len, baseline_catch, baseline_miss, basesub_catch, basesub_miss):
+def basesub_filtered_count(prey_type, prey_type_str, baseline_len, savgol_filter_window, baseline_catch, baseline_miss, basesub_catch, basesub_miss):
     # make baseline for each animal, catch vs miss
     for canny_type in range(len(prey_type)): 
         for animal in prey_type[canny_type]: 
             try:
-                # normalize each trial
-                all_basesub_trials = []
+                # baseline subtract each trial, then apply sav-gol filter
+                all_basesub_filtered_trials = []
                 for trial in prey_type[canny_type][animal]:
                     TGB_baseline = np.nanmean(trial[0:baseline_len])
-                    print(canny_type, animal, TGB_baseline)
                     basesub_trial = [float(x-TGB_baseline) for x in trial]
-                    all_basesub_trials.append(basesub_trial)
-                
+                    basesub_trial_filtered = scipy.signal.savgol_filter(basesub_trial, savgol_filter_window, 3)
+                    all_basesub_filtered_trials.append(basesub_trial_filtered)
+                basesub_filtered_mean = np.nanmean(all_basesub_filtered_trials, axis=1)
                 if canny_type == 0:
                     baseline_catch[animal] = TGB_baseline
                     basesub_catch[animal] = all_basesub_trials
@@ -305,45 +306,37 @@ all_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H201
 all_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 all_catches_baseline = {}
 all_misses_baseline = {}
-all_catches_basesub= {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_misses_basesub= {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_catches_basesub_avg = {}
-all_misses_basesub_avg = {}
-all_catches_std_error = {}
-all_misses_std_error = {}
+all_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+all_catches_basesub_filtered_avg = {}
+all_misses_basesub_filtered_avg = {}
 # natural, by catches v misses
 nat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_catches_baseline = {}
 nat_misses_baseline = {}
-nat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_catches_basesub_avg = {}
-nat_misses_basesub_avg = {}
-nat_catches_std_error = {}
-nat_misses_std_error = {}
+nat_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+nat_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+nat_catches_basesub_filtered_avg = {}
+nat_misses_basesub_filtered_avg = {}
 # patterned, by catches v misses
 pat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_catches_baseline = {}
 pat_misses_baseline = {}
-pat_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_catches_basesub_avg = {}
-pat_misses_basesub_avg = {}
-pat_catches_std_error = {}
-pat_misses_std_error = {}
+pat_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+pat_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+pat_catches_basesub_filtered_avg = {}
+pat_misses_basesub_filtered_avg = {}
 # causal, by catches v misses
 caus_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_catches_baseline = {}
 caus_misses_baseline = {}
-caus_catches_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_misses_norm = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_catches_basesub_avg = {}
-caus_misses_basesub_avg = {}
-caus_catches_std_error = {}
-caus_misses_std_error = {}
+caus_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+caus_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
+caus_catches_basesub_filtered_avg = {}
+caus_misses_basesub_filtered_avg = {}
 
 # collect all canny counts and categorize by animal
 categorize_by_animal(TGB_all, all_TS)
@@ -352,13 +345,36 @@ categorize_by_animal_catchVmiss(TGB_all, all_catches, all_misses)
 categorize_by_animal_catchVmiss(TGB_natural, nat_catches, nat_misses)
 categorize_by_animal_catchVmiss(TGB_patterned, pat_catches, pat_misses)
 categorize_by_animal_catchVmiss(TGB_causal, caus_catches, caus_misses)
-
+# organize by prey type
 all_raw = [all_catches, all_misses]
 nat_raw= [nat_catches, nat_misses]
 pat_raw= [pat_catches, pat_misses]
 caus_raw= [caus_catches, caus_misses]
-
+# time bin for moment tentacles go ballistic
 TGB_bucket_raw = 180
+
+########################################################
+### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
+########################################################
+
+# BASELINE SUBTRACTION
+baseline_buckets = 150
+# baseline subtract and sav-gol filter
+baseline_sub_count(all_raw, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_basesub, all_misses_basesub)
+
+baseline_sub_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_basesub_filtered, nat_misses_basesub_filtered)
+baseline_sub_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_basesub_filtered, pat_misses_basesub_filtered)
+baseline_sub_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_basesub_filtered, caus_misses_basesub_filtered)
+
+all_basesub = [all_catches_basesub, all_misses_basesub_filtered]
+
+
+nat_basesub_filtered = [nat_catches_basesub_filtered, nat_misses_basesub_filtered]
+pat_basesub_filtered = [pat_catches_basesub_filtered, pat_misses_basesub_filtered]
+caus_basesub_filtered = [caus_catches_basesub_filtered, caus_misses_basesub_filtered]
+
+
+
 
 # make min-max normalization of all tentacle shots for each animal
 all_MinMaxNormed = {}
@@ -447,22 +463,6 @@ f.summary()
 ##halfcauchy       344.966041
 ##expon            360.504135
 plt.show()
-
-# make baselined canny count for each animal in catch versus miss conditions
-baseline_buckets = 150
-# make baseline for each animal, catch vs miss
-baseline_sub_count(all_raw, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_basesub, all_misses_basesub)
-
-baseline_sub_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_norm, nat_misses_norm)
-baseline_sub_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_norm, pat_misses_norm)
-baseline_sub_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_norm, caus_misses_norm)
-
-all_basesub = [all_catches_basesub, all_misses_norm]
-
-
-nat_norm = [nat_catches_norm, nat_misses_norm]
-pat_norm = [pat_catches_norm, pat_misses_norm]
-caus_norm = [caus_catches_norm, caus_misses_norm]
 
 ## visualize the data
 # all
