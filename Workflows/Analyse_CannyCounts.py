@@ -35,7 +35,7 @@ def categorize_by_animal_catchVmiss(TGB_files, catch_dict, miss_dict):
         if TGB_type == "miss": 
             miss_dict[TGB_animal].append(TGB_moment)
 
-def basesub_filtered_count(prey_type, prey_type_str, baseline_len, savgol_filter_window, baseline_catch, baseline_miss, basesub_catch, basesub_miss):
+def basesub_filtered_count(prey_type, prey_type_str, baseline_len, savgol_filter_window, baseline_catch, baseline_miss, basesub_catch, basesub_miss, basesub_mean_catch, basesub_mean_miss):
     # make baseline for each animal, catch vs miss
     for canny_type in range(len(prey_type)): 
         for animal in prey_type[canny_type]: 
@@ -47,53 +47,85 @@ def basesub_filtered_count(prey_type, prey_type_str, baseline_len, savgol_filter
                     basesub_trial = [float(x-TGB_baseline) for x in trial]
                     basesub_trial_filtered = scipy.signal.savgol_filter(basesub_trial, savgol_filter_window, 3)
                     all_basesub_filtered_trials.append(basesub_trial_filtered)
-                basesub_filtered_mean = np.nanmean(all_basesub_filtered_trials, axis=1)
+                basesub_filtered_mean = np.nanmean(all_basesub_filtered_trials, axis=0)
                 if canny_type == 0:
                     baseline_catch[animal] = TGB_baseline
-                    basesub_catch[animal] = all_basesub_trials
+                    basesub_catch[animal] = all_basesub_filtered_trials
+                    basesub_mean_catch[animal] = basesub_filtered_mean
                 if canny_type == 1:
                     baseline_miss[animal] = TGB_baseline
-                    basesub_miss[animal] = all_basesub_trials
+                    basesub_miss[animal] = all_basesub_filtered_trials
+                    basesub_mean_miss[animal] = basesub_filtered_mean
             except Exception:
                 if canny_type == 0:
                     print("{a} made no catches during {p} prey movement".format(a=animal,p=prey_type_str))
                 if canny_type == 1:
                     print("{a} made no misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
-def plot_indiv_animals(plot_type_str, prey_type, catches_dict, catches_basesub, misses_basesub, catches_basesub_avg, misses_basesub_avg, prob_aboveThresh_catch, prob_aboveThresh_miss, TGB_bucket, baseline_len, plots_dir, todays_dt):
-    # plot individual animals
-    image_type_options = ['.png', '.pdf']
-    for animal in catches_dict.keys(): 
-        try: 
-            canny_std_catch = np.nanstd(catches_basesub[animal], axis=0, ddof=1)
-            canny_N_catch = len(catches_basesub[animal])
-            canny_std_miss = np.nanstd(misses_basesub[animal], axis=0, ddof=1)
-            canny_N_miss = len(misses_basesub[animal])
-            catches_mean = catches_basesub_avg[animal]
-            misses_mean = misses_basesub_avg[animal]
+def prob_of_tb_above_edgecount_thresh(tbs_to_check, threshold, basesubfilt_catches, basesubfilt_misses):
+    tb_edgecounts_catches = {}
+    tb_edgecounts_misses = {}
+    prob_above_thresh_catches = {}
+    prob_above_thresh_misses = {}
+    for timebin in tbs_to_check:
+        tb_edgecounts_catches[timebin] = {}
+        tb_edgecounts_misses[timebin] = {}
+        prob_above_thresh_catches[timebin] = {}
+        prob_above_thresh_misses[timebin] = {}
+        for animal in basesubfilt_catches:
+            tb_edgecounts_catches[timebin][animal] = []
+            tb_edgecounts_misses[timebin][animal] = []
+            for trial in basesubfilt_catches[animal]:
+                tb_edgecounts_catches[timebin][animal].append(trial[timebin-1])
+            for trial in basesubfilt_misses[animal]:
+                tb_edgecounts_misses[timebin][animal].append(trial[timebin-1])
+        for animal in tb_edgecounts_catches[timebin]:
+            plus1mil_catches = [x>threshold for x in tb_edgecounts_catches[timebin][animal]]
+            prob_above_thresh_catches[timebin][animal] = sum(plus1mil_catches)/len(plus1mil_catches)
+            plus1mil_misses = [x>threshold for x in tb_edgecounts_misses[timebin][animal]]
+            prob_above_thresh_misses[timebin][animal] = sum(plus1mil_misses)/len(plus1mil_misses)
+    return prob_above_thresh_catches, prob_above_thresh_misses
 
-            figure_name = 'CannyEdgeDetector_'+ prey_type + 'Trials_' + animal + "_" + plot_type_str + "_" + todays_dt + '.png'
+def plot_indiv_animals_BSF_TP(prey_type, threshold_str, catches_dict, catches_basesubfilt, misses_basesubfilt, catches_basesubfilt_mean, misses_basesubfilt_mean, prob_aboveThresh_catch, prob_aboveThresh_miss, TGB_bucket, baseline_len, plots_dir, todays_dt):
+    # plot individual animals
+    img_type = ['.png', '.pdf']
+    for animal in catches_dict.keys(): 
+        try:
+            canny_std_catch = np.nanstd(catches_basesubfilt[animal], axis=0, ddof=1)
+            canny_N_catch = len(catches_basesubfilt[animal])
+            canny_std_miss = np.nanstd(misses_basesubfilt[animal], axis=0, ddof=1)
+            canny_N_miss = len(misses_basesubfilt[animal])
+            catches_mean = catches_basesubfilt_mean[animal]
+            misses_mean = misses_basesubfilt_mean[animal]
+
+            figure_name = 'CannyEdgeDetector_BaselineSubtracted_SavGolFiltered_WithThreshProb_'+ prey_type + 'Trials_' + animal + "_" + todays_dt + img_type[0]
             figure_path = os.path.join(plots_dir, figure_name)
-            figure_title = "Average change from baseline in number of edges (with 95% CI) in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Baseline: mean of edge counts from t=0 to t=" + str(baseline_len/60) + "seconds \n Prey Movement type: " + prey_type + ", Animal: " + animal + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
+            figure_title = "Average change from baseline in number of edges in cuttlefish mantle pattern during tentacle shots, as detected by Canny Edge Detector \n Baseline: mean of edge counts from t=0 to t=" + str(baseline_len/60) + " seconds \n Prey Movement type: " + prey_type + ", Animal: " + animal + "\n Number of catches: " + str(canny_N_catch) + ", Number of misses: " + str(canny_N_miss)
             plt.figure(figsize=(16,9), dpi=200)
             plt.suptitle(figure_title, fontsize=12, y=0.98)
             plt.ylabel("Change from baseline in number of edges")
-            plot_xticks = np.arange(0, len(catches_basesub_avg[animal]), step=60)
+            plot_xticks = np.arange(0, len(catches_basesubfilt_mean[animal]), step=60)
             plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
             plt.ylim(-500000,3000000)
             plt.xlabel("Seconds")
             #plt.xlabel("Frame number, original framerate = 60fps")
             plt.grid(b=True, which='major', linestyle='-')
+            ymin, ymax = plt.ylim()
 
             plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-            plt.fill_between(range(len(misses_mean)), misses_mean-error_miss, misses_mean+error_miss, color=[1.0, 0.0, 0.0, 0.3])
-
+            plt.fill_between(range(len(misses_basesubfilt_mean[animal])), misses_mean-canny_std_miss, misses_mean+canny_std_miss, color=[1.0, 0.0, 0.0, 0.1])
             plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-            plt.fill_between(range(len(catches_mean)), catches_mean-error_catch, catches_mean+error_catch, color=[0.0, 0.0, 1.0, 0.3])
+            plt.fill_between(range(len(catches_basesubfilt_mean[animal])), catches_mean-canny_std_catch, catches_mean+canny_std_catch, color=[0.0, 0.0, 1.0, 0.1])
+            for timebin in prob_aboveThresh_miss:
+                plt.plot(timebin, misses_mean[timebin], 'ro')
+                plt.plot((timebin, timebin), (ymin, ymax), 'k--', linewidth=1)
+                plt.text(timebin-25, misses_mean[timebin]-500000, '%.1f'%(timebin/60)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_miss[timebin][animal]*100)+"% trials increased > "+threshold_str+" edges", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
+            for timebin in prob_aboveThresh_catch:
+                plt.plot(timebin, catches_mean[timebin], 'bo')
+                plt.text(timebin-25, catches_mean[timebin]+500000, '%.1f'%(timebin/60)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_catch[timebin][animal]*100)+"% trials increased > "+threshold_str+" edges", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='blue', boxstyle='round,pad=0.35'))
 
-            ymin, ymax = plt.ylim()
             plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-            plt.text(TGB_bucket-5, ymax-5, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+            plt.text(TGB_bucket-25, ymax-250000, "Tentacles Go Ballistic (TGB)", fontsize='x-small', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
             plt.legend(loc='upper left')
 
             plt.savefig(figure_path)
@@ -103,6 +135,8 @@ def plot_indiv_animals(plot_type_str, prey_type, catches_dict, catches_basesub, 
         except Exception:
             plt.close()
             print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type))
+
+
 
 def mult_to_list(input_list, multiplier):
     if not np.isnan(input_list).any(): 
@@ -308,8 +342,8 @@ all_catches_baseline = {}
 all_misses_baseline = {}
 all_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 all_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-all_catches_basesub_filtered_avg = {}
-all_misses_basesub_filtered_avg = {}
+all_catches_basesub_filtered_mean = {}
+all_misses_basesub_filtered_mean = {}
 # natural, by catches v misses
 nat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
@@ -317,8 +351,8 @@ nat_catches_baseline = {}
 nat_misses_baseline = {}
 nat_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 nat_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-nat_catches_basesub_filtered_avg = {}
-nat_misses_basesub_filtered_avg = {}
+nat_catches_basesub_filtered_mean = {}
+nat_misses_basesub_filtered_mean = {}
 # patterned, by catches v misses
 pat_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
@@ -326,8 +360,8 @@ pat_catches_baseline = {}
 pat_misses_baseline = {}
 pat_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 pat_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-pat_catches_basesub_filtered_avg = {}
-pat_misses_basesub_filtered_avg = {}
+pat_catches_basesub_filtered_mean = {}
+pat_misses_basesub_filtered_mean = {}
 # causal, by catches v misses
 caus_catches = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_misses = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
@@ -335,8 +369,8 @@ caus_catches_baseline = {}
 caus_misses_baseline = {}
 caus_catches_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
 caus_misses_basesub_filtered = {"L1-H2013-01": [], "L1-H2013-02": [], "L1-H2013-03": [], "L7-H2013-01": [], "L7-H2013-02": []}
-caus_catches_basesub_filtered_avg = {}
-caus_misses_basesub_filtered_avg = {}
+caus_catches_basesub_filtered_mean = {}
+caus_misses_basesub_filtered_mean = {}
 
 # collect all canny counts and categorize by animal
 categorize_by_animal(TGB_all, all_TS)
@@ -357,14 +391,27 @@ TGB_bucket_raw = 180
 ### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
 ########################################################
 
-# BASELINE SUBTRACTION
+# BASELINE SUBTRACTION 
 baseline_buckets = 150
 # baseline subtract and sav-gol filter
-baseline_sub_count(all_raw, "all", baseline_buckets, all_catches_baseline, all_misses_baseline, all_catches_basesub, all_misses_basesub)
+savgol_window = 15
+#basesub_filtered_count(prey_type, prey_type_str, baseline_len, savgol_filter_window, baseline_catch, baseline_miss, basesub_catch, basesub_miss)
+basesub_filtered_count(all_raw, "all", baseline_buckets, savgol_window, all_catches_baseline, all_misses_baseline, all_catches_basesub_filtered, all_misses_basesub_filtered, all_catches_basesub_filtered_mean, all_misses_basesub_filtered_mean)
+# calculate probability of basesubfilt'd edge counts increasing by at least 1 mil
+## at 0.5 sec after TGB, aka 30 time buckets after TGB
+timebins_to_check = [205, 240, 300, 359]
+threshold_catchVmiss = 1000000
+prob_plus1mil_all_catches, prob_plus1mil_all_misses = prob_of_tb_above_edgecount_thresh(timebins_to_check, threshold_catchVmiss, all_catches_basesub_filtered, all_misses_basesub_filtered)
+## visualize the data
+plot_indiv_animals_BSF_TP("all", "1 million", all_catches, all_catches_basesub_filtered, all_misses_basesub_filtered, all_catches_basesub_filtered_mean, all_misses_basesub_filtered_mean, prob_plus1mil_all_catches, prob_plus1mil_all_misses, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
-baseline_sub_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_basesub_filtered, nat_misses_basesub_filtered)
-baseline_sub_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_basesub_filtered, pat_misses_basesub_filtered)
-baseline_sub_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_basesub_filtered, caus_misses_basesub_filtered)
+########################################################
+### ------ under construction!!!! ------ ###
+########################################################
+
+basesub_filtered_count(nat_raw, "natural", baseline_buckets, nat_catches_baseline, nat_misses_baseline, nat_catches_basesub_filtered, nat_misses_basesub_filtered)
+basesub_filtered_count(pat_raw, "patterned", baseline_buckets, pat_catches_baseline, pat_misses_baseline, pat_catches_basesub_filtered, pat_misses_basesub_filtered)
+basesub_filtered_count(caus_raw, "causal", baseline_buckets, caus_catches_baseline, caus_misses_baseline, caus_catches_basesub_filtered, caus_misses_basesub_filtered)
 
 all_basesub = [all_catches_basesub, all_misses_basesub_filtered]
 
@@ -464,34 +511,7 @@ f.summary()
 ##expon            360.504135
 plt.show()
 
-## visualize the data
-# all
-plot_indiv_animals("BaselineSub", "all", all_catches, all_catches_basesub, all_misses_basesub, all_catches_basesub_avg, all_misses_basesub_avg, all_catches_std_error, all_misses_std_error, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
-# calculate probability of edge counts increasing by at least 1 mil
-## at 0.5 sec after TGB, aka 30 time buckets after TGB
-timebins_to_check = [210, 240, 300, 360]
-moments_postTGB_catches = {}
-moments_postTGB_misses = {}
-prob_plus1mil_catches = {}
-prob_plus1mil_misses = {}
-for timebin in timebins_to_check:
-    moments_postTGB_catches[timebin] = {}
-    moments_postTGB_misses[timebin] = {}
-    prob_plus1mil_catches[timebin] = {}
-    prob_plus1mil_misses[timebin] = {}
-    for animal in all_catches_basesub:
-        moments_postTGB_catches[timebin][animal] = []
-        moments_postTGB_misses[timebin][animal] = []
-        for trial in all_catches_basesub[animal]:
-            moments_postTGB_catches[timebin][animal].append(trial[timebin-1])
-        for trial in all_misses_basesub[animal]:
-            moments_postTGB_misses[timebin][animal].append(trial[timebin-1])
-    for animal in moments_postTGB_catches[timebin]:
-        plus1mil_catches = [x>1000000 for x in moments_postTGB_catches[timebin][animal]]
-        prob_plus1mil_catches[timebin][animal] = sum(plus1mil_catches)/len(plus1mil_catches)
-        plus1mil_misses = [x>1000000 for x in moments_postTGB_misses[timebin][animal]]
-        prob_plus1mil_misses[timebin][animal] = sum(plus1mil_misses)/len(plus1mil_misses)
 
 # natural
 plot_indiv_animals("natural", nat_catches, nat_catches_norm, nat_misses_norm, nat_catches_basesub_avg, nat_misses_basesub_avg, nat_catches_std_error, nat_misses_std_error, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
