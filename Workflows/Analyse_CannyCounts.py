@@ -169,6 +169,20 @@ def pool_acrossA_acrossTB(catches_dict, misses_dict, timebin_start, timebin_end,
     pooled_misses_array = np.array(pooled_misses)
     return pooled_catches_array, pooled_catches_Ntrials, pooled_misses_array, pooled_misses_Ntrials
 
+def pool_timebins_byAnimal(catches_dict, misses_dict, start_tb, end_tb):
+    pooledTB_byA_catches = {}
+    pooledTB_byA_misses = {}
+    for animal in catches_dict:
+        pooledTB_byA_catches[animal] = []
+        pooledTB_byA_misses[animal] = []
+        for trial in catches_dict[animal]:
+            for binned_count in trial[start_tb:end_tb]:
+                pooledTB_byA_catches[animal].append(binned_count)
+        for trial in misses_dict[animal]:
+            for binned_count in trial[start_tb:end_tb]:
+                pooledTB_byA_misses[animal].append(binned_count)
+    return pooledTB_byA_catches, pooledTB_byA_misses
+
 def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, Group2_N, plots_dir, todays_dt):
     # Observed performance
     OPerf = np.mean(Group1) - np.mean(Group2)
@@ -532,30 +546,57 @@ plot_all_animals_pooled_BSF_TP("all", "1 million", all_catches_basesub_filtered,
 # shuffle test
 allTS_basesub_filtered = [all_catches_basesub_filtered, all_misses_basesub_filtered]
 No_of_Shuffles = 20000
+
 ### POOL ACROSS ALL ANIMALS, full trial
 allA_basesub_filt_catches, allA_basesub_filt_catches_N, allA_basesub_filt_misses, allA_basesub_filt_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, -1, "all")
-# all animals full trial shuffle test, number of tests = 15
+# all animals full trial shuffle test, number of tests = 16
 pVal_allA_fullTrial_basesubfilt, sigma_allA_fullTrial_basesubfilt = shuffle_test(allA_basesub_filt_catches, allA_basesub_filt_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-fullTrial", "AllMiss-BaseSubFilt-fullTrial", allA_basesub_filt_catches_N, allA_basesub_filt_misses_N, plots_folder, todays_datetime)
 
 ### POOL ACROSS ALL ANIMALS, before and after TGB
 allA_basesub_filt_preTGB_catches, allA_basesub_filt_preTGB_catches_N, allA_basesub_filt_preTGB_misses, allA_basesub_filt_preTGB_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, TGB_bucket_raw-1, "all")
 allA_basesub_filt_postTGB_catches, allA_basesub_filt_postTGB_catches_N, allA_basesub_filt_postTGB_misses, allA_basesub_filt_postTGB_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, TGB_bucket_raw, -1, "all")
-# all animals preTGB shuffle test, number of tests = 8
+# all animals preTGB shuffle test, number of tests = 9
 pVal_allA_preTGB_basesubfilt, sigma_allA_preTGB_basesubfilt = shuffle_test(allA_basesub_filt_preTGB_catches, allA_basesub_filt_preTGB_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-preTGB", "AllMiss-BaseSubFilt-preTGB", allA_basesub_filt_preTGB_catches_N, allA_basesub_filt_preTGB_misses_N, plots_folder, todays_datetime)
-# all animals postTGB shuffle test, number of tests = 5
+# all animals postTGB shuffle test, number of tests = 6
 pVal_allA_postTGB_basesubfilt, sigma_allA_postTGB_basesubfilt = shuffle_test(allA_basesub_filt_postTGB_catches, allA_basesub_filt_postTGB_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-postTGB", "AllMiss-BaseSubFilt-postTGB", allA_basesub_filt_postTGB_catches_N, allA_basesub_filt_postTGB_misses_N,  plots_folder, todays_datetime)
 
 ### POOL ACROSS ALL ANIMALS, baseline period
 allA_basesub_filt_baseline_catches, allA_basesub_filt_baseline_catches_N, allA_basesub_filt_baseline_misses, allA_basesub_filt_baseline_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, baseline_buckets, "all")
-# all animals baseline shuffle test, number of tests = 1
+# all animals baseline shuffle test, number of tests = 2
 pVal_allA_baseline_basesubfilt, sigma_allA_baseline_basesubfilt = shuffle_test(allA_basesub_filt_baseline_catches, allA_basesub_filt_baseline_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-baseline", "AllMiss-BaseSubFilt-baseline", allA_basesub_filt_baseline_catches_N, allA_basesub_filt_baseline_misses_N,  plots_folder, todays_datetime)
 
+### POOL ACROSS ALL ANIMALS, 0.5 seconds before TGB
+allA_basesub_filt_halfSecPreTGB_catches, allA_basesub_filt_halfSecPreTGB_catches_N, allA_basesub_filt_halfSecPreTGB_misses, allA_basesub_filt_halfSecPreTGB_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, baseline_buckets, TGB_bucket_raw-1, "all")
+# all animals baseline shuffle test, number of tests = 2
+pVal_allA_halfSecPreTGB_basesubfilt, sigma_allA_halfSecPreTGB_basesubfilt = shuffle_test(allA_basesub_filt_halfSecPreTGB_catches, allA_basesub_filt_halfSecPreTGB_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-halfSecPreTGB", "AllMiss-BaseSubFilt-halfSecPreTGB", allA_basesub_filt_halfSecPreTGB_catches_N, allA_basesub_filt_halfSecPreTGB_misses_N,  plots_folder, todays_datetime)
+### individual animals, 0.5 seconds before TGB (to double check the pooled shuffle test)
+indivA_N_shuffles = 1000
+halfSecPreTGB_catches_basesubfilt_byAnimal, halfSecPreTGB_misses_basesubfilt_byAnimal = pool_timebins_byAnimal(all_catches_basesub_filtered, all_misses_basesub_filtered, baseline_buckets, TGB_bucket_raw-1)
+pVal_halfSecPreTGB_basesubfilt_byAnimal = {}
+sigma_halfSecPreTGB_basesubfilt_byAnimal = {}
+for animal in halfSecPreTGB_catches_basesubfilt_byAnimal:
+    pVal_thisA_halfSecPreTGB_basesubfilt, sigma_thisA_halfSecPreTGB_basesubfilt = shuffle_test(halfSecPreTGB_catches_basesubfilt_byAnimal[animal], halfSecPreTGB_misses_basesubfilt_byAnimal[animal], indivA_N_shuffles, animal+"-BaseSubFilt-halfSecPreTGB", animal+"-BaseSubFilt-halfSecPreTGB", len(all_catches_basesub_filtered[animal]), len(all_misses_basesub_filtered[animal]),  plots_folder, todays_datetime)
+    pVal_halfSecPreTGB_basesubfilt_byAnimal[animal] = pVal_thisA_halfSecPreTGB_basesubfilt
+    sigma_halfSecPreTGB_basesubfilt_byAnimal[animal] = sigma_thisA_halfSecPreTGB_basesubfilt
 
+### POOL ACROSS ALL ANIMALS, from 3.4 seconds after TGB to end
+allA_basesub_filt_tb205toEnd_catches, allA_basesub_filt_tb205toEnd_catches_N, allA_basesub_filt_tb205toEnd_misses, allA_basesub_filt_tb205toEnd_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 205, -1, "all")
+# all animals baseline shuffle test, number of tests = 2
+pVal_allA_tb205toEnd_basesubfilt, sigma_allA_tb205toEnd_basesubfilt = shuffle_test(allA_basesub_filt_tb205toEnd_catches, allA_basesub_filt_tb205toEnd_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-tb205toEnd", "AllMiss-BaseSubFilt-tb205toEnd", allA_basesub_filt_tb205toEnd_catches_N, allA_basesub_filt_tb205toEnd_misses_N,  plots_folder, todays_datetime)
+### individual animals, from 3.4 seconds after TGB to end (to double check the pooled shuffle test)
+postTB205_catches_basesubfilt_byAnimal, postTB205_misses_basesubfilt_byAnimal = pool_timebins_byAnimal(all_catches_basesub_filtered, all_misses_basesub_filtered, 205, -1)
+pVal_postTB205_basesubfilt_byAnimal = {}
+sigma_postTB205_basesubfilt_byAnimal = {}
+for animal in postTB205_catches_basesubfilt_byAnimal:
+    pVal_thisA_postTB205_basesubfilt, sigma_thisA_postTB205_basesubfilt = shuffle_test(postTB205_catches_basesubfilt_byAnimal[animal], postTB205_misses_basesubfilt_byAnimal[animal], indivA_N_shuffles, animal+"-BaseSubFilt-halfSecPreTGB", animal+"-BaseSubFilt-halfSecPreTGB", len(all_catches_basesub_filtered[animal]), len(all_misses_basesub_filtered[animal]),  plots_folder, todays_datetime)
+    pVal_postTB205_basesubfilt_byAnimal[animal] = pVal_thisA_postTB205_basesubfilt
+    sigma_postTB205_basesubfilt_byAnimal[animal] = sigma_thisA_postTB205_basesubfilt
 
+########################################################
+### ------ under construction!!!! ------ ###
+########################################################
 
 # pool all basesubfilt'd data to find distribution of data
-
-
 allTS_basesub_filtered = []
 
 for animal in all_catches_basesub_filtered:
@@ -596,9 +637,7 @@ for animal in all_TS:
 
 
 
-########################################################
-### ------ under construction!!!! ------ ###
-########################################################
+
 diffs_of_baselines = {}
 for animal in all_catches_baseline:
     diffs_of_baselines[animal] = all_catches_baseline[animal] - all_misses_baseline[animal]
