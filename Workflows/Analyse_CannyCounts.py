@@ -153,16 +153,54 @@ def pool_acrossA_acrossTB(catches_dict, misses_dict, timebin_start, timebin_end,
         pooled_catches_Ntrials = pooled_catches_Ntrials + thisA_catchesN
         if thisA_catchesN != 0:
             for trial in catches_dict[animal]:
-                for binned_count in trial[timebin_start:timebin_end]:
-                    pooled_catches.append(binned_count)
+                if timebin_end == -1:
+                    for binned_count in trial[timebin_start:]:
+                        pooled_catches.append(binned_count)
+                else:
+                    for binned_count in trial[timebin_start:timebin_end]:
+                        pooled_catches.append(binned_count)
         else:
             print('{a} made no catch tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
         thisA_missesN = len(misses_dict[animal])
         pooled_misses_Ntrials = pooled_misses_Ntrials + thisA_missesN
         if thisA_missesN != 0:
             for trial in misses_dict[animal]:
-                for binned_count in trial[timebin_start:timebin_end]:
-                    pooled_misses.append(binned_count)
+                if timebin_end == -1:
+                    for binned_count in trial[timebin_start:]:
+                        pooled_misses.append(binned_count)
+                else:
+                    for binned_count in trial[timebin_start:timebin_end]:
+                        pooled_misses.append(binned_count)
+        else:
+            print('{a} made no miss tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
+    pooled_catches_array = np.array(pooled_catches)
+    pooled_misses_array = np.array(pooled_misses)
+    return pooled_catches_array, pooled_catches_Ntrials, pooled_misses_array, pooled_misses_Ntrials
+
+def pool_acrossA_keepTemporalStructure(catches_dict, misses_dict, timebin_start, timebin_end, prey_type_str):
+    pooled_catches = []
+    pooled_catches_Ntrials = 0
+    pooled_misses = []
+    pooled_misses_Ntrials = 0
+    for animal in catches_dict:
+        thisA_catchesN = len(catches_dict[animal])
+        pooled_catches_Ntrials = pooled_catches_Ntrials + thisA_catchesN
+        if thisA_catchesN != 0:
+            for trial in catches_dict[animal]:
+                if timebin_end == -1:
+                    pooled_catches.append(trial[timebin_start:])
+                else:     
+                    pooled_catches.append(trial[timebin_start:timebin_end])
+        else:
+            print('{a} made no catch tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
+        thisA_missesN = len(misses_dict[animal])
+        pooled_misses_Ntrials = pooled_misses_Ntrials + thisA_missesN
+        if thisA_missesN != 0:
+            for trial in misses_dict[animal]:
+                if timebin_end == -1:
+                    pooled_catches.append(trial[timebin_start:])
+                else:     
+                    pooled_catches.append(trial[timebin_start:timebin_end])
         else:
             print('{a} made no miss tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
     pooled_catches_array = np.array(pooled_catches)
@@ -176,11 +214,19 @@ def pool_timebins_byAnimal(catches_dict, misses_dict, start_tb, end_tb):
         pooledTB_byA_catches[animal] = []
         pooledTB_byA_misses[animal] = []
         for trial in catches_dict[animal]:
-            for binned_count in trial[start_tb:end_tb]:
-                pooledTB_byA_catches[animal].append(binned_count)
+            if end_tb == -1:
+                for binned_count in trial[start_tb:]:
+                    pooledTB_byA_catches[animal].append(binned_count)
+            else:    
+                for binned_count in trial[start_tb:end_tb]:
+                    pooledTB_byA_catches[animal].append(binned_count)
         for trial in misses_dict[animal]:
-            for binned_count in trial[start_tb:end_tb]:
-                pooledTB_byA_misses[animal].append(binned_count)
+            if end_tb == -1: 
+                for binned_count in trial[start_tb:]:
+                    pooledTB_byA_misses[animal].append(binned_count)
+            else:    
+                for binned_count in trial[start_tb:end_tb]:
+                    pooledTB_byA_misses[animal].append(binned_count)
     return pooledTB_byA_catches, pooledTB_byA_misses
 
 def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, Group2_N, plots_dir, todays_dt):
@@ -437,14 +483,14 @@ now = datetime.datetime.now()
 todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
 current_working_directory = os.getcwd()
 # List relevant data locations: these are for KAMPFF-LAB
-#root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
-#canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-#plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
+root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
+canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
 
 # List relevant data locations: these are for taunsquared
-root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
+#root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
+#canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+#plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
 TGB_all = glob.glob(canny_counts_folder + os.sep + "*.csv")
@@ -548,9 +594,9 @@ allTS_basesub_filtered = [all_catches_basesub_filtered, all_misses_basesub_filte
 No_of_Shuffles = 20000
 
 ### POOL ACROSS ALL ANIMALS, full trial
-allA_basesub_filt_catches, allA_basesub_filt_catches_N, allA_basesub_filt_misses, allA_basesub_filt_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, -1, "all")
+allA_basesubfilt_fullTrial_catches, allA_basesubfilt_fullTrial_catches_N, allA_basesubfilt_fullTrial_misses, allA_basesubfilt_fullTrial_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, -1, "all")
 # all animals full trial shuffle test, number of tests = 16
-pVal_allA_fullTrial_basesubfilt, sigma_allA_fullTrial_basesubfilt = shuffle_test(allA_basesub_filt_catches, allA_basesub_filt_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-fullTrial", "AllMiss-BaseSubFilt-fullTrial", allA_basesub_filt_catches_N, allA_basesub_filt_misses_N, plots_folder, todays_datetime)
+pVal_allA_fullTrial_basesubfilt, sigma_allA_fullTrial_basesubfilt = shuffle_test(allA_basesubfilt_fullTrial_catches, allA_basesubfilt_fullTrial_misses, No_of_Shuffles, "AllCatch-BaseSubFilt-fullTrial", "AllMiss-BaseSubFilt-fullTrial", allA_basesubfilt_fullTrial_catches_N, allA_basesubfilt_fullTrial_misses_N, plots_folder, todays_datetime)
 
 ### POOL ACROSS ALL ANIMALS, before and after TGB
 allA_basesub_filt_preTGB_catches, allA_basesub_filt_preTGB_catches_N, allA_basesub_filt_preTGB_misses, allA_basesub_filt_preTGB_misses_N = pool_acrossA_acrossTB(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, TGB_bucket_raw-1, "all")
@@ -588,9 +634,12 @@ postTB205_catches_basesubfilt_byAnimal, postTB205_misses_basesubfilt_byAnimal = 
 pVal_postTB205_basesubfilt_byAnimal = {}
 sigma_postTB205_basesubfilt_byAnimal = {}
 for animal in postTB205_catches_basesubfilt_byAnimal:
-    pVal_thisA_postTB205_basesubfilt, sigma_thisA_postTB205_basesubfilt = shuffle_test(postTB205_catches_basesubfilt_byAnimal[animal], postTB205_misses_basesubfilt_byAnimal[animal], indivA_N_shuffles, animal+"-BaseSubFilt-halfSecPreTGB", animal+"-BaseSubFilt-halfSecPreTGB", len(all_catches_basesub_filtered[animal]), len(all_misses_basesub_filtered[animal]),  plots_folder, todays_datetime)
+    pVal_thisA_postTB205_basesubfilt, sigma_thisA_postTB205_basesubfilt = shuffle_test(postTB205_catches_basesubfilt_byAnimal[animal], postTB205_misses_basesubfilt_byAnimal[animal], indivA_N_shuffles, animal+"-BaseSubFilt-tb205toEnd", animal+"-BaseSubFilt-tb205toEnd", len(all_catches_basesub_filtered[animal]), len(all_misses_basesub_filtered[animal]),  plots_folder, todays_datetime)
     pVal_postTB205_basesubfilt_byAnimal[animal] = pVal_thisA_postTB205_basesubfilt
     sigma_postTB205_basesubfilt_byAnimal[animal] = sigma_thisA_postTB205_basesubfilt
+
+### POOL ACROSS ALL ANIMALS, make a shuffle test of every time bin
+allA_basesubfilt_byTB_catches, allA_basesubfilt_byTB_catches_N, allA_basesubfilt_byTB_misses, allA_basesubfilt_byTB_misses_N = pool_acrossA_keepTemporalStructure(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, -1, "all")
 
 ########################################################
 ### ------ under construction!!!! ------ ###
