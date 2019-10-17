@@ -169,6 +169,7 @@ allMOI_allA = {}
 # extract data from csv and put into dictionary
 print('Extracting raw data from csv...')
 for animal in animals:
+    print('Working on animal {a}'.format(a=animal))
     allMOI_allA[animal] = {}
     MOI_homebase = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "homebase*.csv")
     MOI_orients = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "orients*.csv")
