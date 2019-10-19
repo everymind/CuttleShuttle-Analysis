@@ -91,11 +91,11 @@ def plot_timeline_MOIs(dict_allAnimals_allMOIs, animal_names_dict, plots_dir, to
         c_count = sum([len(session) for session in all_catches_reversed])
         fo_count = sum([len(session) for session in all_food_offerings_reversed])
         # set colors
+        food_offerings_color = [1.0, 0.0, 1.0, 0.5]
         homebase_color = [1.0, 0.0, 0.0, 0.5]
         orientations_color = [0.0, 1.0, 0.0, 0.5]
-        tentacle_shots_color = [0.0, 0.0, 1.0, 0.5]
-        food_offerings_color = [1.0, 0.0, 1.0, 0.5]
-        catches_color = [1.0, 1.0, 0.0, 0.5]
+        tentacle_shots_color = [1.0, 0.647, 0.0, 0.5]
+        catches_color = [0.0, 0.0, 1.0, 0.6]
         # set figure save path and title
         figure_name = 'MomentsOfInterest_'+ animal + '_' + todays_dt + '.png'
         figure_path = os.path.join(plots_dir, figure_name)
