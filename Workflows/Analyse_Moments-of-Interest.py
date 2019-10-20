@@ -58,24 +58,34 @@ def convert_timestamps_to_secs_from_start(allA_timestamps_dict, list_of_MOIs):
             converted_dict[animal][list_of_MOIs[moi]] = all_mois[moi]
     return converted_dict
 
-def plot_timeline_MOIs(dict_allAnimals_allMOIs, animal_names_dict, plots_dir, todays_dt):
+def plot_timeline_MOIs(dict_allAnimals_allMOIs, list_of_MOIs, animal_names_dict, plots_dir, todays_dt):
     for animal in dict_allAnimals_allMOIs:
         all_session_lens = dict_allAnimals_allMOIs[animal]['session durations']
         all_session_dates = dict_allAnimals_allMOIs[animal]['session dates']
-        all_homebases = dict_allAnimals_allMOIs[animal]['homebase']
-        all_orientations = dict_allAnimals_allMOIs[animal]['orients']
-        all_tentacle_shots = dict_allAnimals_allMOIs[animal]['tentacle shots']
-        all_food_offerings = dict_allAnimals_allMOIs[animal]['food offerings']
-        all_catches = dict_allAnimals_allMOIs[animal]['catches']
+        # prepare for possible MOIs
+        all_homebases = []
+        all_orientations = []
+        all_tentacle_shots = []
+        all_food_offerings = []
+        all_catches = []
+        for moi in list_of_MOIs:
+            if moi=='homebase':
+                all_homebases = dict_allAnimals_allMOIs[animal]['homebase']
+            if moi=='orients':
+                all_orientations = dict_allAnimals_allMOIs[animal]['orients']
+            if moi=='tentacle shots':
+                all_tentacle_shots = dict_allAnimals_allMOIs[animal]['tentacle shots']
+            if moi=='food offerings':
+                all_food_offerings = dict_allAnimals_allMOIs[animal]['food offerings']
+            if moi=='catches':
+                all_catches = dict_allAnimals_allMOIs[animal]['catches']
         # remove habituation session
-        #    all_session_dates = all_session_dates[1:]
-        #    all_session_lens = all_session_lens[1:]
-        #    all_homebases = all_homebases[1:]
-        #    all_orientations = all_orientations[1:]
-        #    all_tentacle_shots = all_tentacle_shots[1:]
-        #    all_food_offerings = all_food_offerings[1:]
+        all_session_dates = all_session_dates[1:]
+        all_homebases = all_homebases[1:]
+        all_orientations = all_orientations[1:]
+        all_tentacle_shots = all_tentacle_shots[1:]
+        all_food_offerings = all_food_offerings[1:]
         # reverse lists of MOI times so that first session appears at the top of the plot
-        all_session_lens_reversed = all_session_lens[::-1]
         all_session_dates_reversed = all_session_dates[::-1]
         all_homebases_reversed = all_homebases[::-1]
         all_orientations_reversed = all_orientations[::-1]
@@ -93,20 +103,20 @@ def plot_timeline_MOIs(dict_allAnimals_allMOIs, animal_names_dict, plots_dir, to
         # set colors
         food_offerings_color = [1.0, 0.0, 1.0, 0.5]
         homebase_color = [1.0, 0.0, 0.0, 0.5]
-        orientations_color = [0.0, 1.0, 0.0, 0.5]
-        tentacle_shots_color = [1.0, 0.647, 0.0, 0.5]
-        catches_color = [0.0, 0.0, 1.0, 0.6]
+        orientations_color = [1.0, 0.647, 0.0, 0.6]
+        tentacle_shots_color = [0.0, 1.0, 0.0, 0.5]
+        catches_color = [0.0, 0.0, 1.0, 0.4]
         # set figure save path and title
         figure_name = 'MomentsOfInterest_'+ animal + '_' + todays_dt + '.png'
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Moments of interest during hunting session of ' + animal + ', aka ' + animal_names_dict[animal] + '\nReturns to home base: ' + str(hb_count) + '\nNumber of Orientations: ' + str(orients_count) + '\n Number of Tentacle Shots: ' + str(ts_count) + '\n Number of Catches: ' + str(c_count)
+        figure_title = 'Moments of interest during hunting session of ' + animal + ', aka ' + animal_names_dict[animal] + '\nReturns to home base: ' + str(hb_count) + '\nNumber of Orientations: ' + str(orients_count) + '\n Number of Tentacle Shots: ' + str(ts_count) + ', Number of Catches: ' + str(c_count)
         # set axes and other figure properties
         ax = plt.figure(figsize=(16,9), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.98)
         plt.xlim(-60,plotting_session_len+60)
-        plt.ylim(-1, len(all_session_lens)+0.5)
+        plt.ylim(-1, len(all_session_lens))
         plot_yticks = np.arange(0, len(all_session_lens), 1)
-        ytick_labels = ['Day '+str(x) for x in range(len(all_session_dates_reversed))]
+        ytick_labels = ['Day '+str(x+1) for x in range(len(all_session_dates_reversed))]
         plt.yticks(plot_yticks, ytick_labels[::-1])
         plt.ylabel("Session Number")
         plot_xticks = np.arange(0, plotting_session_len, step=60)
@@ -200,7 +210,7 @@ for animal in animals:
                     allMOI_allA[animal][csv_date]['food offerings'] = csv_MOI
                 if MOI_type == 5:
                     allMOI_allA[animal][csv_date]['session vids'] = csv_MOI
-
+print('Finished extracting csv data!')
 ########################################################
 ### ---- CREATE TIMELINE OF MOI FOR EACH ANIMAL ---- ###
 ########################################################
@@ -210,5 +220,5 @@ print('Converting timestamps to seconds from start...')
 allMOI_allA_converted = convert_timestamps_to_secs_from_start(allMOI_allA, MOIs)
 animal_names = {'L1-H2013-01':'Dora','L1-H2013-02':'Scar','L1-H2013-03':'Ender','L7-H2013-01':'Old Tom','L7-H2013-02':'Plato','L7-H2013-03':'Blaise'}
 print('Plotting...')
-plot_timeline_MOIs(allMOI_allA_converted, animal_names, plots_folder, todays_datetime)
+plot_timeline_MOIs(allMOI_allA_converted, MOIs, animal_names, plots_folder, todays_datetime)
 
