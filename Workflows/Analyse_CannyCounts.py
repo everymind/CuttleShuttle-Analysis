@@ -124,10 +124,10 @@ def plot_indiv_animals_BSF_TP(prey_type_str, threshold_str, catches_basesubfilt,
             for timebin in prob_aboveThresh_miss:
                 plt.plot(timebin, misses_mean[timebin], 'ro')
                 plt.plot((timebin, timebin), (ymin, ymax), 'k--', linewidth=1)
-                plt.text(timebin, misses_mean[timebin]-1000000, '%.1f'%(timebin/60)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_miss[timebin][animal]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
+                plt.text(timebin, misses_mean[timebin]-1000000, '%.1f'%(timebin/60 - 3)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_miss[timebin][animal]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
             for timebin in prob_aboveThresh_catch:
                 plt.plot(timebin, catches_mean[timebin], 'bo')
-                plt.text(timebin, catches_mean[timebin]+1000000, '%.1f'%(timebin/60)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_catch[timebin][animal]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='blue', boxstyle='round,pad=0.35'))
+                plt.text(timebin, catches_mean[timebin]+1000000, '%.1f'%(timebin/60 - 3)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_catch[timebin][animal]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='blue', boxstyle='round,pad=0.35'))
 
             plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
             plt.text(baseline_len, ymax-600000, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
@@ -198,9 +198,9 @@ def pool_acrossA_keepTemporalStructure(catches_dict, misses_dict, timebin_start,
         if thisA_missesN != 0:
             for trial in misses_dict[animal]:
                 if timebin_end == -1:
-                    pooled_catches.append(trial[timebin_start:])
+                    pooled_misses.append(trial[timebin_start:])
                 else:     
-                    pooled_catches.append(trial[timebin_start:timebin_end])
+                    pooled_misses.append(trial[timebin_start:timebin_end])
         else:
             print('{a} made no miss tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
     pooled_catches_array = np.array(pooled_catches)
@@ -242,11 +242,12 @@ def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, G
     # p-value of shuffle test
     pVal = np.mean(SPerf**2 >= OPerf**2)
     # sigma
-    sigma_shuff = (OPerf - np.mean(SPerf))/np.std(SPerf, ddof=1)
+    shuffled_mean = np.mean(SPerf)
+    sigmaSq_shuff = sum([(x - shuffled_mean)**2 for x in SPerf])/np.std(SPerf, ddof=1)
     # show histogram of diffs of shuffled means
     figure_name = 'ShuffleTest_'+ Group1_str + '_' + Group2_str + '_' + todays_dt + '.png'
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = "Histogram of the differences in means of randomly labeled data, Number of shuffles = " + str(N_Shuffles) + "\n Group 1: " + Group1_str + ", N = " + str(Group1_N) + "\n Group 2: " + Group2_str + ", N = " + str(Group2_N) + "\n P-value of shuffle test: " + str(pVal) + ", Sigma of shuffle test: " + str(sigma_shuff)
+    figure_title = "Histogram of the differences in means of randomly labeled data, Number of shuffles = {Ns}\n Group 1: {G1}, N = {G1N}\n Group 2: {G2}, N = {G2N}\n P-value of shuffle test: {p:.4f}, Mean of shuffle test: {m:.4f}, Sigma of shuffle test: {s:.4f}".format(Ns=N_Shuffles, G1=Group1_str, G1N=Group1_N, G2=Group2_str, G2N=Group2_N, p=pVal, m=shuffled_mean, s=np.sqrt(sigmaSq_shuff[0]))
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.98)
     plt.hist(SPerf)
@@ -258,13 +259,13 @@ def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, G
     plt.show(block=False)
     plt.pause(1)
     plt.close()
-    return pVal, sigma_shuff
+    return pVal, np.sqrt(sigmaSq_shuff)
 
 def mult_to_list(input_list, multiplier):
     if not np.isnan(input_list).any(): 
         return [x*multiplier for x in input_list]
 
-def plot_all_animals_pooled_BSF_TP(prey_type_str, threshold_str, catches_basesubfilt, misses_basesubfilt, catches_basesubfilt_mean, misses_basesubfilt_mean, prob_aboveThresh_catch, prob_aboveThresh_miss, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+def plot_all_animals_pooled_BSF_TP(prey_type_str, threshold_str, catches_basesubfilt, misses_basesubfilt, catches_basesubfilt_mean, misses_basesubfilt_mean, sigmas_eachTB, pval_eachTB, sigDiff_means_TB, prob_aboveThresh_catch, prob_aboveThresh_miss, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
     ### POOL ACROSS ANIMALS ### 
     allA_catches_mean_N = [] #(mean, N)
@@ -303,10 +304,26 @@ def plot_all_animals_pooled_BSF_TP(prey_type_str, threshold_str, catches_basesub
             above_thresh_count_miss.append(N_misses_above_thresh)
         prob_aboveThresh_catch_allA[timebin] = sum(above_thresh_count_catch)/catches_combined_N
         prob_aboveThresh_miss_allA[timebin] = sum(above_thresh_count_miss)/misses_combined_N
+    # calculate 95% confidence interval for each time bucket
+    catches_95CI_upper = []
+    catches_95CI_lower = []
+    misses_95CI_upper = []
+    misses_95CI_lower = []
+    x_tbs = []
+    for timebucket in range(len(sigmas_eachTB)):
+        x_tbs.append(timebucket)
+        upper_bound_C = catches_combined_mean[timebucket] + 1.96*sigmas_eachTB[timebucket]
+        catches_95CI_upper.append(upper_bound_C)
+        lower_bound_C = catches_combined_mean[timebucket] - 1.96*sigmas_eachTB[timebucket]
+        catches_95CI_lower.append(lower_bound_C)
+        upper_bound_M = misses_combined_mean[timebucket] + 1.96*sigmas_eachTB[timebucket]
+        misses_95CI_upper.append(upper_bound_M)
+        lower_bound_M = misses_combined_mean[timebucket] - 1.96*sigmas_eachTB[timebucket]
+        misses_95CI_lower.append(lower_bound_M)
 
     figure_name = 'CannyEdgeDetector_BaselineSubtracted_SavGolFiltered_WithThreshProb_'+ prey_type_str + 'Trials_AllAnimals' + todays_dt + img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = "Mean change from baseline in number of edges in ROI on cuttlefish mantle during tentacle shots, as detected by Canny Edge Detector \n Individual trials plotted with more transparent traces \n Baseline: mean of edge counts from t=0 to t=" + str(baseline_len/60) + " seconds \n Pooled across all animals, Prey movement type: " + prey_type_str + "\n Number of catches: " + str(catches_combined_N) + ", Number of misses: " + str(misses_combined_N)
+    figure_title = "Mean change from baseline in number of edges in ROI on cuttlefish mantle during tentacle shots, as detected by Canny Edge Detector \n 95% Confidence intervals (calculated via shuffle tests, 20000 shuffles) plotted as shaded regions around each mean \n Baseline: mean of edge counts from t=0 to t=" + str(baseline_len/60) + " seconds \n Pooled across all animals, Prey movement type: " + prey_type_str + "\n Number of catches: " + str(catches_combined_N) + ", Number of misses: " + str(misses_combined_N)
 
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -320,20 +337,25 @@ def plot_all_animals_pooled_BSF_TP(prey_type_str, threshold_str, catches_basesub
     plt.grid(b=True, which='major', linestyle='-')
     ymin, ymax = plt.ylim()
 
-    for animal in misses_basesubfilt:
-        for trial in misses_basesubfilt[animal]:
-            plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
-        for trial in catches_basesubfilt[animal]:
-            plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
     plt.plot(misses_combined_mean, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+    plt.fill_between(x_tbs, misses_95CI_upper, misses_95CI_lower, color=[0.9, 0.0, 0.0, 0.3])
     plt.plot(catches_combined_mean, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+    plt.fill_between(x_tbs, catches_95CI_upper, catches_95CI_lower, color=[0.0, 0.0, 0.9, 0.3])
     for timebin in prob_aboveThresh_miss_allA:
         plt.plot(timebin, misses_combined_mean[timebin], 'ro')
-        plt.plot((timebin, timebin), (ymin, ymax), 'k--', linewidth=1)
-        plt.text(timebin, misses_combined_mean[timebin]-1000000, '%.1f'%(timebin/60)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_miss_allA[timebin]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
+        plt.plot((timebin, timebin), (ymin, ymax), 'k--', linewidth=0.5)
+        plt.text(timebin, misses_combined_mean[timebin]-1000000, '%.1f'%(timebin/60 - 3)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_miss_allA[timebin]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
     for timebin in prob_aboveThresh_catch_allA:
         plt.plot(timebin, catches_combined_mean[timebin], 'bo')
-        plt.text(timebin, catches_combined_mean[timebin]+1000000, '%.1f'%(timebin/60)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_catch_allA[timebin]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='blue', boxstyle='round,pad=0.35'))
+        plt.text(timebin, catches_combined_mean[timebin]+1000000, '%.1f'%(timebin/60 - 3)+" seconds after TGB, \n"+'%.2d'%(prob_aboveThresh_catch_allA[timebin]*100)+"% trials increased \nby > "+threshold_str+" edges", fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='blue', boxstyle='round,pad=0.35'))
+    for timebin in range(len(sigDiff_means_TB)):
+        tb = sigDiff_means_TB[timebin]
+        if tb < 180:
+            plt.plot((tb, tb), (ymin, ymax), color='orange', linestyle='--', linewidth=1)
+            plt.text(tb, catches_combined_mean[tb]+550000+(timebin*170000), "At {s:.1f} sec,\n p(diff of means)={p:.4f}".format(s=tb/60, p=pval_eachTB[tb]), fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='orange', boxstyle='round,pad=0.35'))
+        else:
+            plt.plot((tb, tb), (ymin, ymax), color='orange', linestyle='--', linewidth=1)
+            plt.text(tb, catches_combined_mean[tb]+1750000, "At {s:.1f} sec, p(diff of means)={p:.4f}".format(s=tb/60, p=pval_eachTB[tb]), fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='orange', boxstyle='round,pad=0.35'))
 
     plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
     plt.text(baseline_len, ymax-600000, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
@@ -483,14 +505,14 @@ now = datetime.datetime.now()
 todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
 current_working_directory = os.getcwd()
 # List relevant data locations: these are for KAMPFF-LAB
-root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
-canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
+#root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
+#canny_counts_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+#plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
 
 # List relevant data locations: these are for taunsquared
-#root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-#canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
-#plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
+root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
+canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
 TGB_all = glob.glob(canny_counts_folder + os.sep + "*.csv")
@@ -579,17 +601,11 @@ basesub_filtered_count(all_raw, "all", baseline_buckets, savgol_window, all_catc
 timebins_to_check = [205, 240, 300, 359]
 threshold_catchVmiss = 1000000
 prob_plus1mil_all_catches, prob_plus1mil_all_misses = prob_of_tb_above_edgecount_thresh(timebins_to_check, threshold_catchVmiss, all_catches_basesub_filtered, all_misses_basesub_filtered)
-## visualize the data
-plot_indiv_animals_BSF_TP("all", "1 million", all_catches_basesub_filtered, all_misses_basesub_filtered, all_catches_basesub_filtered_mean, all_misses_basesub_filtered_mean, prob_plus1mil_all_catches, prob_plus1mil_all_misses, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
-
-### POOL ACROSS ANIMALS
-plot_all_animals_pooled_BSF_TP("all", "1 million", all_catches_basesub_filtered, all_misses_basesub_filtered, all_catches_basesub_filtered_mean, all_misses_basesub_filtered_mean, prob_plus1mil_all_catches, prob_plus1mil_all_misses, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ########################################################
 ### ------------ STATS FOR SIGNIFICANCE ------------ ###
 ########################################################
-
-# shuffle test
+#### shuffle test ####
 allTS_basesub_filtered = [all_catches_basesub_filtered, all_misses_basesub_filtered]
 No_of_Shuffles = 20000
 
@@ -634,12 +650,40 @@ postTB205_catches_basesubfilt_byAnimal, postTB205_misses_basesubfilt_byAnimal = 
 pVal_postTB205_basesubfilt_byAnimal = {}
 sigma_postTB205_basesubfilt_byAnimal = {}
 for animal in postTB205_catches_basesubfilt_byAnimal:
-    pVal_thisA_postTB205_basesubfilt, sigma_thisA_postTB205_basesubfilt = shuffle_test(postTB205_catches_basesubfilt_byAnimal[animal], postTB205_misses_basesubfilt_byAnimal[animal], indivA_N_shuffles, animal+"-BaseSubFilt-tb205toEnd", animal+"-BaseSubFilt-tb205toEnd", len(all_catches_basesub_filtered[animal]), len(all_misses_basesub_filtered[animal]),  plots_folder, todays_datetime)
+    pVal_thisA_postTB205_basesubfilt, sigma_thisA_postTB205_basesubfilt = shuffle_test(postTB205_catches_basesubfilt_byAnimal[animal], postTB205_misses_basesubfilt_byAnimal[animal], indivA_N_shuffles, animal+"-Catches-BaseSubFilt-tb205toEnd", animal+"-Misses-BaseSubFilt-tb205toEnd", len(all_catches_basesub_filtered[animal]), len(all_misses_basesub_filtered[animal]), plots_folder, todays_datetime)
     pVal_postTB205_basesubfilt_byAnimal[animal] = pVal_thisA_postTB205_basesubfilt
     sigma_postTB205_basesubfilt_byAnimal[animal] = sigma_thisA_postTB205_basesubfilt
 
 ### POOL ACROSS ALL ANIMALS, make a shuffle test of every time bin
 allA_basesubfilt_byTB_catches, allA_basesubfilt_byTB_catches_N, allA_basesubfilt_byTB_misses, allA_basesubfilt_byTB_misses_N = pool_acrossA_keepTemporalStructure(all_catches_basesub_filtered, all_misses_basesub_filtered, 0, -1, "all")
+edgeScores_byTB = {}
+for timebin in range(360):
+    # collect all edge scores for each time bin
+    edgeScores_byTB[timebin] = {'catch':[], 'miss':[], 'pval': None, 'sigma': None}
+    for trial in allA_basesubfilt_byTB_catches:
+        edgeScores_byTB[timebin]['catch'].append(trial[timebin])
+    for trial in allA_basesubfilt_byTB_misses:
+        edgeScores_byTB[timebin]['miss'].append(trial[timebin])
+    # shuffle test each time bin
+    edgeScores_byTB[timebin]['pval'], edgeScores_byTB[timebin]['sigma'] = shuffle_test(edgeScores_byTB[timebin]['catch'], edgeScores_byTB[timebin]['miss'], No_of_Shuffles, 'AllCatches-BaseSubFilt-TB'+str(timebin), 'AllMisses-BaseSubFilt-TB'+str(timebin), len(edgeScores_byTB[timebin]['catch']), len(edgeScores_byTB[timebin]['miss']), plots_folder, todays_datetime)
+sigmas_byTB = []
+pval_byTB = []
+for timebin in sorted(edgeScores_byTB.keys()):
+    # collect sigmas for each timebin
+    sigmas_byTB.append(edgeScores_byTB[timebin]['sigma'][0])
+    pval_byTB.append(edgeScores_byTB[timebin]['pval'])
+
+#######################################################
+### ---------------- PLOT THE DATA ---------------- ###
+#######################################################
+
+## visualize the data
+plot_indiv_animals_BSF_TP("all", "1 million", all_catches_basesub_filtered, all_misses_basesub_filtered, all_catches_basesub_filtered_mean, all_misses_basesub_filtered_mean, prob_plus1mil_all_catches, prob_plus1mil_all_misses, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+
+### POOL ACROSS ANIMALS
+sigDiff_timebins = [0, 150, 174, 195, 210, 216]
+plot_all_animals_pooled_BSF_TP("all", "1 million", all_catches_basesub_filtered, all_misses_basesub_filtered, all_catches_basesub_filtered_mean, all_misses_basesub_filtered_mean, sigmas_byTB, pval_byTB, sigDiff_timebins, prob_plus1mil_all_catches, prob_plus1mil_all_misses, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+
 
 ########################################################
 ### ------ under construction!!!! ------ ###
@@ -765,10 +809,10 @@ plt.show(block=False)
 plt.pause(1)
 plt.close()
 
-f = Fitter(np.hstack(allO_allA_postTGB))
-f.fit()
-plt.hist(np.hstack(allO_allA_postTGB))
-f.summary()
+#f = Fitter(np.hstack(allO_allA_postTGB))
+#f.fit()
+#plt.hist(np.hstack(allO_allA_postTGB))
+#f.summary()
 #>>> f.summary()
 ##            sumsquare_error
 ##levy             129.317025
@@ -776,7 +820,7 @@ f.summary()
 ##invgamma         248.078092
 ##halfcauchy       344.966041
 ##expon            360.504135
-plt.show()
+#plt.show()
 
 
 
