@@ -3,6 +3,7 @@ import glob
 import cv2
 import datetime
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from matplotlib.patches import Patch
@@ -126,23 +127,23 @@ def plot_timeline_MOIs(dict_allAnimals_allMOIs, list_of_MOIs, animal_names_dict,
         plt.grid(b=True, which='major', linestyle='-')
         # draw moments of interest
         for session in range(len(all_food_offerings_reversed)):
-            if len(all_food_offerings_reversed[session]) > 0: 
+            if len(all_food_offerings_reversed[session]) > 0:
                 for time_diff in all_food_offerings_reversed[session]:
                     plt.plot(time_diff, session, Marker='|', markersize=7, color=food_offerings_color)
         for session in range(len(all_homebases_reversed)):
-            if len(all_homebases_reversed[session]) > 0: 
+            if len(all_homebases_reversed[session]) > 0:
                 for time_diff in all_homebases_reversed[session]:
                     plt.plot(time_diff, session, Marker='d', markersize=7, color=homebase_color)
         for session in range(len(all_orientations_reversed)):
-            if len(all_orientations_reversed[session]) > 0: 
+            if len(all_orientations_reversed[session]) > 0:
                 for time_diff in all_orientations_reversed[session]:
                     plt.plot(time_diff, session, Marker='^', markersize=7, color=orientations_color)
         for session in range(len(all_tentacle_shots_reversed)):
-            if len(all_tentacle_shots_reversed[session]) > 0: 
+            if len(all_tentacle_shots_reversed[session]) > 0:
                 for time_diff in all_tentacle_shots_reversed[session]:
                     plt.plot(time_diff, session, Marker='*', markersize=7, color=tentacle_shots_color)
         for session in range(len(all_catches_reversed)):
-            if len(all_catches_reversed[session]) > 0: 
+            if len(all_catches_reversed[session]) > 0:
                 for time_diff in all_catches_reversed[session]:
                     plt.plot(time_diff, session, Marker='*', markersize=7, color=catches_color)
         # create custom legend
@@ -157,6 +158,73 @@ def plot_timeline_MOIs(dict_allAnimals_allMOIs, list_of_MOIs, animal_names_dict,
         plt.show(block=False)
         plt.pause(1)
         plt.close()
+
+def calc_prob_MOI_sequence(secsFromStart_dict, MOI, prevMOI):
+    MOIProb_dict = {}
+    for animal in secsFromStart_dict:
+        MOIProb_dict[animal] = {}
+        all_MOI = secsFromStart_dict[animal][MOI]
+        all_prevMOI = secsFromStart_dict[animal][prevMOI]
+        for day in range(len(all_MOI)):
+            if len(all_MOI[day])>0:
+                for moi in all_MOI[day]:
+                    if moi in all_prevMOI[day]:
+                        attempt_number = all_prevMOI[day].index(moi)
+                        MOIProb_dict[animal][attempt_number] = MOIProb_dict[animal].setdefault(attempt_number,0) + 1
+                    else:
+                        try:
+                            attempt_number = [x-moi>0 for x in all_prevMOI[day]].index(True)
+                            MOIProb_dict[animal][attempt_number] = MOIProb_dict[animal].setdefault(attempt_number,0) + 1
+                        except Exception:
+                            print('Error in {a}, day {d}'.format(a=animal, d=day))
+    return MOIProb_dict
+
+def plot_probMOIseq(probMOIseq_dict, MOI_str, prevMOI_str, plots_dir, todays_dt):
+    allA_probMOIseq = []
+    for animal in probMOIseq_dict:
+        all_numPrevMOI = sorted(probMOIseq_dict[animal].keys())
+        if len(all_numPrevMOI)>0:
+            max_numPrevMOI = max(all_numPrevMOI)
+            frequencies_to_plot = [0*x for x in range(max_numPrevMOI+1)]
+            for numPrevMOI in all_numPrevMOI:
+                frequencies_to_plot[numPrevMOI] = probMOIseq_dict[animal][numPrevMOI]
+        else:
+            print('No previous MOIs for {a}'.format(a=animal))
+        allA_probMOIseq.append(frequencies_to_plot)
+    mostTS_beforeCatch = max([len(x) for x in allA_probMOIseq])
+    for animal in range(len(allA_probMOIseq)):
+        pad_N = mostTS_beforeCatch-len(allA_probMOIseq[animal])
+        padded_animal = allA_probMOIseq[animal]+[0]*pad_N
+        allA_probMOIseq[animal] = padded_animal
+    # set figure save path and title
+    figure_name = 'Prob_MomentsOfInterestSeq_' + prevMOI_str + 'Before' + MOI_str + '_allAnimals_' + todays_dt + '.png'
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Number of '+ prevMOI_str + ' before a ' + MOI_str + ' for all animals'
+    # set axes and other figure properties
+    ax = plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.98)
+    x = np.arange(mostTS_beforeCatch)  # the label locations
+    plt.xticks(x)
+    plt.xlabel("{pM} before {M}".format(pM=prevMOI_str, M=MOI_str))
+    plt.ylabel("Frequency")
+    plt.grid(b=True, which='major', linestyle='-')
+    width = 0.1  # the width of the bars
+    # draw bars for 5 animals at each x tick
+    plt.bar(x - 2*width, allA_probMOIseq[0], width, label='L1-H2013-01')
+    plt.bar(x - width, allA_probMOIseq[1], width, label='L1-H2013-02')
+    plt.bar(x, allA_probMOIseq[2], width, label='L1-H2013-03')
+    plt.bar(x + width, allA_probMOIseq[3], width, label='L7-H2013-01')
+    plt.bar(x + 2*width, allA_probMOIseq[4], width, label='L7-H2013-02')
+    # Add legend
+    ax.legend()
+    # create custom legend
+    #legend_elements = [Line2D([0], [0], marker='|', color=food_offerings_color, label='Food offerings', markerfacecolor=food_offerings_color, markersize=10)]
+    #ax.legend(handles=legend_elements, loc='upper right')
+    # save and display fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
 
 ### BEGIN ANALYSIS ###
 # grab today's date
@@ -211,14 +279,31 @@ for animal in animals:
                 if MOI_type == 5:
                     allMOI_allA[animal][csv_date]['session vids'] = csv_MOI
 print('Finished extracting csv data!')
+
+# convert timestamp obj's into ints (microseconds from start)
+MOIs = ['food offerings','homebase','orients','tentacle shots','catches']
+print('Converting timestamps to microseconds from start...')
+allMOI_allA_converted = convert_timestamps_to_secs_from_start(allMOI_allA, MOIs)
+# convert animal numbers into names
+animal_names = {'L1-H2013-01':'Dora','L1-H2013-02':'Scar','L1-H2013-03':'Ender','L7-H2013-01':'Old Tom','L7-H2013-02':'Plato','L7-H2013-03':'Blaise'}
+
 ########################################################
 ### ---- CREATE TIMELINE OF MOI FOR EACH ANIMAL ---- ###
 ########################################################
 
-MOIs = ['food offerings','homebase','orients','tentacle shots','catches']
-print('Converting timestamps to seconds from start...')
-allMOI_allA_converted = convert_timestamps_to_secs_from_start(allMOI_allA, MOIs)
-animal_names = {'L1-H2013-01':'Dora','L1-H2013-02':'Scar','L1-H2013-03':'Ender','L7-H2013-01':'Old Tom','L7-H2013-02':'Plato','L7-H2013-03':'Blaise'}
-print('Plotting...')
+print('Drawing timeline of MOIs...')
 plot_timeline_MOIs(allMOI_allA_converted, MOIs, animal_names, plots_folder, todays_datetime)
+
+##################################################################################
+### ---- PROBABILITY OF MOIS HAPPENING AFTER 1ST/2ND/3RD/4TH PREVIOUS MOI ---- ###
+##################################################################################
+
+print('Calculating probability of MOIs happening after previous MOI...')
+# how many tentacle shots before a catch?
+allA_shotsBeforeCatch = calc_prob_MOI_sequence(allMOI_allA_converted, 'catches', 'tentacle shots')
+plot_probMOIseq(allA_shotsBeforeCatch, 'catch', 'tentacle shots', plots_folder, todays_datetime)
+# how many orientations before a tentacle shot?
+allA_orientsBeforeTS = calc_prob_MOI_sequence(allMOI_allA_converted, 'tentacle shots', 'orients')
+plot_probMOIseq(allA_orientsBeforeTS, 'tentacle shot', 'orientations', plots_folder, todays_datetime)
+
 
