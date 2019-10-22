@@ -1,0 +1,233 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.4.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:q1="clr-namespace:Bonsai.IO;assembly=Bonsai.System"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
+                 xmlns:q2="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting"
+                 xmlns:q3="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
+                 xmlns:q4="clr-namespace:Bonsai.Dsp;assembly=Bonsai.Dsp"
+                 xmlns="https://bonsai-rx.org/2018/workflow">
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q1:GetFiles">
+          <q1:Path>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots</q1:Path>
+          <q1:SearchPattern>*.avi</q1:SearchPattern>
+          <q1:SearchOption>AllDirectories</q1:SearchOption>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Concat" />
+      </Expression>
+      <Expression xsi:type="SelectMany">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="rx:RepeatCount">
+                <rx:Count>1</rx:Count>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+          </Nodes>
+          <Edges>
+            <Edge From="0" To="1" Label="Source1" />
+            <Edge From="1" To="2" Label="Source1" />
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="CreateObservable">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="ReplaySubject">
+              <Name>FileName</Name>
+              <BufferSize xsi:nil="true" />
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>FileName</Name>
+            </Expression>
+            <Expression xsi:type="q2:PythonTransform">
+              <q2:Script>@returns(str)
+def process(value):
+  global output
+  L = len(value)-4
+  output = value[0:L] + "CannyCount.csv"
+  return output</q2:Script>
+            </Expression>
+            <Expression xsi:type="PropertyMapping">
+              <PropertyMappings>
+                <Property Name="FileName" />
+              </PropertyMappings>
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>FileName</Name>
+            </Expression>
+            <Expression xsi:type="PropertyMapping">
+              <PropertyMappings>
+                <Property Name="FileName" />
+              </PropertyMappings>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:FileCapture">
+                <q3:FileName>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots\CA_L1-H2013-02_2014-09-11_TS02_catch_60fps.avi</q3:FileName>
+                <q3:PlaybackRate>60</q3:PlaybackRate>
+                <q3:StartPosition>0</q3:StartPosition>
+                <q3:PositionUnits>Frames</q3:PositionUnits>
+                <q3:Loop>false</q3:Loop>
+                <q3:Playing>true</q3:Playing>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Grayscale" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Crop">
+                <q3:RegionOfInterest>
+                  <q3:X>852</q3:X>
+                  <q3:Y>433</q3:Y>
+                  <q3:Width>525</q3:Width>
+                  <q3:Height>224</q3:Height>
+                </q3:RegionOfInterest>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Canny">
+                <q3:Threshold1>7500</q3:Threshold1>
+                <q3:Threshold2>2000</q3:Threshold2>
+                <q3:ApertureSize>7</q3:ApertureSize>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q4:Sum" />
+            </Expression>
+            <Expression xsi:type="MemberSelector">
+              <Selector>Val0</Selector>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="q1:CsvWriter">
+              <q1:FileName>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots\CA_L1-H2013-02_2014-09-11_TS02_catch_60fpsCannyCount.csv</q1:FileName>
+              <q1:Append>false</q1:Append>
+              <q1:Overwrite>false</q1:Overwrite>
+              <q1:Suffix>Timestamp</q1:Suffix>
+              <q1:IncludeHeader>false</q1:IncludeHeader>
+              <q1:Selector />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:ImageHistogram" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q4:Sum" />
+            </Expression>
+            <Expression xsi:type="MemberSelector">
+              <Selector>Val0</Selector>
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>FileName</Name>
+            </Expression>
+            <Expression xsi:type="q2:PythonTransform">
+              <q2:Script>@returns(str)
+def process(value):
+  global output
+  L = len(value)-4
+  output = value[0:L] + "PixelSum.csv"
+  return output</q2:Script>
+            </Expression>
+            <Expression xsi:type="PropertyMapping">
+              <PropertyMappings>
+                <Property Name="FileName" />
+              </PropertyMappings>
+            </Expression>
+            <Expression xsi:type="q1:CsvWriter">
+              <q1:FileName>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots\CA_L1-H2013-02_2014-09-11_TS02_catch_60fpsPixelSum.csv</q1:FileName>
+              <q1:Append>false</q1:Append>
+              <q1:Overwrite>false</q1:Overwrite>
+              <q1:Suffix>Timestamp</q1:Suffix>
+              <q1:IncludeHeader>false</q1:IncludeHeader>
+              <q1:Selector />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q3:Sobel">
+                <q3:XOrder>0</q3:XOrder>
+                <q3:YOrder>1</q3:YOrder>
+                <q3:ApertureSize>5</q3:ApertureSize>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="q4:Sum" />
+            </Expression>
+            <Expression xsi:type="MemberSelector">
+              <Selector>Val0</Selector>
+            </Expression>
+            <Expression xsi:type="SubscribeSubject">
+              <Name>FileName</Name>
+            </Expression>
+            <Expression xsi:type="q2:PythonTransform">
+              <q2:Script>@returns(str)
+def process(value):
+  global output
+  L = len(value)-4
+  output = value[0:L] + "SobelCount.csv"
+  return output</q2:Script>
+            </Expression>
+            <Expression xsi:type="PropertyMapping">
+              <PropertyMappings>
+                <Property Name="FileName" />
+              </PropertyMappings>
+            </Expression>
+            <Expression xsi:type="q1:CsvWriter">
+              <q1:FileName>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots\CA_L1-H2013-02_2014-09-11_TS02_catch_60fpsSobelCount.csv</q1:FileName>
+              <q1:Append>false</q1:Append>
+              <q1:Overwrite>false</q1:Overwrite>
+              <q1:Suffix>Timestamp</q1:Suffix>
+              <q1:IncludeHeader>false</q1:IncludeHeader>
+              <q1:Selector />
+            </Expression>
+          </Nodes>
+          <Edges>
+            <Edge From="0" To="1" Label="Source1" />
+            <Edge From="2" To="3" Label="Source1" />
+            <Edge From="3" To="4" Label="Source1" />
+            <Edge From="4" To="14" Label="Source1" />
+            <Edge From="5" To="6" Label="Source1" />
+            <Edge From="6" To="7" Label="Source1" />
+            <Edge From="7" To="8" Label="Source1" />
+            <Edge From="8" To="9" Label="Source1" />
+            <Edge From="9" To="10" Label="Source1" />
+            <Edge From="9" To="15" Label="Source1" />
+            <Edge From="9" To="16" Label="Source1" />
+            <Edge From="9" To="22" Label="Source1" />
+            <Edge From="10" To="11" Label="Source1" />
+            <Edge From="11" To="12" Label="Source1" />
+            <Edge From="12" To="13" Label="Source1" />
+            <Edge From="12" To="14" Label="Source2" />
+            <Edge From="16" To="17" Label="Source1" />
+            <Edge From="17" To="21" Label="Source2" />
+            <Edge From="18" To="19" Label="Source1" />
+            <Edge From="19" To="20" Label="Source1" />
+            <Edge From="20" To="21" Label="Source1" />
+            <Edge From="22" To="23" Label="Source1" />
+            <Edge From="23" To="24" Label="Source1" />
+            <Edge From="24" To="28" Label="Source2" />
+            <Edge From="25" To="26" Label="Source1" />
+            <Edge From="26" To="27" Label="Source1" />
+            <Edge From="27" To="28" Label="Source1" />
+          </Edges>
+        </Workflow>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Concat" />
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="1" To="2" Label="Source1" />
+      <Edge From="2" To="3" Label="Source1" />
+      <Edge From="3" To="4" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>

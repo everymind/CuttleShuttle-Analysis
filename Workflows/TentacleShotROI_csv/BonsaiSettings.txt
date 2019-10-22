@@ -1,0 +1,10 @@
+Bonsai settings for Tentacle Shot ROI csvs:
+Crop: 852,433,525,224
+Canny:
+ - Aperature size: 7
+ - Threshold 1: 7500
+ - Threshold 2: 2000
+Sobel:
+ - Aperature size: 5
+ - X order: 0
+ - Y order: 1
