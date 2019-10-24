@@ -283,7 +283,7 @@ def find_bounds_for_sig(shuffle_test_results_dict, UpBound, LowBound):
         lowerbound.append(np.percentile(shuffle_test_results_dict[timebin]['SPerf'], LowBound))
     return upperbound, lowerbound
 
-def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, ObservedDiff, shuffDiff, firstSigTB, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigTB, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
     ### POOL ACROSS ANIMALS ### 
     allA_C = []
@@ -306,6 +306,7 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     allA_C_std = np.std(allA_C, axis=0, ddof=1)
     allA_M_mean = np.mean(allA_M, axis=0)
     allA_M_std = np.std(allA_M, axis=0, ddof=1)
+    ObservedDiff = allA_C_mean - allA_M_mean
     # set fig path and title
     figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_' + todays_dt + img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
@@ -319,7 +320,7 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     plt.ylabel("Z-scored change from baseline in number of edges")
     plot_xticks = np.arange(0, len(allA_C_mean), step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    #plt.ylim(-1500000,4000000)
+    plt.ylim(-1.5,2.0)
     #plt.xlim(0,180)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
@@ -344,17 +345,17 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     plt.fill_between(x_tbs, UpperBound_C, LowerBound_C, color=color_stdC)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.3), 'm--', linewidth=1)
-    plt.text(baseline_len, ymax-0.35, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-    plt.text(TGB_bucket, ymax-0.1, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     #subplot: difference of observed means vs shuffled diff of means
     plt.subplot(2,1,2)
     plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
     plt.ylabel("Difference of z-scored means in number of edges")
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    #plt.ylim(-1500000,4000000)
+    plt.ylim(-1.5,2.0)
     #plt.xlim(0,180)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
@@ -370,15 +371,15 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     plt.plot(ObservedDiff, linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means')
     # plot significant time bins as shaded region
     sig_x = range(firstSigTB, 360)
-    plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB_corrected[firstSigTB:], color='cyan', alpha=0.3)
+    plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color='cyan', alpha=0.3)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-    plt.text(baseline_len, -0.2, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-    plt.text(TGB_bucket, ymin, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-    plt.plot((firstSigTB, firstSigTB), (ymin, ymax), 'c--', linewidth=1)
-    plt.text(firstSigTB, -0.2, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+    plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax-0.75), 'c--', linewidth=1)
+    plt.text(firstSigTB, ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save and show fig
     plt.savefig(figure_path)
@@ -408,9 +409,11 @@ TGB_all = glob.glob(canny_counts_folder + os.sep + "*.csv")
 TGB_natural = []
 TGB_patterned = []
 TGB_causal = []
+TGB_daily = {}
 for TGB_file in TGB_all: 
     csv_name = TGB_file.split(os.sep)[-1]
     trial_date = csv_name.split('_')[2]
+    sorted_by_session = TGB_daily.setdefault(trial_date,[]).append(TGB_file)
     trial_datetime = datetime.datetime.strptime(trial_date, '%Y-%m-%d')
     if trial_datetime < datetime.datetime(2014, 9, 13, 0, 0):
         TGB_natural.append(TGB_file)
@@ -420,6 +423,13 @@ for TGB_file in TGB_all:
         TGB_patterned.append(TGB_file)
 
 # organize canny count data
+# categorize daily sessions by animal
+all_TS_daily = {}
+all_catches_daily = {}
+all_misses_daily = {}
+for session_date in TGB_daily:
+    all_TS_daily[session_date] = categorize_by_animal(TGB_daily[session_date])
+    all_catches_daily[session_date], all_misses_daily[session_date] = categorize_by_animal_catchVmiss(TGB_daily[session_date])
 # collect all canny counts and categorize by animal
 all_TS = categorize_by_animal(TGB_all)
 # collect all canny counts and categorize by animal and type (catch vs miss)
@@ -435,15 +445,29 @@ TGB_bucket_raw = 180
 
 # BASELINE SUBTRACTION 
 baseline_buckets = 150
-# sav-gol filter and baseline subtract
+# sav-gol filter and baseline subtract, all TS
 savgol_window = 15
+dailyTS_filtBaseSub = {}
+for session_date in all_TS_daily:
+    dailyTS_filtBaseSub[session_date] = filtered_basesub_count(all_TS_daily[session_date], 'all', baseline_buckets, savgol_window)
 allTS_filtBaseSub = filtered_basesub_count(all_TS, 'all', baseline_buckets, savgol_window)
+# sav-gol filter and baseline subtract, catches versus misses
+dailyCatches_filtBaseSub = {}
+dailyMisses_filtBaseSub = {}
+for session_date in all_catches_daily:
+    dailyCatches_filtBaseSub[session_date] = filtered_basesub_count(all_catches_daily[session_date], 'all', baseline_buckets, savgol_window)
+for session_date in all_misses_daily:
+    dailyMisses_filtBaseSub[session_date] = filtered_basesub_count(all_misses_daily[session_date], 'all', baseline_buckets, savgol_window)
 allCatches_filtBaseSub = filtered_basesub_count(all_catches, 'all', baseline_buckets, savgol_window)
 allMisses_filtBaseSub = filtered_basesub_count(all_misses, 'all', baseline_buckets, savgol_window)
 # zscore each animal so that I can pool all trials into a "superanimal"
 allTS_filtBaseSub_Zscored = zScored_count(allTS_filtBaseSub, allTS_filtBaseSub)
 allCatches_filtBaseSub_Zscored = zScored_count(allCatches_filtBaseSub, allTS_filtBaseSub)
 allMisses_filtBaseSub_Zscored = zScored_count(allMisses_filtBaseSub, allTS_filtBaseSub)
+# zscore daily sessions for each animal to characterize session dynamics
+dailyTS_filtBaseSub_Zscored = {}
+for session_date in dailyTS_filtBaseSub:
+    dailyTS_filtBaseSub_Zscored[session_date] = zScored_count(dailyTS_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
 
 #######################################################
 ### ------------ PLOT THE ZSCORED DATA ------------ ###
@@ -451,6 +475,8 @@ allMisses_filtBaseSub_Zscored = zScored_count(allMisses_filtBaseSub, allTS_filtB
 
 ## individual animals
 plot_indiv_animals('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+for session_date in dailyTS_filtBaseSub:
+    plot_indiv_animals('CannyEdgeDetector', 'Daily_Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ########################################################
 ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
@@ -571,7 +597,7 @@ N_violations_UBcorrected, N_violations_LBcorrected = check_violations_sigBounds(
 
 # find where observed data crosses corrected bounds for first time
 for tb in range(len(Observed_DiffMeans)):
-    if Observed_DiffMeans[tb]>global005sig_UB[tb]:
+    if Observed_DiffMeans[tb]>pw005sig_UB[tb]:
         firstTB_P005sig = tb
         break
 
@@ -591,6 +617,15 @@ plt.show()
 #######################################################
 
 ### POOL ACROSS ANIMALS
-plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, Observed_DiffMeans, shuff_DiffMeans, firstTB_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstTB_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+
+### TO DO
+# calculate the average time post-TGB when tentacles hit target and when tentacles return to mouth and add to plots
+
+#######################################################
+### ---------------- SANITY CHECKS ---------------- ###
+#######################################################
+### zscore each animal by session (day)
+
 
 ## FIN
