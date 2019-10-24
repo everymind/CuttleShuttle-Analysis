@@ -200,7 +200,7 @@ def pool_acrossA_keepTemporalStructure(catches_dict, misses_dict, timebin_start,
     pooled_misses_array = np.array(pooled_misses)
     return pooled_catches_array, pooled_catches_Ntrials, pooled_misses_array, pooled_misses_Ntrials
 
-def plot_indiv_animals(analysis_type_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
+def plot_indiv_animals(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
     # plot individual animals
     img_type = ['.png', '.pdf']
     for animal in allA_C_dict.keys(): 
@@ -210,7 +210,7 @@ def plot_indiv_animals(analysis_type_str, metric_str, prey_type_str, allA_C_dict
             catches_mean = np.mean(allA_C_dict[animal], axis=0)
             misses_mean = np.mean(allA_M_dict[animal], axis=0)
             # set fig path and title
-            figure_name = analysis_type_str + '_SavGolFiltered_BaselineSubtracted_'+ prey_type_str + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+            figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_' + animal + "_" + todays_dt + img_type[0]
             figure_path = os.path.join(plots_dir, figure_name)
             figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
             # setup fig
@@ -307,7 +307,7 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     allA_M_mean = np.mean(allA_M, axis=0)
     allA_M_std = np.std(allA_M, axis=0, ddof=1)
     # set fig path and title
-    figure_name = analysis_type_str + preprocess_str + prey_type_str + 'Trials_AllAnimals_' + todays_dt + img_type[0]
+    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_' + todays_dt + img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
     figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N), Nm=str(allA_M_N))
     # draw fig
@@ -450,7 +450,7 @@ allMisses_filtBaseSub_Zscored = zScored_count(allMisses_filtBaseSub, allTS_filtB
 #######################################################
 
 ## individual animals
-plot_indiv_animals('CannyEdgeDetector', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_indiv_animals('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ########################################################
 ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
@@ -591,6 +591,6 @@ plt.show()
 #######################################################
 
 ### POOL ACROSS ANIMALS
-plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', '_Zscored_SavGol_BaseSub_', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, Observed_DiffMeans, shuff_DiffMeans, firstTB_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, Observed_DiffMeans, shuff_DiffMeans, firstTB_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ## FIN
