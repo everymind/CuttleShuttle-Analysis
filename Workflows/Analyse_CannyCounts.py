@@ -209,16 +209,6 @@ def pool_acrossA_keepTemporalStructure(catches_dict, misses_dict, timebin_start,
     pooled_misses_array = np.array(pooled_misses)
     return pooled_catches_array, pooled_catches_Ntrials, pooled_misses_array, pooled_misses_Ntrials
 
-analysis_type_str = 'CannyEdgeDetector'
-preprocess_str = 'Zscored_SavGol_BaseSub'
-metric_str = 'edge counts'
-prey_type_str = 'all'
-allA_C_dict = allCatches_filtBaseSub_Zscored
-allA_M_dict = allMisses_filtBaseSub_Zscored
-TGB_bucket = TGB_bucket_raw
-baseline_len = baseline_buckets
-plots_dir = plots_folder
-todays_dt = todays_datetime
 def plot_indiv_animals(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
     # plot individual animals
     img_type = ['.png', '.pdf']
@@ -388,7 +378,7 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     plt.ylabel("Z-scored change from baseline in number of edges")
     plot_xticks = np.arange(0, len(allA_C_mean), step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    plt.ylim(-1.5,2.0)
+    plt.ylim(-1.5,3.0)
     #plt.xlim(0,180)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
@@ -423,7 +413,7 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
     plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
     plt.ylabel("Difference of z-scored means in number of edges")
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    plt.ylim(-1.5,2.0)
+    plt.ylim(-1.5,3.0)
     #plt.xlim(0,180)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
@@ -533,30 +523,34 @@ allCatches_filtBaseSub = filtered_basesub_count(all_catches, 'all', baseline_buc
 allMisses_filtBaseSub = filtered_basesub_count(all_misses, 'all', baseline_buckets, savgol_window)
 # zscore each animal so that I can pool all trials into a "superanimal"
 allTS_filtBaseSub_Zscored = zScored_count('timebin', allTS_filtBaseSub, allTS_filtBaseSub)
-allCatches_filtBaseSub_Zscored = zScored_count('timebin', allCatches_filtBaseSub, allTS_filtBaseSub)
-allMisses_filtBaseSub_Zscored = zScored_count('timebin', allMisses_filtBaseSub, allTS_filtBaseSub)
+allCatches_filtBaseSub_Zscored_TB = zScored_count('timebin', allCatches_filtBaseSub, allTS_filtBaseSub)
+allMisses_filtBaseSub_Zscored_TB = zScored_count('timebin', allMisses_filtBaseSub, allTS_filtBaseSub)
+allTS_filtBaseSub_Zscored_TB_Sess = zScored_count('session', allTS_filtBaseSub, allTS_filtBaseSub)
+allCatches_filtBaseSub_Zscored_Sess = zScored_count('session', allCatches_filtBaseSub, allTS_filtBaseSub)
+allMisses_filtBaseSub_Zscored_Sess = zScored_count('session', allMisses_filtBaseSub, allTS_filtBaseSub)
 # zscore daily sessions for each animal to characterize session dynamics
-dailyTS_filtBaseSub_Zscored = {}
+dailyTS_filtBaseSub_Zscored_Sess = {}
 for session_date in dailyTS_filtBaseSub:
-    dailyTS_filtBaseSub_Zscored[session_date] = zScored_count('session', dailyTS_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
-dailyCatches_filtBaseSub_Zscored = {}
-dailyMisses_filtBaseSub_Zscored = {}
+    dailyTS_filtBaseSub_Zscored_Sess[session_date] = zScored_count('session', dailyTS_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+dailyCatches_filtBaseSub_Zscored_Sess = {}
+dailyMisses_filtBaseSub_Zscored_Sess = {}
 for session_date in dailyCatches_filtBaseSub:
-    dailyCatches_filtBaseSub_Zscored[session_date] = zScored_count('session', dailyCatches_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+    dailyCatches_filtBaseSub_Zscored_Sess[session_date] = zScored_count('session', dailyCatches_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
 for session_date in dailyMisses_filtBaseSub:
-    dailyMisses_filtBaseSub_Zscored[session_date] = zScored_count('session', dailyMisses_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+    dailyMisses_filtBaseSub_Zscored_Sess[session_date] = zScored_count('session', dailyMisses_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
 
 #######################################################
 ### ------------ PLOT THE ZSCORED DATA ------------ ###
 #######################################################
 
 ## individual animals
-plot_indiv_animals('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_indiv_animals('CannyEdgeDetector', 'Zscored_TB_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_indiv_animals('CannyEdgeDetector', 'Zscored_Sess_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored_Sess, allMisses_filtBaseSub_Zscored_Sess, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 # sanity check
 for session_date in dailyTS_filtBaseSub:
     plot_indiv_animals('CannyEdgeDetector', 'SavGol_BaseSub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub[session_date], dailyMisses_filtBaseSub[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
-    plot_indiv_animals('CannyEdgeDetector', 'Zscored_SavGol_Basesub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub_Zscored[session_date], dailyMisses_filtBaseSub_Zscored[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+    plot_indiv_animals('CannyEdgeDetector', 'Zscored_Sess_SavGol_Basesub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub_Zscored_Sess[session_date], dailyMisses_filtBaseSub_Zscored_Sess[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ########################################################
 ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
@@ -564,56 +558,58 @@ for session_date in dailyTS_filtBaseSub:
 No_of_Shuffles = 20000
 
 ### POOL ACROSS ALL ANIMALS, zscored, full trial
-allA_ZfullTrial_C, allA_ZfullTrial_C_N, allA_ZfullTrial_M, allA_ZfullTrial_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, 0, -1, "all")
+allA_ZfullTrial_C, allA_ZfullTrial_C_N, allA_ZfullTrial_M, allA_ZfullTrial_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, 0, -1, "all")
 # all animals full trial shuffle test
 allA_ZfullTrial_SPerf, allA_ZfullTrial_pval, allA_ZfullTrial_mean = shuffle_test(allA_ZfullTrial_C, allA_ZfullTrial_M, No_of_Shuffles, "AllCatches-Zscored-fullTrial", "AllMisses-Zscored-fullTrial", allA_ZfullTrial_C_N, allA_ZfullTrial_M_N, False, plots_folder, todays_datetime)
 
 ### POOL ACROSS ALL ANIMALS, before and after TGB
-allA_ZpreTGB_C, allA_ZpreTGB_C_N, allA_ZpreTGB_M, allA_ZpreTGB_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, 0, TGB_bucket_raw-1, "all")
-allA_ZpostTGB_C, allA_ZpostTGB_C_N, allA_ZpostTGB_M, allA_ZpostTGB_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, -1, "all")
+allA_ZpreTGB_C, allA_ZpreTGB_C_N, allA_ZpreTGB_M, allA_ZpreTGB_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, 0, TGB_bucket_raw-1, "all")
+allA_ZpostTGB_C, allA_ZpostTGB_C_N, allA_ZpostTGB_M, allA_ZpostTGB_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, TGB_bucket_raw, -1, "all")
 # all animals preTGB shuffle test
 allA_ZpreTGB_SPerf, allA_ZpreTGB_pval, allA_ZpreTGB_mean = shuffle_test(allA_ZpreTGB_C, allA_ZpreTGB_M, No_of_Shuffles, "AllCatch-Zscored-preTGB", "AllMiss-Zscored-preTGB", allA_ZpreTGB_C_N, allA_ZpreTGB_M_N, False, plots_folder, todays_datetime)
 # all animals postTGB shuffle test
 allA_ZpostTGB_SPerf, allA_ZpostTGB_pval, allA_ZpostTGB_mean = shuffle_test(allA_ZpostTGB_C, allA_ZpostTGB_M, No_of_Shuffles, "AllCatch-Zscored-postTGB", "AllMiss-Zscored-postTGB", allA_ZpostTGB_C_N, allA_ZpostTGB_M_N, False, plots_folder, todays_datetime)
 
 ### POOL ACROSS ALL ANIMALS, baseline period
-allA_Zbaseline_C, allA_Zbaseline_C_N, allA_Zbaseline_M, allA_Zbaseline_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, 0, baseline_buckets, "all")
-# all animals baseline shuffle test, number of tests = 2
+allA_Zbaseline_C, allA_Zbaseline_C_N, allA_Zbaseline_M, allA_Zbaseline_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, 0, baseline_buckets, "all")
+# all animals baseline shuffle test
 allA_Zbaseline_SPerf, allA_Zbaseline_pval, allA_Zbaseline_mean = shuffle_test(allA_Zbaseline_C, allA_Zbaseline_M, No_of_Shuffles, "AllCatch-Zscored-baseline", "AllMiss-Zscored-baseline", allA_Zbaseline_C_N, allA_Zbaseline_M_N, False, plots_folder, todays_datetime)
 
 ### POOL ACROSS ALL ANIMALS, 0.5 seconds before TGB
-allA_ZhalfSecPreTGB_C, allA_ZhalfSecPreTGB_C_N, allA_ZhalfSecPreTGB_M, allA_ZhalfSecPreTGB_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, baseline_buckets, TGB_bucket_raw-1, "all")
-# all animals baseline shuffle test, number of tests = 2
+# zscored by timebin
+allA_ZhalfSecPreTGB_C, allA_ZhalfSecPreTGB_C_N, allA_ZhalfSecPreTGB_M, allA_ZhalfSecPreTGB_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, baseline_buckets, TGB_bucket_raw-1, "all")
+# all animals baseline shuffle test
 allA_ZhalfSecPreTGB_SPerf, allA_ZhalfSecPreTGB_pval, allA_ZhalfSecPreTGB_mean = shuffle_test(allA_ZhalfSecPreTGB_C, allA_ZhalfSecPreTGB_M, No_of_Shuffles, "AllCatch-Zscored-halfSecPreTGB", "AllMiss-Zscored-halfSecPreTGB", allA_ZhalfSecPreTGB_C_N, allA_ZhalfSecPreTGB_M_N, False, plots_folder, todays_datetime)
 ### individual animals, 0.5 seconds before TGB (show trends in individual animals to double check the pooled shuffle test)
 indivA_N_shuffles = 1000
-byA_ZhalfSecPreTGB_C, byA_ZhalfSecPreTGB_M = pool_timebins_byAnimal(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, baseline_buckets, TGB_bucket_raw-1)
+byA_ZhalfSecPreTGB_C, byA_ZhalfSecPreTGB_M = pool_timebins_byAnimal(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, baseline_buckets, TGB_bucket_raw-1)
 byA_ZhalfSecPreTGB_SPerf = {}
 byA_ZhalfSecPreTGB_pval = {}
 byA_ZhalfSecPreTGB_mean = {}
 for animal in byA_ZhalfSecPreTGB_C:
-    thisA_ZhalfSecPreTGB_SPerf, thisA_ZhalfSecPreTGB_pval, thisA_ZhalfSecPreTGB_mean = shuffle_test(byA_ZhalfSecPreTGB_C[animal], byA_ZhalfSecPreTGB_M[animal], indivA_N_shuffles, animal+"-Zscored-halfSecPreTGB", animal+"-Zscored-halfSecPreTGB", len(allCatches_filtBaseSub_Zscored[animal]), len(allMisses_filtBaseSub_Zscored[animal]), False, plots_folder, todays_datetime)
+    thisA_ZhalfSecPreTGB_SPerf, thisA_ZhalfSecPreTGB_pval, thisA_ZhalfSecPreTGB_mean = shuffle_test(byA_ZhalfSecPreTGB_C[animal], byA_ZhalfSecPreTGB_M[animal], indivA_N_shuffles, animal+"-Zscored-halfSecPreTGB", animal+"-Zscored-halfSecPreTGB", len(allCatches_filtBaseSub_Zscored_TB[animal]), len(allMisses_filtBaseSub_Zscored_TB[animal]), False, plots_folder, todays_datetime)
     byA_ZhalfSecPreTGB_SPerf[animal] = thisA_ZhalfSecPreTGB_SPerf
     byA_ZhalfSecPreTGB_pval[animal] = thisA_ZhalfSecPreTGB_pval
     byA_ZhalfSecPreTGB_mean[animal] = thisA_ZhalfSecPreTGB_mean
 
 ### POOL ACROSS ALL ANIMALS, from 3.4 seconds after TGB to end
-allA_Ztb205toEnd_C, allA_Ztb205toEnd_C_N, allA_Ztb205toEnd_M, allA_Ztb205toEnd_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, 205, -1, "all")
-# all animals baseline shuffle test, number of tests = 2
+allA_Ztb205toEnd_C, allA_Ztb205toEnd_C_N, allA_Ztb205toEnd_M, allA_Ztb205toEnd_M_N = pool_acrossA_acrossTB(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, 205, -1, "all")
+# all animals baseline shuffle test
 allA_Ztb205toEnd_SPerf, allA_Ztb205toEnd_pval, allA_Ztb205toEnd_mean = shuffle_test(allA_Ztb205toEnd_C, allA_Ztb205toEnd_M, No_of_Shuffles, "AllCatch-Zscored-tb205toEnd", "AllMiss-Zscored-tb205toEnd", allA_Ztb205toEnd_C_N, allA_Ztb205toEnd_M_N, False, plots_folder, todays_datetime)
 ### individual animals, from 3.4 seconds after TGB to end (show trends in individual animals to double check the pooled shuffle test)
-byA_ZpostTB205_C, byA_ZpostTB205_M = pool_timebins_byAnimal(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, 205, -1)
+byA_ZpostTB205_C, byA_ZpostTB205_M = pool_timebins_byAnimal(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, 205, -1)
 byA_ZpostTB205_SPerf = {}
 byA_ZpostTB205_pval = {}
 byA_ZpostTB205_mean = {}
 for animal in byA_ZpostTB205_C:
-    thisA_ZpostTB205_SPerf, thisA_ZpostTB205_pval, thisA_ZpostTB205_mean = shuffle_test(byA_ZpostTB205_C[animal], byA_ZpostTB205_M[animal], indivA_N_shuffles, animal+"-Catches-Zscored-tb205toEnd", animal+"-Misses-Zscored-tb205toEnd", len(allCatches_filtBaseSub_Zscored[animal]), len(allMisses_filtBaseSub_Zscored[animal]), False, plots_folder, todays_datetime)
+    thisA_ZpostTB205_SPerf, thisA_ZpostTB205_pval, thisA_ZpostTB205_mean = shuffle_test(byA_ZpostTB205_C[animal], byA_ZpostTB205_M[animal], indivA_N_shuffles, animal+"-Catches-Zscored-tb205toEnd", animal+"-Misses-Zscored-tb205toEnd", len(allCatches_filtBaseSub_Zscored_TB[animal]), len(allMisses_filtBaseSub_Zscored_TB[animal]), False, plots_folder, todays_datetime)
     byA_ZpostTB205_SPerf[animal] = thisA_ZpostTB205_SPerf
     byA_ZpostTB205_pval[animal] = thisA_ZpostTB205_pval
     byA_ZpostTB205_mean[animal] = thisA_ZpostTB205_mean
 
 ### POOL ACROSS ALL ANIMALS, make a shuffle test of every time bin
-allA_Z_byTB_C, allA_Z_byTB_C_N, allA_Z_byTB_M, allA_Z_byTB_M_N = pool_acrossA_keepTemporalStructure(allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, 0, -1, "all")
+# zscored by timebin
+allA_Z_byTB_C, allA_Z_byTB_C_N, allA_Z_byTB_M, allA_Z_byTB_M_N = pool_acrossA_keepTemporalStructure(allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, 0, -1, "all")
 ZedgeScores_byTB = {}
 for timebin in range(360):
     # collect all edge scores for each time bin
@@ -624,6 +620,18 @@ for timebin in range(360):
         ZedgeScores_byTB[timebin]['miss'].append(trial[timebin])
     # shuffle test each time bin
     ZedgeScores_byTB[timebin]['SPerf'], ZedgeScores_byTB[timebin]['pval'], ZedgeScores_byTB[timebin]['mean'] = shuffle_test(ZedgeScores_byTB[timebin]['catch'], ZedgeScores_byTB[timebin]['miss'], No_of_Shuffles, 'AllCatches-Zscored-TB'+str(timebin), 'AllMisses-Zscored-TB'+str(timebin), allA_Z_byTB_C_N, allA_Z_byTB_M_N, False, plots_folder, todays_datetime)
+# zscored by entire dataset
+allA_ZSess_byTB_C, allA_ZSess_byTB_C_N, allA_ZSess_byTB_M, allA_ZSess_byTB_M_N = pool_acrossA_keepTemporalStructure(allCatches_filtBaseSub_Zscored_Sess, allMisses_filtBaseSub_Zscored_Sess, 0, -1, "all")
+ZSessEdgeScores_byTB = {}
+for timebin in range(360):
+    # collect all edge scores for each time bin
+    ZSessEdgeScores_byTB[timebin] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+    for trial in allA_ZSess_byTB_C:
+        ZSessEdgeScores_byTB[timebin]['catch'].append(trial[timebin])
+    for trial in allA_ZSess_byTB_M:
+        ZSessEdgeScores_byTB[timebin]['miss'].append(trial[timebin])
+    # shuffle test each time bin
+    ZSessEdgeScores_byTB[timebin]['SPerf'], ZSessEdgeScores_byTB[timebin]['pval'], ZSessEdgeScores_byTB[timebin]['mean'] = shuffle_test(ZSessEdgeScores_byTB[timebin]['catch'], ZSessEdgeScores_byTB[timebin]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-TB'+str(timebin), 'AllMisses-ZscoredSess-TB'+str(timebin), allA_ZSess_byTB_C_N, allA_ZSess_byTB_M_N, True, plots_folder, todays_datetime)
 
 #######################################################
 ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
@@ -633,27 +641,45 @@ for timebin in range(360):
 UB_pointwise = 97.5
 LB_pointwise = 2.5
 pw005sig_UB, pw005sig_LB = find_bounds_for_sig(ZedgeScores_byTB, UB_pointwise, LB_pointwise)
+pw005sig_Zsess_UB, pw005sig_Zsess_LB = find_bounds_for_sig(ZSessEdgeScores_byTB, UB_pointwise, LB_pointwise)
 
 # collect shuffled mean of each time bin
 shuff_DiffMeans = []
 for timebin in sorted(ZedgeScores_byTB.keys()):
     shuff_DiffMeans.append(ZedgeScores_byTB[timebin]['mean'])
 shuff_DiffMeans = np.array(shuff_DiffMeans)
+#
+shuff_ZSess_DiffMeans = []
+for timebin in sorted(ZSessEdgeScores_byTB.keys()):
+    shuff_ZSess_DiffMeans.append(ZSessEdgeScores_byTB[timebin]['mean'])
+shuff_ZSess_DiffMeans = np.array(shuff_ZSess_DiffMeans)
 
 # calculate real difference of mean catch and mean miss
 allA_allC_Z = []
 allA_allM_Z = []
-for animal in allCatches_filtBaseSub_Zscored:
-    for trial in allCatches_filtBaseSub_Zscored[animal]:
+for animal in allCatches_filtBaseSub_Zscored_TB:
+    for trial in allCatches_filtBaseSub_Zscored_TB[animal]:
         allA_allC_Z.append(trial)
-    for trial in allMisses_filtBaseSub_Zscored[animal]:
+    for trial in allMisses_filtBaseSub_Zscored_TB[animal]:
         allA_allM_Z.append(trial)
 allA_allC_Z_mean = np.nanmean(allA_allC_Z, axis=0)
 allA_allM_Z_mean = np.nanmean(allA_allM_Z, axis=0)
 Observed_DiffMeans = allA_allC_Z_mean - allA_allM_Z_mean
+#
+allA_allC_ZSess = []
+allA_allM_ZSess = []
+for animal in allCatches_filtBaseSub_Zscored_Sess:
+    for trial in allCatches_filtBaseSub_Zscored_Sess[animal]:
+        allA_allC_ZSess.append(trial)
+    for trial in allMisses_filtBaseSub_Zscored_Sess[animal]:
+        allA_allM_ZSess.append(trial)
+allA_allC_ZSess_mean = np.nanmean(allA_allC_ZSess, axis=0)
+allA_allM_ZSess_mean = np.nanmean(allA_allM_ZSess, axis=0)
+Observed_DiffMeans_ZSess = allA_allC_ZSess_mean - allA_allM_ZSess_mean
 
 # generate random traces to correct threshold for p<0.05
 No_of_random_traces = 1000
+# zscored by timebin
 shuffledDiffMeans_byTB = {}
 for timebin in ZedgeScores_byTB:
     shuffledDiffMeans_byTB[timebin] = gen_shuffled_traces(ZedgeScores_byTB[timebin]['catch'], ZedgeScores_byTB[timebin]['miss'], No_of_random_traces, len(ZedgeScores_byTB[timebin]['catch']), len(ZedgeScores_byTB[timebin]['miss']))
@@ -666,19 +692,39 @@ for st in range(shuffMeans_traces_N):
         this_trace.append(shuffledDiffMeans_byTB[timebin][st][0])
     shuffMeans_traces.append(this_trace)
 shuffMeans_traces = np.array(shuffMeans_traces)
+# zscored by entire dataset
+shuffledDiffMeans_ZSess_byTB = {}
+for timebin in ZSessEdgeScores_byTB:
+    shuffledDiffMeans_ZSess_byTB[timebin] = gen_shuffled_traces(ZSessEdgeScores_byTB[timebin]['catch'], ZSessEdgeScores_byTB[timebin]['miss'], No_of_random_traces, len(ZSessEdgeScores_byTB[timebin]['catch']), len(ZSessEdgeScores_byTB[timebin]['miss']))
+# convert to arrays for plotting
+shuffMeans_ZSess_traces = []
+shuffMeans_ZSess_traces_N = len(shuffledDiffMeans_ZSess_byTB[0])
+for st in range(shuffMeans_ZSess_traces_N):
+    this_trace = []
+    for timebin in shuffledDiffMeans_ZSess_byTB:
+        this_trace.append(shuffledDiffMeans_ZSess_byTB[timebin][st][0])
+    shuffMeans_ZSess_traces.append(this_trace)
+shuffMeans_ZSess_traces = np.array(shuffMeans_ZSess_traces)
 
 # correct the p<0.05 bounds
-UB_corrected = 99.991
-LB_corrected = 0.009
+UB_corrected = 99.994
+LB_corrected = 0.006
 global005sig_UB, global005sig_LB = find_bounds_for_sig(ZedgeScores_byTB, UB_corrected, LB_corrected)
+global005sig_ZSess_UB, global005sig_ZSess_LB = find_bounds_for_sig(ZSessEdgeScores_byTB, UB_corrected, LB_corrected)
 
 # check how many of these random traces violate the p<0.05 generated by timebin-wise shuffle test
 N_violations_UBcorrected, N_violations_LBcorrected = check_violations_sigBounds(shuffMeans_traces, global005sig_UB, global005sig_LB)
+N_violations_ZSess_UBcorrected, N_violations_ZSess_LBcorrected = check_violations_sigBounds(shuffMeans_ZSess_traces, global005sig_ZSess_UB, global005sig_ZSess_LB)
 
 # find where observed data crosses corrected bounds for first time
 for tb in range(len(Observed_DiffMeans)):
     if Observed_DiffMeans[tb]>pw005sig_UB[tb]:
         firstTB_P005sig = tb
+        break
+# 
+for tb in range(len(Observed_DiffMeans_ZSess)):
+    if Observed_DiffMeans_ZSess[tb]>pw005sig_Zsess_UB[tb]:
+        firstTB_ZSess_P005sig = tb
         break
 
 # visualize
@@ -691,13 +737,91 @@ plt.plot(global005sig_LB, 'm--')
 plt.plot(shuff_DiffMeans, 'b--')
 plt.plot(Observed_DiffMeans, 'k-')
 plt.show()
+#
+for shuff_trace in shuffMeans_ZSess_traces:
+    plt.plot(shuff_trace, alpha=0.1)
+plt.plot(pw005sig_Zsess_UB, 'g--')
+plt.plot(pw005sig_Zsess_LB, 'g--')
+plt.plot(global005sig_ZSess_UB, 'm--')
+plt.plot(global005sig_ZSess_LB, 'm--')
+plt.plot(shuff_ZSess_DiffMeans, 'b--')
+plt.plot(Observed_DiffMeans_ZSess, 'k-')
+plt.show()
 
 #######################################################
 ### ------------ PLOT THE SHUFFLE DATA ------------ ###
 #######################################################
 
 ### POOL ACROSS ANIMALS
-plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstTB_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstTB_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored_Sess, allMisses_filtBaseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstTB_ZSess_P005sig, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+
+##############################################################################
+### -- GET ERROR BAR FOR WHEN DIFF B/T CATCH V MISS BECOMES SIGNIFICANT -- ###
+##############################################################################
+
+ZSessEdgeScores_byTB_ErrOfSigTB = {}
+pw005sig_Zsess_ErrOfSigTB = {}
+shuff_ZSess_DiffMeans_ErrOfSigTB = {}
+shuffledDiffMeans_ZSess_byTB_ErrOfSigTB = {}
+shuffMeans_ZSess_traces_ErrOfSigTB = {}
+UB_corrected_ErrOfSigTB = {}
+LB_corrected_ErrOfSigTB = {}
+firstTB_ZSess_P005sig_ErrOfSigTB = {}
+No_of_repetitions = 100
+for rep in No_of_repetitions:
+    # shuffle test
+    print('Running shuffle test, rep = {r}...'.format(r=rep))
+    ZSessEdgeScores_byTB_ErrOfSigTB[rep] = {}
+    pw005sig_Zsess_ErrOfSigTB[rep] = {'upper bound': None, 'lower bound': None}
+    for timebin in range(360):
+        # collect all edge scores for each time bin
+        ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+        for trial in allA_ZSess_byTB_C:
+            ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['catch'].append(trial[timebin])
+        for trial in allA_ZSess_byTB_M:
+            ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['miss'].append(trial[timebin])
+        # shuffle test each time bin
+        ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['SPerf'], ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['pval'], ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['mean'] = shuffle_test(ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['catch'], ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-TB'+str(timebin), 'AllMisses-ZscoredSess-TB'+str(timebin), allA_ZSess_byTB_C_N, allA_ZSess_byTB_M_N, False, plots_folder, todays_datetime)
+    # collect shuffled mean of each time bin
+    shuff_ZSess_DiffMeans_ErrOfSigTB[rep] = []
+    for timebin in sorted(ZSessEdgeScores_byTB_ErrOfSigTB[rep].keys()):
+        shuff_ZSess_DiffMeans_ErrOfSigTB[rep].append(ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['mean'])
+    shuff_ZSess_DiffMeans_ErrOfSigTB[rep] = np.array(shuff_ZSess_DiffMeans_ErrOfSigTB[rep])
+    # pointwise p<0.05
+    pw005sig_Zsess_ErrOfSigTB[rep]['upper bound'], pw005sig_Zsess_ErrOfSigTB[rep]['lower bound'] = find_bounds_for_sig(ZSessEdgeScores_byTB_ErrOfSigTB[rep], UB_pointwise, LB_pointwise)
+    # generate random traces to correct threshold for p<0.05
+    print('Generating 1000 random traces, rep = {r}...'.format(r=rep))
+    shuffledDiffMeans_ZSess_byTB_ErrOfSigTB[rep] = {}
+    for timebin in ZSessEdgeScores_byTB_ErrOfSigTB[rep]:
+        shuffledDiffMeans_ZSess_byTB_ErrOfSigTB[rep][timebin] = gen_shuffled_traces(ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['catch'], ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['miss'], No_of_random_traces, len(ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['catch']), len(ZSessEdgeScores_byTB_ErrOfSigTB[rep][timebin]['miss']))
+    # convert to arrays for plotting
+    shuffMeans_ZSess_traces_ErrOfSigTB[rep] = []
+    shuffMeans_ZSess_traces_N_ErrOfSigTB = len(shuffledDiffMeans_ZSess_byTB_ErrOfSigTB[rep][0])
+    for st in range(shuffMeans_ZSess_traces_N_ErrOfSigTB):
+        this_trace = []
+        for timebin in shuffledDiffMeans_ZSess_byTB_ErrOfSigTB[rep]:
+            this_trace.append(shuffledDiffMeans_ZSess_byTB_ErrOfSigTB[rep][timebin][st][0])
+        shuffMeans_ZSess_traces_ErrOfSigTB[rep].append(this_trace)
+    shuffMeans_ZSess_traces_ErrOfSigTB[rep] = np.array(shuffMeans_ZSess_traces_ErrOfSigTB[rep])
+    # correct the p<0.05 bounds
+    print('Correcting p<0.05 bounds, rep = {r}...'.format(r=rep))
+    UB_corrected_ErrOfSigTB[rep] = UB_pointwise
+    LB_corrected_ErrOfSigTB[rep] = LB_pointwise
+    N_violations_ZSess_UBcorrected_ErrOfSigTB = 1000
+    N_violations_ZSess_LBcorrected_ErrOfSigTB = 1000
+    while N_violations_ZSess_UBcorrected_ErrOfSigTB>50 or N_violations_ZSess_LBcorrected_ErrOfSigTB>50:
+        global005sig_ZSess_UB_ErrOfSigTB[rep], global005sig_ZSess_LB_ErrOfSigTB[rep] = find_bounds_for_sig(ZSessEdgeScores_byTB_ErrOfSigTB[rep], UB_corrected_ErrOfSigTB[rep], LB_corrected_ErrOfSigTB[rep])
+        # check how many of these random traces violate the p<0.05 generated by timebin-wise shuffle test
+        N_violations_ZSess_UBcorrected_ErrOfSigTB, N_violations_ZSess_LBcorrected_ErrOfSigTB = check_violations_sigBounds(shuffMeans_ZSess_traces_ErrOfSigTB[rep], global005sig_ZSess_UB_ErrOfSigTB[rep], global005sig_ZSess_LB_ErrOfSigTB[rep])
+        if N_violations_ZSess_UBcorrected_ErrOfSigTB>50 or N_violations_ZSess_LBcorrected_ErrOfSigTB>50:
+            UB_corrected_ErrOfSigTB[rep] = UB_corrected_ErrOfSigTB[rep] + 0.001
+            LB_corrected_ErrOfSigTB[rep] = LB_corrected_ErrOfSigTB[rep] - 0.001
+    # find where observed data crosses corrected bounds for first time
+    for tb in range(len(Observed_DiffMeans_ZSess)):
+    if Observed_DiffMeans_ZSess[tb]>pw005sig_Zsess_ErrOfSigTB[rep]['upper bound'][tb]:
+        firstTB_ZSess_P005sig_ErrOfSigTB[rep] = tb
+        break
 
 ### TO DO
 # calculate the average time post-TGB when tentacles hit target and when tentacles return to mouth and add to plots
