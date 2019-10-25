@@ -10,7 +10,6 @@ import sys
 import itertools
 import scipy
 import scipy.signal
-from fitter import Fitter
 from scipy import stats
 import random
 
@@ -54,28 +53,38 @@ def filtered_basesub_count(TS_dict, prey_type, baseline_len, savgol_filter_windo
                 baseline = np.nanmean(filtered_trial[0:baseline_len])
                 filtered_basesub_trial = [float(x-baseline) for x in filtered_trial]
                 all_filtered_basesub_trials.append(filtered_basesub_trial)
-            basesub_filtered_mean = np.nanmean(all_filtered_basesub_trials, axis=0)
-            basesub_filtered_std = np.nanstd(all_filtered_basesub_trials, axis=0, ddof=1)
+            basesub_filtered_mean_byTB = np.nanmean(all_filtered_basesub_trials, axis=0)
+            basesub_filtered_mean_bySess = np.nanmean(all_filtered_basesub_trials)
+            basesub_filtered_std_byTB = np.nanstd(all_filtered_basesub_trials, axis=0, ddof=1)
+            basesub_filtered_std_bySess = np.nanstd(all_filtered_basesub_trials, ddof=1)
             basesub_filtered_TS[animal]['trials'] = all_filtered_basesub_trials
-            basesub_filtered_TS[animal]['mean'] = basesub_filtered_mean
-            basesub_filtered_TS[animal]['std'] = basesub_filtered_std
+            basesub_filtered_TS[animal]['mean tb'] = basesub_filtered_mean_byTB
+            basesub_filtered_TS[animal]['mean session'] = basesub_filtered_mean_bySess
+            basesub_filtered_TS[animal]['std tb'] = basesub_filtered_std_byTB
+            basesub_filtered_TS[animal]['std session'] = basesub_filtered_std_bySess
         except Exception:
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return basesub_filtered_TS
 
-def zScored_count(dict_to_Zscore, dict_for_mean_std):
+def zScored_count(Zscore_type, dict_to_Zscore, dict_for_mean_std):
     zScored_dict = {}
     for animal in dict_to_Zscore:
         zScored_dict[animal] = []
         for trial in dict_to_Zscore[animal]['trials']:
             trial_array = np.array(trial)
-            trial_zscored = (trial_array - dict_for_mean_std[animal]['mean'])/dict_for_mean_std[animal]['std']
+            if Zscore_type=='timebin':
+                trial_zscored = (trial_array - dict_for_mean_std[animal]['mean tb'])/dict_for_mean_std[animal]['std tb']
+            if Zscore_type=='session':
+                trial_zscored = []
+                for timebin in trial:
+                    tb_zscored = (timebin - dict_for_mean_std[animal]['mean session'])/dict_for_mean_std[animal]['std session']
+                    trial_zscored.append(tb_zscored)
             zScored_dict[animal].append(trial_zscored)
     return zScored_dict
 
 def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, Group2_N, plot_on, plots_dir, todays_dt):
     # Observed performance
-    OPerf = np.mean(Group1) - np.mean(Group2)
+    OPerf = np.nanmean(Group1) - np.nanmean(Group2)
     # Shuffle the dataset and compare means again
     num_of_shuffles = N_Shuffles
     SPerf = np.zeros((num_of_shuffles,1))
@@ -84,10 +93,10 @@ def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, G
         shuff_response = np.random.permutation(All_Group)
         SPerf[shuff] = np.nanmean(shuff_response[0:len(Group1)]) - np.nanmean(shuff_response[len(Group1):])
     # p-value of shuffle test
-    pVal = np.mean(SPerf**2 >= OPerf**2)
+    pVal = np.nanmean(SPerf**2 >= OPerf**2)
     # sigma
-    shuffled_mean = np.mean(SPerf)
-    sigma_shuff = np.std(SPerf, ddof=1)
+    shuffled_mean = np.nanmean(SPerf)
+    sigma_shuff = np.nanstd(SPerf, ddof=1)
     shuff_975p = np.percentile(SPerf, 97.5)
     shuff_025p = np.percentile(SPerf, 2.5)
     if plot_on == True:
@@ -200,49 +209,108 @@ def pool_acrossA_keepTemporalStructure(catches_dict, misses_dict, timebin_start,
     pooled_misses_array = np.array(pooled_misses)
     return pooled_catches_array, pooled_catches_Ntrials, pooled_misses_array, pooled_misses_Ntrials
 
+analysis_type_str = 'CannyEdgeDetector'
+preprocess_str = 'Zscored_SavGol_BaseSub'
+metric_str = 'edge counts'
+prey_type_str = 'all'
+allA_C_dict = allCatches_filtBaseSub_Zscored
+allA_M_dict = allMisses_filtBaseSub_Zscored
+TGB_bucket = TGB_bucket_raw
+baseline_len = baseline_buckets
+plots_dir = plots_folder
+todays_dt = todays_datetime
 def plot_indiv_animals(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
     # plot individual animals
     img_type = ['.png', '.pdf']
     for animal in allA_C_dict.keys(): 
         try:
-            N_catch = len(allA_C_dict[animal])
-            N_miss = len(allA_M_dict[animal])
-            catches_mean = np.mean(allA_C_dict[animal], axis=0)
-            misses_mean = np.mean(allA_M_dict[animal], axis=0)
-            # set fig path and title
-            figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_' + animal + "_" + todays_dt + img_type[0]
-            figure_path = os.path.join(plots_dir, figure_name)
-            figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
-            # setup fig
-            plt.figure(figsize=(16,9), dpi=200)
-            plt.suptitle(figure_title, fontsize=12, y=0.99)
-            plt.ylabel("Change from baseline in number of edges")
-            plot_xticks = np.arange(0, len(allA_C_dict[animal][0]), step=60)
-            plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-            #plt.xlim(0,180)
-            plt.xlabel("Seconds")
-            plt.grid(b=True, which='major', linestyle='-')
-            # plot z-scored edge counts
-            for trial in allA_M_dict[animal]:
-                plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
-            for trial in allA_C_dict[animal]:
-                plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
-            plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-            #plt.fill_between(range(len(allA_M_dict_mean[animal])), misses_mean-canny_std_miss, misses_mean+canny_std_miss, color=[1.0, 0.0, 0.0, 0.1])
-            plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-            #plt.fill_between(range(len(allA_C_dict_mean[animal])), catches_mean-canny_std_catch, catches_mean+canny_std_catch, color=[0.0, 0.0, 1.0, 0.1])
-            # plot events
-            ymin, ymax = plt.ylim()
-            plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-            plt.text(baseline_len, ymax-0.8, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-            plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-            plt.text(TGB_bucket, ymax-0.1, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-            plt.legend(loc='upper left')
-            # save fig
-            plt.savefig(figure_path)
-            plt.show(block=False)
-            plt.pause(1)
-            plt.close()
+            if 'Zscored' in preprocess_str:
+                N_catch = len(allA_C_dict[animal])
+                N_miss = len(allA_M_dict[animal])
+                catches_mean = np.nanmean(allA_C_dict[animal], axis=0)
+                misses_mean = np.nanmean(allA_M_dict[animal], axis=0)
+                # set fig path and title
+                if len(prey_type_str.split(' '))>1:
+                    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str.split(' ')[1] + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+                else:
+                    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+                figure_path = os.path.join(plots_dir, figure_name)
+                figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
+                # setup fig
+                plt.figure(figsize=(16,9), dpi=200)
+                plt.suptitle(figure_title, fontsize=12, y=0.99)
+                plt.ylabel("Change from baseline in number of edges")
+                plot_xticks = np.arange(0, len(allA_C_dict[animal][0]), step=60)
+                plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+                #plt.xlim(0,180)
+                plt.ylim(-6, 6)
+                plt.xlabel("Seconds")
+                plt.grid(b=True, which='major', linestyle='-')
+                # plot z-scored edge counts
+                for trial in allA_M_dict[animal]:
+                    plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
+                for trial in allA_C_dict[animal]:
+                    plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
+                plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+                #plt.fill_between(range(len(allA_M_dict_mean[animal])), misses_mean-canny_std_miss, misses_mean+canny_std_miss, color=[1.0, 0.0, 0.0, 0.1])
+                plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+                #plt.fill_between(range(len(allA_C_dict_mean[animal])), catches_mean-canny_std_catch, catches_mean+canny_std_catch, color=[0.0, 0.0, 1.0, 0.1])
+                # plot events
+                ymin, ymax = plt.ylim()
+                plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+                plt.text(baseline_len, ymax-0.8, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+                plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+                plt.text(TGB_bucket, ymax-0.5, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+                plt.legend(loc='upper left')
+                # save fig
+                plt.savefig(figure_path)
+                plt.show(block=False)
+                plt.pause(1)
+                plt.close()
+            else:
+                if animal in allA_C_dict:
+                    N_catch = len(allA_C_dict[animal]['trials'])
+                    catches_mean = np.nanmean(allA_C_dict[animal]['trials'], axis=0)
+                if animal in allA_M_dict:
+                    N_miss = len(allA_M_dict[animal]['trials'])
+                    misses_mean = np.nanmean(allA_M_dict[animal]['trials'], axis=0)
+                # set fig path and title
+                figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str.split(' ')[1] + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+                figure_path = os.path.join(plots_dir, figure_name)
+                figure_title = 'SavGol filtered and baseline subtracted mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
+                # setup fig
+                plt.figure(figsize=(16,9), dpi=200)
+                plt.suptitle(figure_title, fontsize=12, y=0.99)
+                plt.ylabel("Change from baseline in number of edges")
+                plot_xticks = np.arange(0, len(allA_C_dict[animal]['trials'][0]), step=60)
+                plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+                #plt.xlim(0,180)
+                #plt.ylim(-6, 6)
+                plt.xlabel("Seconds")
+                plt.grid(b=True, which='major', linestyle='-')
+                # plot z-scored edge counts
+                if animal in allA_M_dict:
+                    for trial in allA_M_dict[animal]['trials']:
+                        plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
+                if animal in allA_C_dict:
+                    for trial in allA_C_dict[animal]['trials']:
+                        plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
+                if animal in allA_M_dict:
+                    plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+                if animal in allA_C_dict:
+                    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+                # plot events
+                ymin, ymax = plt.ylim()
+                plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+                plt.text(baseline_len, ymax-ymax/10, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+                plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+                plt.text(TGB_bucket, ymax-ymax/20, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+                plt.legend(loc='upper left')
+                # save fig
+                plt.savefig(figure_path)
+                plt.show(block=False)
+                plt.pause(1)
+                plt.close()
         except Exception:
             plt.close()
             print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
@@ -302,10 +370,10 @@ def plot_allA_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
             allA_M_N = allA_M_N + thisA_M_N
             for trial in misses_dict[animal]:
                 allA_M.append(trial)
-    allA_C_mean = np.mean(allA_C, axis=0)
-    allA_C_std = np.std(allA_C, axis=0, ddof=1)
-    allA_M_mean = np.mean(allA_M, axis=0)
-    allA_M_std = np.std(allA_M, axis=0, ddof=1)
+    allA_C_mean = np.nanmean(allA_C, axis=0)
+    allA_C_std = np.nanstd(allA_C, axis=0, ddof=1)
+    allA_M_mean = np.nanmean(allA_M, axis=0)
+    allA_M_std = np.nanstd(allA_M, axis=0, ddof=1)
     ObservedDiff = allA_C_mean - allA_M_mean
     # set fig path and title
     figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_' + todays_dt + img_type[0]
@@ -399,7 +467,10 @@ current_working_directory = os.getcwd()
 
 # List relevant data locations: these are for taunsquared
 root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+old_canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_csv_smallCrop_Canny2000-7500"
+canny_counts_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_20191025"
+sobel_score_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\SobelScore_20191025"
+pixel_sum_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\PixelSum_20191025"
 plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
 
 # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
@@ -461,13 +532,19 @@ for session_date in all_misses_daily:
 allCatches_filtBaseSub = filtered_basesub_count(all_catches, 'all', baseline_buckets, savgol_window)
 allMisses_filtBaseSub = filtered_basesub_count(all_misses, 'all', baseline_buckets, savgol_window)
 # zscore each animal so that I can pool all trials into a "superanimal"
-allTS_filtBaseSub_Zscored = zScored_count(allTS_filtBaseSub, allTS_filtBaseSub)
-allCatches_filtBaseSub_Zscored = zScored_count(allCatches_filtBaseSub, allTS_filtBaseSub)
-allMisses_filtBaseSub_Zscored = zScored_count(allMisses_filtBaseSub, allTS_filtBaseSub)
+allTS_filtBaseSub_Zscored = zScored_count('timebin', allTS_filtBaseSub, allTS_filtBaseSub)
+allCatches_filtBaseSub_Zscored = zScored_count('timebin', allCatches_filtBaseSub, allTS_filtBaseSub)
+allMisses_filtBaseSub_Zscored = zScored_count('timebin', allMisses_filtBaseSub, allTS_filtBaseSub)
 # zscore daily sessions for each animal to characterize session dynamics
 dailyTS_filtBaseSub_Zscored = {}
 for session_date in dailyTS_filtBaseSub:
-    dailyTS_filtBaseSub_Zscored[session_date] = zScored_count(dailyTS_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+    dailyTS_filtBaseSub_Zscored[session_date] = zScored_count('session', dailyTS_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+dailyCatches_filtBaseSub_Zscored = {}
+dailyMisses_filtBaseSub_Zscored = {}
+for session_date in dailyCatches_filtBaseSub:
+    dailyCatches_filtBaseSub_Zscored[session_date] = zScored_count('session', dailyCatches_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+for session_date in dailyMisses_filtBaseSub:
+    dailyMisses_filtBaseSub_Zscored[session_date] = zScored_count('session', dailyMisses_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
 
 #######################################################
 ### ------------ PLOT THE ZSCORED DATA ------------ ###
@@ -475,8 +552,11 @@ for session_date in dailyTS_filtBaseSub:
 
 ## individual animals
 plot_indiv_animals('CannyEdgeDetector', 'Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+
+# sanity check
 for session_date in dailyTS_filtBaseSub:
-    plot_indiv_animals('CannyEdgeDetector', 'Daily_Zscored_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored, allMisses_filtBaseSub_Zscored, TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+    plot_indiv_animals('CannyEdgeDetector', 'SavGol_BaseSub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub[session_date], dailyMisses_filtBaseSub[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+    plot_indiv_animals('CannyEdgeDetector', 'Zscored_SavGol_Basesub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub_Zscored[session_date], dailyMisses_filtBaseSub_Zscored[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 
 ########################################################
 ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
@@ -568,8 +648,8 @@ for animal in allCatches_filtBaseSub_Zscored:
         allA_allC_Z.append(trial)
     for trial in allMisses_filtBaseSub_Zscored[animal]:
         allA_allM_Z.append(trial)
-allA_allC_Z_mean = np.mean(allA_allC_Z, axis=0)
-allA_allM_Z_mean = np.mean(allA_allM_Z, axis=0)
+allA_allC_Z_mean = np.nanmean(allA_allC_Z, axis=0)
+allA_allM_Z_mean = np.nanmean(allA_allM_Z, axis=0)
 Observed_DiffMeans = allA_allC_Z_mean - allA_allM_Z_mean
 
 # generate random traces to correct threshold for p<0.05
@@ -621,11 +701,6 @@ plot_allA_Zscored_ShuffledDiffMeans('CannyEdgeDetector', 'Zscored_SavGol_BaseSub
 
 ### TO DO
 # calculate the average time post-TGB when tentacles hit target and when tentacles return to mouth and add to plots
-
-#######################################################
-### ---------------- SANITY CHECKS ---------------- ###
-#######################################################
-### zscore each animal by session (day)
 
 
 ## FIN
