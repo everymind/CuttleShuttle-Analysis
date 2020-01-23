@@ -301,9 +301,31 @@ plot_timeline_MOIs(allMOI_allA_converted, MOIs, animal_names, plots_folder, toda
 print('Calculating probability of MOIs happening after previous MOI...')
 # how many tentacle shots before a catch?
 allA_shotsBeforeCatch = calc_prob_MOI_sequence(allMOI_allA_converted, 'catches', 'tentacle shots')
+# accuracy: probability of catch after first shot?
+first_shot_catch_prob = {}
+second_shot_catch_prob = {}
+third_shot_catch_prob = {}
+for animal in allA_shotsBeforeCatch:
+    if bool(allA_shotsBeforeCatch[animal]):
+        total_shots = sum(allA_shotsBeforeCatch[animal].values())
+        shots_without_error = allA_shotsBeforeCatch[animal].get(0, 0)
+        first_shot_catch_prob[animal] = shots_without_error/total_shots
+        two_attempts_or_less = allA_shotsBeforeCatch[animal].get(0, 0) + allA_shotsBeforeCatch[animal].get(1, 0)
+        second_shot_catch_prob[animal] = two_attempts_or_less/total_shots
+        three_attempts_or_less = allA_shotsBeforeCatch[animal].get(0, 0) + allA_shotsBeforeCatch[animal].get(1, 0) + allA_shotsBeforeCatch[animal].get(2, 0)
+        third_shot_catch_prob[animal] = three_attempts_or_less/total_shots
+mean_first_shot_catch = np.mean([x for x in first_shot_catch_prob.values()])
+var_first_shot_catch = np.var([x for x in first_shot_catch_prob.values()])
+mean_second_shot_catch = np.mean([x for x in second_shot_catch_prob.values()])
+var_second_shot_catch = np.var([x for x in second_shot_catch_prob.values()])
+mean_third_shot_catch = np.mean([x for x in third_shot_catch_prob.values()])
+var_third_shot_catch = np.var([x for x in third_shot_catch_prob.values()])
+# plot summary of catch accuracy
 plot_probMOIseq(allA_shotsBeforeCatch, 'catch', 'tentacle shots', plots_folder, todays_datetime)
 # how many orientations before a tentacle shot?
 allA_orientsBeforeTS = calc_prob_MOI_sequence(allMOI_allA_converted, 'tentacle shots', 'orients')
 plot_probMOIseq(allA_orientsBeforeTS, 'tentacle shot', 'orientations', plots_folder, todays_datetime)
 
-
+###########################################################
+### ---- FRAMES FROM TGB TO TENTACLES CONTACT PREY ---- ###
+###########################################################
