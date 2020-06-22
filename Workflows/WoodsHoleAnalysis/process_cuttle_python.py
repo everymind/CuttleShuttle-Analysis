@@ -68,7 +68,8 @@ def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, ban
         # If displaying or saving, compute filtered images via inverse FFT
         if display_bool or save_bool:
             # setup output video
-            output_video_path = TS_video_path[:-4] + '_output.avi'
+            output_video_name = os.path.basename(TS_video_path)[:-4] + "_filteredVid.avi"
+            output_video_path = os.path.join(save_folder, output_video_name)
             output_video_size = (1280, 400)
             fourcc = cv2.VideoWriter_fourcc('F','M','P','4')
             output_video = cv2.VideoWriter(output_video_path, fourcc, 30, output_video_size, False)
