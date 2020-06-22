@@ -143,7 +143,7 @@ CropRoi = [roi_ul_x, roi_ul_y, roi_lr_x, roi_lr_y]
 
 ### LOOP THRU VIDEO FOLDER ###
 all_vids = glob.glob(video_folder + os.sep + "*.avi")
-all_vids = all_vids[:10]
+#all_vids = all_vids[:10] # for debugging
 for video_path in all_vids: 
     # Open video
     video = cv2.VideoCapture(video_path)
