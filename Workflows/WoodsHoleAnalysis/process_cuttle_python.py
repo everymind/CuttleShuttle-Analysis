@@ -99,7 +99,7 @@ def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, ban
     # set fig path and title
     shot_type = os.path.basename(TS_video_path).split('_')[-2]
     animal_name = os.path.basename(TS_video_path).split('_')[1]
-    figure_name = os.path.basename(TS_video_path) + "_PowerFreqBandPlot.png"
+    figure_name = os.path.basename(TS_video_path)[:-4] + "_PowerFreqBandPlot.png"
     figure_path = os.path.join(save_folder, figure_name)
     figure_title = "Energy of each frequency band during tentacle shot (shot occurs at frame 180) \n Animal: {a}, Tentacle Shot type: {s}".format(a=animal_name, s=shot_type)
     # draw fig
