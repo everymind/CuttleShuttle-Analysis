@@ -12,6 +12,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
+### FUNCTIONS ###
+def genBandMasks(number_bands, x_matrix, y_matrix):
+    bands = np.arange(number_bands,0, -1)
+    radii = np.power(1/2, bands)
+    band_masks = np.zeros((roi_height, roi_width, number_bands))
+    for i in np.arange(number_bands):
+        if (i == 0):
+            band_screen = ((x_matrix/roi_width)**2 + (y_matrix/roi_height)**2) <= radii[i]**2
+        else:
+            band_screen = (((x_matrix/roi_width)**2 + (y_matrix/roi_height)**2) > radii[i-1]**2) & (((x_matrix/roi_width)**2 + (y_matrix/roi_height)**2) <= radii[i]**2)
+        #plt.imshow(band_screen)
+        #plt.show()
+        band_masks[:,:,i] = band_screen
+    return band_masks
+
+
 # Specify params
 display = False
 save = False
@@ -58,17 +74,8 @@ StartY = -np.round((roi_height+1)/2)
 EndY = StartY + roi_height
 X,Y = np.meshgrid(np.arange(StartX, EndX), np.arange(StartY, EndY).T)
 NumBands = 7
-Bands = np.arange(NumBands,0, -1)
-Radii = np.power(1/2, Bands)
-BandMasks = np.zeros((roi_height, roi_width, NumBands))
-for i in np.arange(NumBands):
-    if (i == 0):
-        BandScreen = ((X/roi_width)**2 + (Y/roi_height)**2) <= Radii[i]**2
-    else:
-        BandScreen = (((X/roi_width)**2 + (Y/roi_height)**2) > Radii[i-1]**2) & (((X/roi_width)**2 + (Y/roi_height)**2) <= Radii[i]**2)
-    #plt.imshow(BandScreen)
-    #plt.show()
-    BandMasks[:,:,i] = BandScreen
+BandMasks = genBandMasks(NumBands, X, Y)
+
     
 # If displaying, open display window
 if display:
