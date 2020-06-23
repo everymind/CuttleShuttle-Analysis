@@ -3,6 +3,7 @@
 process_cuttle_python.py
 
 Process cropped and aligned video of cuttlefish, measure contrast in multiple spatial bands
+Generate intermediate files with power of each spatial band for each frame
 
 @author: ARK/DK
 """
@@ -36,16 +37,6 @@ def genBandMasks(number_bands, crop_roi):
         #plt.show()
         band_masks[:,:,i] = band_screen
     return band_masks
-
-N_frames = num_frames
-N_bands = NumBands
-TS_video = video
-TS_video_path = video_path
-crop_roi = CropRoi
-band_masks = BandMasks
-display_bool = display
-save_bool = save
-save_folder = plots_folder
 
 def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, band_masks, display_bool, save_bool, save_folder):
     # expected format for crop_roi = [roi_ul_x, roi_ul_y, roi_lr_x, roi_lr_y]
