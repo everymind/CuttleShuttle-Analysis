@@ -22,8 +22,15 @@ def categorize_by_animal(TGB_files):
         TGB_name = os.path.basename(TGB_file)
         TGB_animal = TGB_name.split("_")[1]
         TGB_type = TGB_name.split("_")[4]
-        TGB_data = np.load(TGB_file)
-        all_animals_dict.setdefault(TGB_animal,[]).append(TGB_data)
+        TS_bandEnergies = np.load(TGB_file)
+        # extract power at each frequency band for every frame
+        all_bands = range(TS_bandEnergies.shape[1])
+        power_at_each_frequency = {key:[] for key in all_bands}
+        for frame in TS_bandEnergies:
+            for band in frame:
+                i, = np.where(frame == band)[0]
+                power_at_each_frequency[i].append(band)
+        all_animals_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
     return all_animals_dict
 
 def categorize_by_animal_catchVmiss(TGB_files):
@@ -34,12 +41,47 @@ def categorize_by_animal_catchVmiss(TGB_files):
         TGB_name = os.path.basename(TGB_file)
         TGB_animal = TGB_name.split("_")[1]
         TGB_type = TGB_name.split("_")[4]
-        TGB_data = np.load(TGB_file)
+        TS_bandEnergies = np.load(TGB_file)
+        # extract power at each frequency band for every frame
+        all_bands = range(TS_bandEnergies.shape[1])
+        power_at_each_frequency = {key:[] for key in all_bands}
+        for frame in TS_bandEnergies:
+            for band in frame:
+                i, = np.where(frame == band)[0]
+                power_at_each_frequency[i].append(band)
         if TGB_type == "catch":
-            catch_dict.setdefault(TGB_animal,[]).append(TGB_data)
+            catch_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
         if TGB_type == "miss": 
-            miss_dict.setdefault(TGB_animal,[]).append(TGB_data)
+            miss_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
     return catch_dict, miss_dict
+
+def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
+    baseSub_TS = {}
+    # make baseline for each animal, catch vs miss
+    for animal in TS_dict: 
+        baseSub_TS[animal] = {}
+        try:
+            # baseline subtract each frequency during each trial
+            allFreq_allTrials_baseSub = {}
+            for i,trial in enumerate(TS_dict[animal]):
+                for freq_band in trial:
+                    baseSub_TS[animal][freq_band] = {}
+                    this_freq_baseline = np.nanmean(TS_dict[animal][i][freq_band][0:baseline_len])
+                    this_freq_basesubbed = [float(x-this_freq_baseline) for x in TS_dict[animal][i][freq_band]]
+                    allFreq_allTrials_baseSub.setdefault(freq_band,[]).append(this_freq_basesubbed)
+            for freq_band in allFreq_allTrials_baseSub:
+                thisFreq_baseSub_mean_byFrame = np.nanmean(allFreq_allTrials_baseSub[freq_band], axis=0)
+                thisFreq_baseSub_mean_bySess = np.nanmean(allFreq_allTrials_baseSub[freq_band])
+                thisFreq_baseSub_std_byFrame = np.nanstd(allFreq_allTrials_baseSub[freq_band], axis=0, ddof=1)
+                thisFreq_baseSub_std_bySess = np.nanstd(allFreq_allTrials_baseSub[freq_band], ddof=1)
+                baseSub_TS[animal][freq_band]['trials'] = allFreq_allTrials_baseSub[freq_band]
+                baseSub_TS[animal][freq_band]['mean frame'] = thisFreq_baseSub_mean_byFrame
+                baseSub_TS[animal][freq_band]['mean session'] = thisFreq_baseSub_mean_bySess
+                baseSub_TS[animal][freq_band]['std frame'] = thisFreq_baseSub_std_byFrame
+                baseSub_TS[animal][freq_band]['std session'] = thisFreq_baseSub_std_bySess
+        except Exception:
+            print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
+    return baseSub_TS
 
 ### BEGIN ANALYSIS ###
 # source data and output locations
@@ -85,7 +127,18 @@ TGB_bucket_raw = 180
 ########################################################
 ### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
 ########################################################
+# baseline subtraction
+baseline_frames = 150 #frames
+# baseline subtract, all TS
+dailyTS_baseSub = {}
+for session_date in all_TS_daily:
+    dailyTS_baseSub[session_date] = baseSub_powerAtFreq(all_TS_daily[session_date], 'all', baseline_frames)
+allTS_baseSub = baseSub_powerAtFreq(all_TS, 'all', baseline_frames)
+# baseline subtract, catch vs miss
 
+# zscore each animal so that I can pool all trials into a "superanimal"
+
+# zscore daily sessions for each animal to characterize session dynamics
 
 
 
