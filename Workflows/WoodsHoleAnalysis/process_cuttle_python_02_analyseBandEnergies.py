@@ -12,21 +12,94 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import datetime
 
 ### FUNCTIONS ###
+def categorize_by_animal(TGB_files):
+    all_animals_dict = {}
+    # collect all canny counts and categorize by animal and type (catch vs miss)
+    for TGB_file in TGB_files: 
+        TGB_name = os.path.basename(TGB_file)
+        TGB_animal = TGB_name.split("_")[1]
+        TGB_type = TGB_name.split("_")[4]
+        TGB_data = np.load(TGB_file)
+        all_animals_dict.setdefault(TGB_animal,[]).append(TGB_data)
+    return all_animals_dict
 
+def categorize_by_animal_catchVmiss(TGB_files):
+    catch_dict = {}
+    miss_dict = {}
+    # collect all canny counts and categorize by animal and type (catch vs miss)
+    for TGB_file in TGB_files: 
+        TGB_name = os.path.basename(TGB_file)
+        TGB_animal = TGB_name.split("_")[1]
+        TGB_type = TGB_name.split("_")[4]
+        TGB_data = np.load(TGB_file)
+        if TGB_type == "catch":
+            catch_dict.setdefault(TGB_animal,[]).append(TGB_data)
+        if TGB_type == "miss": 
+            miss_dict.setdefault(TGB_animal,[]).append(TGB_data)
+    return catch_dict, miss_dict
 
 ### BEGIN ANALYSIS ###
 # source data and output locations
 data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis'
 
-### LOOP THRU DATA FOLDER ###
+# from data folder, collect all binary files with power-at-freq-band data
 all_data = glob.glob(data_folder + os.sep + "*.npy")
-all_TS_extracted = {}
+
+# categorize tentacle shots according to prey movement
+TGB_natural = []
+TGB_patterned = []
+TGB_causal = []
+TGB_daily = {}
+for TGB_file in all_data: 
+    trial_date = os.path.basename(TGB_file).split('_')[2]
+    sorted_by_session = TGB_daily.setdefault(trial_date,[]).append(TGB_file)
+    trial_datetime = datetime.datetime.strptime(trial_date, '%Y-%m-%d')
+    if trial_datetime < datetime.datetime(2014, 9, 13, 0, 0):
+        TGB_natural.append(TGB_file)
+    elif trial_datetime > datetime.datetime(2014, 10, 18, 0, 0):
+        TGB_causal.append(TGB_file)
+    else: 
+        TGB_patterned.append(TGB_file)
+
+# organize power-at-frequency-band data
+# categorize daily sessions by animal
+all_TS_daily = {}
+all_catches_daily = {}
+all_misses_daily = {}
+for session_date in TGB_daily:
+    all_TS_daily[session_date] = categorize_by_animal(TGB_daily[session_date])
+    all_catches_daily[session_date], all_misses_daily[session_date] = categorize_by_animal_catchVmiss(TGB_daily[session_date])
+
+# collect all power-at-frequency-band data and categorize by animal
+all_TS = categorize_by_animal(all_data)
+# collect all power-at-frequency-band data and categorize by animal and type (catch vs miss)
+all_catches, all_misses = categorize_by_animal_catchVmiss(all_data)
+# organize by prey type
+all_raw = [all_catches, all_misses]
+# time bin for moment tentacles go ballistic
+TGB_bucket_raw = 180
+
+########################################################
+### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
+########################################################
+
+
+
+
+
+
+all_TS_basesub_zscored = {}
 for data in all_data: 
     # extract tentacle shot details
     animal = os.path.basename(data).split('_')[1]
+    if animal not in all_TS_basesub_zscored:
+        all_TS_basesub_zscored[animal] = {}
     shot_type = os.path.basename(data).split('_')[4]
+    if shot_type not in all_TS_basesub_zscored[animal]:
+        all_TS_basesub_zscored[animal][shot_type] = []
     # load data from each tentacle shot
     TS_bandEnergies = np.load(data)
     # extract power at each frequency band for every frame
@@ -43,5 +116,19 @@ for data in all_data:
         this_freq_baseline = np.nanmean(power_at_each_frequency[freq_band][0:baseline_len])
         this_freq_basesubbed = [float(x-this_freq_baseline) for x in power_at_each_frequency[freq_band]]
         basesubbed_power_at_each_freq[freq_band] = this_freq_basesubbed
+        
+        
+        
+        # collect necessary stats for z-scoring
+        this_freq_basesub_mean_byTB = np.nanmean(all_filtered_basesub_trials, axis=0)
+        basesub_filtered_mean_bySess = np.nanmean(all_filtered_basesub_trials)
+        basesub_filtered_std_byTB = np.nanstd(all_filtered_basesub_trials, axis=0, ddof=1)
+        basesub_filtered_std_bySess = np.nanstd(all_filtered_basesub_trials, ddof=1)
+        basesub_filtered_TS[animal]['trials'] = all_filtered_basesub_trials
+        basesub_filtered_TS[animal]['mean tb'] = basesub_filtered_mean_byTB
+        basesub_filtered_TS[animal]['mean session'] = basesub_filtered_mean_bySess
+        basesub_filtered_TS[animal]['std tb'] = basesub_filtered_std_byTB
+        basesub_filtered_TS[animal]['std session'] = basesub_filtered_std_bySess
+    all_TS_basesub_zscored[animal][shot_type].append(basesubbed_power_at_each_freq)
 
 
