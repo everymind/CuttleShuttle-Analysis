@@ -198,6 +198,75 @@ def plot_indiv_animals_each_freq(analysis_type_str, preprocess_str, metric_str, 
                 plt.close()
                 print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
+def pool_acrossA_keepTemporalStructure_eachFreq(catches_dict, misses_dict, frame_start, frame_end, prey_type_str):
+    pooled_catches = {}
+    pooled_misses = {}
+    pooled_catches_Ntrials = 0
+    pooled_misses_Ntrials = 0
+    for animal in catches_dict:
+        thisA_catchesN = len(catches_dict[animal][0])
+        pooled_catches_Ntrials = pooled_catches_Ntrials + thisA_catchesN
+        thisA_missesN = len(misses_dict[animal][0])
+        pooled_misses_Ntrials = pooled_misses_Ntrials + thisA_missesN
+        for freq_band in catches_dict[animal]:
+            if thisA_catchesN != 0:
+                for trial in catches_dict[animal][freq_band]:
+                    if frame_end == -1:
+                        pooled_catches.setdefault(freq_band,[]).append(trial[frame_start:])
+                    else:     
+                        pooled_catches.setdefault(freq_band,[]).append(trial[frame_start:frame_end])
+            else:
+                print('{a} made no catch tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
+            if thisA_missesN != 0:
+                for trial in misses_dict[animal][freq_band]:
+                    if frame_end == -1:
+                        pooled_misses.setdefault(freq_band,[]).append(trial[frame_start:])
+                    else:     
+                        pooled_misses.setdefault(freq_band,[]).append(trial[frame_start:frame_end])
+            else:
+                print('{a} made no miss tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
+    return pooled_catches, pooled_catches_Ntrials, pooled_misses, pooled_misses_Ntrials
+
+def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, Group2_N, plot_on, plots_dir, todays_dt):
+    # Observed performance
+    OPerf = np.nanmean(Group1) - np.nanmean(Group2)
+    # Shuffle the dataset and compare means again
+    num_of_shuffles = N_Shuffles
+    SPerf = np.zeros((num_of_shuffles,1))
+    All_Group = np.concatenate([Group1, Group2])
+    for shuff in range(num_of_shuffles):
+        shuff_response = np.random.permutation(All_Group)
+        SPerf[shuff] = np.nanmean(shuff_response[0:len(Group1)]) - np.nanmean(shuff_response[len(Group1):])
+    # p-value of shuffle test
+    pVal = np.nanmean(SPerf**2 >= OPerf**2)
+    # sigma
+    shuffled_mean = np.nanmean(SPerf)
+    sigma_shuff = np.nanstd(SPerf, ddof=1)
+    shuff_975p = np.percentile(SPerf, 97.5)
+    shuff_025p = np.percentile(SPerf, 2.5)
+    if plot_on == True:
+        # show histogram of diffs of shuffled means
+        figure_name = 'ShuffleTest_'+ Group1_str + '_' + Group2_str + '_' + todays_dt + '.png'
+        figure_path = os.path.join(plots_dir, figure_name)
+        figure_title = "Histogram of the differences in means of randomly labeled data, Number of shuffles = {Ns}\n Group 1: {G1}, N = {G1N}\n Group 2: {G2}, N = {G2N}\n P-value of shuffle test: {p:.4f}, Mean of shuffle test: {m:.4f}, Sigma of shuffle test: {s:.4f}".format(Ns=N_Shuffles, G1=Group1_str, G1N=Group1_N, G2=Group2_str, G2N=Group2_N, p=pVal, m=shuffled_mean, s=sigma_shuff)
+        plt.figure(figsize=(16,9), dpi=200)
+        plt.suptitle(figure_title, fontsize=12, y=0.98)
+        plt.hist(SPerf)
+        ymin, ymax = plt.ylim()
+        xmin, xmax = plt.xlim()
+        plt.plot((shuff_025p, shuff_025p), (ymin, ymax/2), 'r-', linewidth=1)
+        plt.plot(shuff_025p, ymax/2, 'ro')
+        plt.text(shuff_025p, ymax/2-ymax/20, '2.5 percentile:\n'+'%.4f'%(shuff_025p), fontsize='x-small', ha='right', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
+        plt.plot((shuff_975p, shuff_975p), (ymin, ymax/2), 'r-', linewidth=1)
+        plt.plot(shuff_975p, ymax/2, 'ro')
+        plt.text(shuff_975p, ymax/2-ymax/20, '97.5 percentile:\n'+'%.4f'%(shuff_975p), fontsize='x-small', ha='left', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
+        plt.plot((OPerf, OPerf), (ymin, ymax), 'g--', linewidth=1)
+        plt.text(OPerf, ymax-5, "Difference of Labeled Means = " + str(OPerf), fontsize='x-small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.savefig(figure_path)
+        plt.show(block=False)
+        plt.pause(1)
+        plt.close()
+    return SPerf, pVal, shuffled_mean
 
 ### BEGIN ANALYSIS ###
 # grab today's date
@@ -294,8 +363,44 @@ plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Sess_BaseSub', 'pow
 
 # sanity check
 for session_date in dailyTS_baseSub:
-    plot_indiv_animals('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-    plot_indiv_animals('ProcessCuttlePython', 'Zscored_Sess_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Sess[session_date], dailyMisses_baseSub_Zscored_Sess[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Sess_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Sess[session_date], dailyMisses_baseSub_Zscored_Sess[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+
+########################################################
+### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
+########################################################
+No_of_Shuffles = 20000
+
+### POOL ACROSS ALL ANIMALS, make a shuffle test of every frame
+# zscored by frame
+allA_allFreq_Z_byFrame_C, allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M, allA_allFreq_Z_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, 0, -1, "all")
+Z_power_allFreq_byFrame = {}
+for freq_band in range(7):
+    Z_power_allFreq_byFrame[freq_band] = {}
+    for frame in range(360):
+        # collect all power scores for each frame
+        Z_power_allFreq_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+        for trial in allA_allFreq_Z_byFrame_C[freq_band]:
+            Z_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
+        for trial in allA_allFreq_Z_byFrame_M[freq_band]:
+            Z_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
+        # shuffle test each time bin
+        Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame), 'AllMisses-Zscored-Frame'+str(frame), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, False, plots_folder, todays_datetime)
+
+# zscored by entire dataset
+allA_allFreq_ZSess_byFrame_C, allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M, allA_allFreq_ZSess_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, 0, -1, "all")
+ZSessEdgeScores_byFrame = {}
+for freq_band in range(7):
+    ZSessEdgeScores_byFrame[freq_band] = {}
+    for frame in range(360):
+        # collect all edge scores for each time bin
+        ZSessEdgeScores_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+        for trial in allA_allFreq_ZSess_byFrame_C:
+            ZSessEdgeScores_byFrame[freq_band][frame]['catch'].append(trial[frame])
+        for trial in allA_allFreq_ZSess_byFrame_M:
+            ZSessEdgeScores_byFrame[freq_band][frame]['miss'].append(trial[frame])
+        # shuffle test each time bin
+        ZSessEdgeScores_byFrame[freq_band][frame]['SPerf'], ZSessEdgeScores_byFrame[freq_band][frame]['pval'], ZSessEdgeScores_byFrame[freq_band][frame]['mean'] = shuffle_test(ZSessEdgeScores_byFrame[freq_band][frame]['catch'], ZSessEdgeScores_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-Frame'+str(frame), 'AllMisses-ZscoredSess-Frame'+str(frame), allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M_N, True, plots_folder, todays_datetime)
 
 
 
