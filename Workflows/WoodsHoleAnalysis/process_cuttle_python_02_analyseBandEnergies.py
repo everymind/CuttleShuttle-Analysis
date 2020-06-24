@@ -22,5 +22,26 @@ data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAna
 
 ### LOOP THRU DATA FOLDER ###
 all_data = glob.glob(data_folder + os.sep + "*.npy")
+all_TS_extracted = {}
 for data in all_data: 
+    # extract tentacle shot details
+    animal = os.path.basename(data).split('_')[1]
+    shot_type = os.path.basename(data).split('_')[4]
+    # load data from each tentacle shot
     TS_bandEnergies = np.load(data)
+    # extract power at each frequency band for every frame
+    all_bands = range(TS_bandEnergies.shape[1])
+    power_at_each_frequency = {key:[] for key in all_bands}
+    for frame in TS_bandEnergies:
+        for band in frame:
+            i, = np.where(frame == band)[0]
+            power_at_each_frequency[i].append(band)
+    # baseline subtraction
+    baseline_len = 150 #frames
+    basesubbed_power_at_each_freq = {key:None for key in all_bands}
+    for freq_band in power_at_each_frequency.keys():
+        this_freq_baseline = np.nanmean(power_at_each_frequency[freq_band][0:baseline_len])
+        this_freq_basesubbed = [float(x-this_freq_baseline) for x in power_at_each_frequency[freq_band]]
+        basesubbed_power_at_each_freq[freq_band] = this_freq_basesubbed
+
+
