@@ -37,6 +37,16 @@ def genBandMasks(number_bands, crop_roi):
         band_masks[:,:,i] = band_screen
     return band_masks
 
+N_frames = num_frames
+N_bands = NumBands
+TS_video = video
+TS_video_path = video_path
+crop_roi = CropRoi
+band_masks = BandMasks
+display_bool = display
+save_bool = save
+save_folder = plots_folder
+
 def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, band_masks, display_bool, save_bool, save_folder):
     # expected format for crop_roi = [roi_ul_x, roi_ul_y, roi_lr_x, roi_lr_y]
     # Measure ROI size
@@ -95,6 +105,10 @@ def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, ban
             filtered_images_small_u8[filtered_images_small_u8 < 0] = 0
             filtered_images_small_u8 = np.uint8(filtered_images_small_u8)
             output_video.write(filtered_images_small_u8)
+    # Save band energies as intermediate file
+    data_name = os.path.basename(TS_video_path)[:-4] + "_bandEnergies.npy"
+    data_path = os.path.join(save_folder, data_name)
+    np.save(data_path, band_energies)
     # Plot band energies for entire TS_video
     # set fig path and title
     shot_type = os.path.basename(TS_video_path).split('_')[-2]
