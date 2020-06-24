@@ -83,6 +83,23 @@ def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return baseSub_TS
 
+def zScored_powerAtFreq(Zscore_type, dict_to_Zscore, dict_for_mean_std):
+    zScored_dict = {}
+    for animal in dict_to_Zscore:
+        zScored_dict[animal] = []
+        for freq_band in dict_to_Zscore[animal]:
+            for trial in dict_to_Zscore[animal][freq_band]['trials']:
+                trial_array = np.array(trial)
+                if Zscore_type=='frame':
+                    trial_zscored = (trial_array - dict_for_mean_std[animal][freq_band]['mean frame'])/dict_for_mean_std[animal][freq_band]['std frame']
+                if Zscore_type=='session':
+                    trial_zscored = []
+                    for frame in trial:
+                        frame_zscored = (frame - dict_for_mean_std[animal][freq_band]['mean session'])/dict_for_mean_std[animal][freq_band]['std session']
+                        trial_zscored.append(frame_zscored)
+                zScored_dict[animal].append(trial_zscored)
+    return zScored_dict
+
 ### BEGIN ANALYSIS ###
 # source data and output locations
 data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis'
@@ -144,8 +161,22 @@ for session_date in all_misses_daily:
 allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
 allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
 # zscore each animal so that I can pool all trials into a "superanimal"
-
+allTS_baseSub_Zscored = zScored_powerAtFreq('frame', allTS_baseSub, allTS_baseSub)
+allCatches_baseSub_Zscored_frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
+allMisses_baseSub_Zscored_frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
+allTS_baseSub_Zscored_frame_Sess = zScored_powerAtFreq('session', allTS_baseSub, allTS_baseSub)
+allCatches_baseSub_Zscored_Sess = zScored_powerAtFreq('session', allCatches_baseSub, allTS_baseSub)
+allMisses_baseSub_Zscored_Sess = zScored_powerAtFreq('session', allMisses_baseSub, allTS_baseSub)
 # zscore daily sessions for each animal to characterize session dynamics
+dailyTS_baseSub_Zscored_Sess = {}
+for session_date in dailyTS_baseSub:
+    dailyTS_baseSub_Zscored_Sess[session_date] = zScored_powerAtFreq('session', dailyTS_baseSub[session_date], dailyTS_baseSub[session_date])
+dailyCatches_baseSub_Zscored_Sess = {}
+dailyMisses_baseSub_Zscored_Sess = {}
+for session_date in dailyCatches_baseSub:
+    dailyCatches_baseSub_Zscored_Sess[session_date] = zScored_powerAtFreq('session', dailyCatches_baseSub[session_date], dailyTS_baseSub[session_date])
+for session_date in dailyMisses_baseSub:
+    dailyMisses_baseSub_Zscored_Sess[session_date] = zScored_powerAtFreq('session', dailyMisses_baseSub[session_date], dailyTS_baseSub[session_date])
 
 
 
