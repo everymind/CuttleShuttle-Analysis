@@ -135,7 +135,14 @@ for session_date in all_TS_daily:
     dailyTS_baseSub[session_date] = baseSub_powerAtFreq(all_TS_daily[session_date], 'all', baseline_frames)
 allTS_baseSub = baseSub_powerAtFreq(all_TS, 'all', baseline_frames)
 # baseline subtract, catch vs miss
-
+dailyCatches_baseSub = {}
+dailyMisses_baseSub = {}
+for session_date in all_catches_daily:
+    dailyCatches_baseSub[session_date] = baseSub_powerAtFreq(all_catches_daily[session_date], 'all', baseline_frames)
+for session_date in all_misses_daily:
+    dailyMisses_baseSub[session_date] = baseSub_powerAtFreq(all_misses_daily[session_date], 'all', baseline_frames)
+allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
+allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
 # zscore each animal so that I can pool all trials into a "superanimal"
 
 # zscore daily sessions for each animal to characterize session dynamics
@@ -144,44 +151,4 @@ allTS_baseSub = baseSub_powerAtFreq(all_TS, 'all', baseline_frames)
 
 
 
-all_TS_basesub_zscored = {}
-for data in all_data: 
-    # extract tentacle shot details
-    animal = os.path.basename(data).split('_')[1]
-    if animal not in all_TS_basesub_zscored:
-        all_TS_basesub_zscored[animal] = {}
-    shot_type = os.path.basename(data).split('_')[4]
-    if shot_type not in all_TS_basesub_zscored[animal]:
-        all_TS_basesub_zscored[animal][shot_type] = []
-    # load data from each tentacle shot
-    TS_bandEnergies = np.load(data)
-    # extract power at each frequency band for every frame
-    all_bands = range(TS_bandEnergies.shape[1])
-    power_at_each_frequency = {key:[] for key in all_bands}
-    for frame in TS_bandEnergies:
-        for band in frame:
-            i, = np.where(frame == band)[0]
-            power_at_each_frequency[i].append(band)
-    # baseline subtraction
-    baseline_len = 150 #frames
-    basesubbed_power_at_each_freq = {key:None for key in all_bands}
-    for freq_band in power_at_each_frequency.keys():
-        this_freq_baseline = np.nanmean(power_at_each_frequency[freq_band][0:baseline_len])
-        this_freq_basesubbed = [float(x-this_freq_baseline) for x in power_at_each_frequency[freq_band]]
-        basesubbed_power_at_each_freq[freq_band] = this_freq_basesubbed
-        
-        
-        
-        # collect necessary stats for z-scoring
-        this_freq_basesub_mean_byTB = np.nanmean(all_filtered_basesub_trials, axis=0)
-        basesub_filtered_mean_bySess = np.nanmean(all_filtered_basesub_trials)
-        basesub_filtered_std_byTB = np.nanstd(all_filtered_basesub_trials, axis=0, ddof=1)
-        basesub_filtered_std_bySess = np.nanstd(all_filtered_basesub_trials, ddof=1)
-        basesub_filtered_TS[animal]['trials'] = all_filtered_basesub_trials
-        basesub_filtered_TS[animal]['mean tb'] = basesub_filtered_mean_byTB
-        basesub_filtered_TS[animal]['mean session'] = basesub_filtered_mean_bySess
-        basesub_filtered_TS[animal]['std tb'] = basesub_filtered_std_byTB
-        basesub_filtered_TS[animal]['std session'] = basesub_filtered_std_bySess
-    all_TS_basesub_zscored[animal][shot_type].append(basesubbed_power_at_each_freq)
-
-
+# FIN
