@@ -114,9 +114,9 @@ def plot_indiv_animals_each_freq(analysis_type_str, preprocess_str, metric_str, 
                     misses_mean = np.nanmean(allA_M_dict[animal][freq_band], axis=0)
                     # set fig path and title
                     if len(prey_type_str.split(' '))>1:
-                        figure_name = analysis_type_str+'_'+preprocess_str+'_FreqBand'+ str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+animal+'_'+todays_dt+img_type[0]
+                        figure_name = analysis_type_str+'_'+preprocess_str+'_'+animal+'_FreqBand'+ str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
                     else:
-                        figure_name = analysis_type_str+'_'+preprocess_str+'_FreqBand'+ str(freq_band)+'_'+prey_type_str+'Trials_'+animal+'_'+todays_dt+img_type[0]
+                        figure_name = analysis_type_str+'_'+preprocess_str+'_'+animal+'_FreqBand'+ str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
                     figure_path = os.path.join(plots_dir, figure_name)
                     figure_title = 'Z-scored mean change from baseline of {m} {fb} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, fb=freq_band, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
                     # setup fig
