@@ -86,8 +86,9 @@ def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
 def zScored_powerAtFreq(Zscore_type, dict_to_Zscore, dict_for_mean_std):
     zScored_dict = {}
     for animal in dict_to_Zscore:
-        zScored_dict[animal] = []
+        zScored_dict[animal] = {}
         for freq_band in dict_to_Zscore[animal]:
+            zScored_dict[animal][freq_band] = []
             for trial in dict_to_Zscore[animal][freq_band]['trials']:
                 trial_array = np.array(trial)
                 if Zscore_type=='frame':
@@ -97,16 +98,121 @@ def zScored_powerAtFreq(Zscore_type, dict_to_Zscore, dict_for_mean_std):
                     for frame in trial:
                         frame_zscored = (frame - dict_for_mean_std[animal][freq_band]['mean session'])/dict_for_mean_std[animal][freq_band]['std session']
                         trial_zscored.append(frame_zscored)
-                zScored_dict[animal].append(trial_zscored)
+                zScored_dict[animal][freq_band].append(trial_zscored)
     return zScored_dict
 
-### BEGIN ANALYSIS ###
-# source data and output locations
-data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis'
+def plot_indiv_animals_each_freq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
+    # plot individual animals
+    img_type = ['.png', '.pdf']
+    for animal in allA_C_dict.keys(): 
+        for freq_band in allA_C_dict[animal].keys():
+            try:
+                if 'Zscored' in preprocess_str:
+                    N_catch = len(allA_C_dict[animal][freq_band])
+                    N_miss = len(allA_M_dict[animal][freq_band])
+                    catches_mean = np.nanmean(allA_C_dict[animal][freq_band], axis=0)
+                    misses_mean = np.nanmean(allA_M_dict[animal][freq_band], axis=0)
+                    # set fig path and title
+                    if len(prey_type_str.split(' '))>1:
+                        figure_name = analysis_type_str+'_'+preprocess_str+'_FreqBand'+ str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+animal+'_'+todays_dt+img_type[0]
+                    else:
+                        figure_name = analysis_type_str+'_'+preprocess_str+'_FreqBand'+ str(freq_band)+'_'+prey_type_str+'Trials_'+animal+'_'+todays_dt+img_type[0]
+                    figure_path = os.path.join(plots_dir, figure_name)
+                    figure_title = 'Z-scored mean change from baseline of {m} {fb} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, fb=freq_band, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
+                    # setup fig
+                    plt.figure(figsize=(16,9), dpi=200)
+                    plt.suptitle(figure_title, fontsize=12, y=0.99)
+                    plt.ylabel("Change from baseline in power")
+                    plot_xticks = np.arange(0, len(allA_C_dict[animal][freq_band][0]), step=60)
+                    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+                    #plt.xlim(0,180)
+                    plt.ylim(-6, 6)
+                    plt.xlabel("Seconds")
+                    plt.grid(b=True, which='major', linestyle='-')
+                    # plot z-scored power at frequency band
+                    for trial in allA_M_dict[animal][freq_band]:
+                        plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
+                    for trial in allA_C_dict[animal][freq_band]:
+                        plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
+                    plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+                    #plt.fill_between(range(len(allA_M_dict_mean[animal])), misses_mean-canny_std_miss, misses_mean+canny_std_miss, color=[1.0, 0.0, 0.0, 0.1])
+                    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+                    #plt.fill_between(range(len(allA_C_dict_mean[animal])), catches_mean-canny_std_catch, catches_mean+canny_std_catch, color=[0.0, 0.0, 1.0, 0.1])
+                    # plot events
+                    ymin, ymax = plt.ylim()
+                    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+                    plt.text(baseline_len, ymax-0.8, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+                    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+                    plt.text(TGB_bucket, ymax-0.5, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+                    plt.legend(loc='upper left')
+                    # save fig
+                    plt.savefig(figure_path)
+                    plt.show(block=False)
+                    plt.pause(1)
+                    plt.close()
+                else:
+                    if animal in allA_C_dict:
+                        N_catch = len(allA_C_dict[animal][freq_band]['trials'])
+                        catches_mean = np.nanmean(allA_C_dict[animal][freq_band]['trials'], axis=0)
+                    if animal in allA_M_dict:
+                        N_miss = len(allA_M_dict[animal][freq_band]['trials'])
+                        misses_mean = np.nanmean(allA_M_dict[animal][freq_band]['trials'], axis=0)
+                    # set fig path and title
+                    figure_name = analysis_type_str+'_'+preprocess_str+'_FreqBand'+ str(freq_band)+'_'+ prey_type_str.split(' ')[1]+'Trials_'+animal+"_"+todays_dt+img_type[0]
+                    figure_path = os.path.join(plots_dir, figure_name)
+                    figure_title = 'Baseline subtracted mean change from baseline of {m} {fb} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, fb=freq_band, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
+                    # setup fig
+                    plt.figure(figsize=(16,9), dpi=200)
+                    plt.suptitle(figure_title, fontsize=12, y=0.99)
+                    plt.ylabel("Change from baseline in power")
+                    plot_xticks = np.arange(0, len(allA_C_dict[animal][freq_band]['trials'][0]), step=60)
+                    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+                    #plt.xlim(0,180)
+                    #plt.ylim(-6, 6)
+                    plt.xlabel("Seconds")
+                    plt.grid(b=True, which='major', linestyle='-')
+                    # plot z-scored power at frequency band
+                    if animal in allA_M_dict:
+                        for trial in allA_M_dict[animal][freq_band]['trials']:
+                            plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
+                    if animal in allA_C_dict:
+                        for trial in allA_C_dict[animal][freq_band]['trials']:
+                            plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
+                    if animal in allA_M_dict:
+                        plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+                    if animal in allA_C_dict:
+                        plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+                    # plot events
+                    ymin, ymax = plt.ylim()
+                    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+                    plt.text(baseline_len, ymax-ymax/10, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+                    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+                    plt.text(TGB_bucket, ymax-ymax/20, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+                    plt.legend(loc='upper left')
+                    # save fig
+                    plt.savefig(figure_path)
+                    plt.show(block=False)
+                    plt.pause(1)
+                    plt.close()
+            except Exception:
+                plt.close()
+                print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
+
+### BEGIN ANALYSIS ###
+# grab today's date
+now = datetime.datetime.now()
+todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
+cwd = os.getcwd()
+# source data and output locations
+data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
 # from data folder, collect all binary files with power-at-freq-band data
 all_data = glob.glob(data_folder + os.sep + "*.npy")
 
+########################################################
+### ------ ORGANIZE DATA ------ ###
+########################################################
 # categorize tentacle shots according to prey movement
 TGB_natural = []
 TGB_patterned = []
@@ -162,9 +268,9 @@ allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
 allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
 # zscore each animal so that I can pool all trials into a "superanimal"
 allTS_baseSub_Zscored = zScored_powerAtFreq('frame', allTS_baseSub, allTS_baseSub)
-allCatches_baseSub_Zscored_frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
-allMisses_baseSub_Zscored_frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
-allTS_baseSub_Zscored_frame_Sess = zScored_powerAtFreq('session', allTS_baseSub, allTS_baseSub)
+allCatches_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
+allMisses_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
+allTS_baseSub_Zscored_Frame_Sess = zScored_powerAtFreq('session', allTS_baseSub, allTS_baseSub)
 allCatches_baseSub_Zscored_Sess = zScored_powerAtFreq('session', allCatches_baseSub, allTS_baseSub)
 allMisses_baseSub_Zscored_Sess = zScored_powerAtFreq('session', allMisses_baseSub, allTS_baseSub)
 # zscore daily sessions for each animal to characterize session dynamics
@@ -177,6 +283,20 @@ for session_date in dailyCatches_baseSub:
     dailyCatches_baseSub_Zscored_Sess[session_date] = zScored_powerAtFreq('session', dailyCatches_baseSub[session_date], dailyTS_baseSub[session_date])
 for session_date in dailyMisses_baseSub:
     dailyMisses_baseSub_Zscored_Sess[session_date] = zScored_powerAtFreq('session', dailyMisses_baseSub[session_date], dailyTS_baseSub[session_date])
+
+#######################################################
+### ------------ PLOT THE ZSCORED DATA ------------ ###
+#######################################################
+
+## individual animals
+plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Sess_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+
+# sanity check
+for session_date in dailyTS_baseSub:
+    plot_indiv_animals('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_indiv_animals('ProcessCuttlePython', 'Zscored_Sess_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Sess[session_date], dailyMisses_baseSub_Zscored_Sess[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+
 
 
 
