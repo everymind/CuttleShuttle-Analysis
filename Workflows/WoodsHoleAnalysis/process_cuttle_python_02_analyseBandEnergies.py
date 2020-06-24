@@ -395,9 +395,9 @@ for freq_band in range(7):
     for frame in range(360):
         # collect all edge scores for each time bin
         ZSessEdgeScores_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
-        for trial in allA_allFreq_ZSess_byFrame_C:
+        for trial in allA_allFreq_ZSess_byFrame_C[freq_band]:
             ZSessEdgeScores_byFrame[freq_band][frame]['catch'].append(trial[frame])
-        for trial in allA_allFreq_ZSess_byFrame_M:
+        for trial in allA_allFreq_ZSess_byFrame_M[freq_band]:
             ZSessEdgeScores_byFrame[freq_band][frame]['miss'].append(trial[frame])
         # shuffle test each time bin
         ZSessEdgeScores_byFrame[freq_band][frame]['SPerf'], ZSessEdgeScores_byFrame[freq_band][frame]['pval'], ZSessEdgeScores_byFrame[freq_band][frame]['mean'] = shuffle_test(ZSessEdgeScores_byFrame[freq_band][frame]['catch'], ZSessEdgeScores_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-Frame'+str(frame), 'AllMisses-ZscoredSess-Frame'+str(frame), allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M_N, True, plots_folder, todays_datetime)
