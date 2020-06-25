@@ -269,13 +269,40 @@ def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, G
     return SPerf, pVal, shuffled_mean
 
 def find_bounds_for_sig(shuffle_test_results_dict, UpBound, LowBound):
-    upperbound = {}
-    lowerbound = {}
-    for freq_band in shuffle_test_results_dict.keys():
-        for timebin in sorted(shuffle_test_results_dict[freq_band].keys()):
-            upperbound.setdefault(freq_band,[]).append(np.percentile(shuffle_test_results_dict[freq_band][timebin]['SPerf'], UpBound))
-            lowerbound.setdefault(freq_band,[]).append(np.percentile(shuffle_test_results_dict[freq_band][timebin]['SPerf'], LowBound))
+    upperbound = []
+    lowerbound = []
+    for frame in sorted(shuffle_test_results_dict.keys()):
+        upperbound.append(np.percentile(shuffle_test_results_dict[frame]['SPerf'], UpBound))
+        lowerbound.append(np.percentile(shuffle_test_results_dict[frame]['SPerf'], LowBound))
     return upperbound, lowerbound
+
+def gen_shuffled_traces(Group1, Group2, N_Shuffles, Group1_N, Group2_N):
+    # Shuffle the dataset and compare means again
+    num_of_shuffles = N_Shuffles
+    SPerf = np.zeros((num_of_shuffles,1))
+    All_Group = np.concatenate([Group1, Group2])
+    for shuff in range(num_of_shuffles):
+        shuff_response = np.random.permutation(All_Group)
+        SPerf[shuff] = np.nanmean(shuff_response[0:len(Group1)]) - np.nanmean(shuff_response[len(Group1):])
+    # sigma
+    return SPerf
+
+def check_violations_sigBounds(shuffDiffMeansTraces, sig_upperBound, sig_lowerBound):
+    outOfBounds_upper = 0
+    outOfBounds_lower = 0
+    for trial in shuffDiffMeansTraces:
+        num_crossings_UB = 0
+        num_crossings_LB = 0
+        for x in range(len(trial)):
+            if trial[x]>sig_upperBound[x]:
+                num_crossings_UB += 1
+            if trial[x]<sig_lowerBound[x]:
+                num_crossings_LB += 1
+        if num_crossings_UB>0:
+            outOfBounds_upper += 1
+        if num_crossings_LB>0:
+            outOfBounds_lower += 1
+    return outOfBounds_upper, outOfBounds_lower
 
 ### BEGIN ANALYSIS ###
 # grab today's date
@@ -414,25 +441,32 @@ for freq_band in range(7):
 #######################################################
 ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
 #######################################################
-
 # pointwise p<0.05 bounds
 UB_pointwise = 97.5
 LB_pointwise = 2.5
-pw005sig_UB, pw005sig_LB = find_bounds_for_sig(Z_power_allFreq_byFrame, UB_pointwise, LB_pointwise)
-pw005sig_Zsess_UB, pw005sig_Zsess_LB = find_bounds_for_sig(ZSess_power_allFreq_byFrame, UB_pointwise, LB_pointwise)
+pw005sig_UB = {}
+pw005sig_LB = {}
+pw005sig_Zsess_UB = {}
+pw005sig_Zsess_LB = {}
+for freq_band in Z_power_allFreq_byFrame.keys():
+    pw005sig_UB[freq_band], pw005sig_LB[freq_band] = find_bounds_for_sig(Z_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
+    pw005sig_Zsess_UB[freq_band], pw005sig_Zsess_LB[freq_band] = find_bounds_for_sig(ZSess_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
 
 # collect shuffled mean of each frame
 shuff_DiffMeans = {}
 for freq_band in Z_power_allFreq_byFrame.keys():
-    for timebin in sorted(Z_power_allFreq_byFrame[freq_band].keys()):
-        shuff_DiffMeans.setdefault(freq_band,[]).append(Z_power_allFreq_byFrame[freq_band][timebin]['mean'])
+    for frame in sorted(Z_power_allFreq_byFrame[freq_band].keys()):
+        shuff_DiffMeans.setdefault(freq_band,[]).append(Z_power_allFreq_byFrame[freq_band][frame]['mean'])
 #
 shuff_ZSess_DiffMeans = {}
 for freq_band in ZSess_power_allFreq_byFrame
-    for timebin in sorted(ZSess_power_allFreq_byFrame[freq_band].keys()):
-        shuff_ZSess_DiffMeans.append(ZSess_power_allFreq_byFrame[freq_band][timebin]['mean'])
+    for frame in sorted(ZSess_power_allFreq_byFrame[freq_band].keys()):
+        shuff_ZSess_DiffMeans.append(ZSess_power_allFreq_byFrame[freq_band][frame]['mean'])
 
-# calculate real difference of mean catch and mean miss
+#######################################################
+### -- CALCULATE REAL/OBSERVED DIFF OF MEANS -- ###
+#######################################################
+# by frame
 allA_allC_Z_allFreq = {}
 allA_allM_Z_allFreq = {}
 for animal in allCatches_baseSub_Zscored_Frame:
@@ -448,7 +482,7 @@ for freq_band in allA_allC_Z_allFreq.keys():
     allA_allC_Z_allFreq_mean[freq_band] = np.nanmean(allA_allC_Z_allFreq[freq_band], axis=0)
     allA_allM_Z_allFreq_mean[freq_band] = np.nanmean(allA_allM_Z_allFreq[freq_band], axis=0)
     Observed_DiffMeans_allFreq[freq_band] = allA_allC_Z_allFreq_mean[freq_band] - allA_allM_Z_allFreq_mean[freq_band]
-#
+# by session
 allA_allC_ZSess_allFreq = {}
 allA_allM_ZSess_allFreq = {}
 for animal in allCatches_baseSub_Zscored_Sess:
@@ -457,7 +491,6 @@ for animal in allCatches_baseSub_Zscored_Sess:
             allA_allC_ZSess_allFreq.setdefault(freq_band,[]).append(trial)
         for trial in allMisses_baseSub_Zscored_Sess[animal][freq_band]:
             allA_allM_ZSess_allFreq.setdefault(freq_band,[]).append(trial)
-
 allA_allC_ZSess_allFreq_mean = {}
 allA_allM_ZSess_allFreq_mean = {}
 Observed_DiffMeans_ZSess_allFreq = {}
@@ -466,6 +499,93 @@ for freq_band in allA_allC_ZSess_allFreq.keys():
     allA_allM_ZSess_allFreq_mean[freq_band] = np.nanmean(allA_allM_ZSess_allFreq[freq_band], axis=0)
     Observed_DiffMeans_ZSess_allFreq[freq_band] = allA_allC_ZSess_allFreq_mean[freq_band] - allA_allM_ZSess_allFreq_mean[freq_band]
 
+####################################################################
+### -- GENERATE RANDOM TRACES TO CORRECT THRESHOLD FOR P<0.05 -- ###
+####################################################################
+No_of_random_traces = 1000
+## zscored by frame
+shuffledDiffMeans_ZFrame_allFreq = {}
+for freq_band in Z_power_allFreq_byFrame.keys():
+    shuffledDiffMeans_ZFrame_allFreq[freq_band] = {}
+    for frame in Z_power_allFreq_byFrame[freq_band]:
+        shuffledDiffMeans_ZFrame_allFreq[freq_band][frame] = gen_shuffled_traces(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_random_traces, len(Z_power_allFreq_byFrame[freq_band][frame]['catch']), len(Z_power_allFreq_byFrame[freq_band][frame]['miss']))
+# convert to arrays for plotting
+shuffMeans_traces_allFreq = {}
+shuffMeans_traces_N = len(shuffledDiffMeans_ZFrame_allFreq[0][0])
+for st in range(shuffMeans_traces_N):
+    for freq_band in shuffledDiffMeans_ZFrame_allFreq.keys():
+        this_trace = []
+        for frame in shuffledDiffMeans_ZFrame_allFreq[freq_band].keys():
+            this_trace.append(shuffledDiffMeans_ZFrame_allFreq[freq_band][frame][st][0])
+        shuffMeans_traces_allFreq.setdefault(freq_band,[]).append(this_trace)
+for freq_band in shuffMeans_traces_allFreq.keys():
+    shuffMeans_traces_allFreq[freq_band] = np.array(shuffMeans_traces_allFreq[freq_band])
+## zscored by entire dataset
+shuffledDiffMeans_ZSess_byFrame = {}
+for freq_band in ZSess_power_allFreq_byFrame.keys():
+    shuffledDiffMeans_ZSess_byFrame[freq_band] = {}
+    for frame in ZSess_power_allFreq_byFrame[freq_band]:
+        shuffledDiffMeans_ZSess_byFrame[freq_band][frame] = gen_shuffled_traces(ZSess_power_allFreq_byFrame[freq_band][frame]['catch'], ZSess_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_random_traces, len(ZSess_power_allFreq_byFrame[freq_band][frame]['catch']), len(ZSess_power_allFreq_byFrame[freq_band][frame]['miss']))
+# convert to arrays for plotting
+shuffMeans_ZSess_traces_allFreq = {}
+shuffMeans_ZSess_traces_allFreq_N = len(shuffledDiffMeans_ZSess_byFrame[0][0])
+for st in range(shuffMeans_ZSess_traces_allFreq_N):
+    for freq_band in shuffledDiffMeans_ZSess_byFrame.keys():
+        this_trace = []
+        for frame in shuffledDiffMeans_ZSess_byFrame[freq_band].keys():
+            this_trace.append(shuffledDiffMeans_ZSess_byFrame[freq_band][frame][st][0])
+        shuffMeans_ZSess_traces_allFreq.setdefault(freq_band,[]).append(this_trace)
+for freq_band in shuffMeans_ZSess_traces_allFreq.keys():
+    shuffMeans_ZSess_traces_allFreq[freq_band] = np.array(shuffMeans_ZSess_traces_allFreq[freq_band])
 
+# correct the p<0.05 bounds
+UB_corrected = 99.993
+LB_corrected = 0.007
+global005sig_UB = {}
+global005sig_LB = {}
+global005sig_ZSess_UB = {}
+global005sig_ZSess_LB = {}
+for freq_band in Z_power_allFreq_byFrame.keys():
+    global005sig_UB[freq_band], global005sig_LB[freq_band] = find_bounds_for_sig(Z_power_allFreq_byFrame[freq_band], UB_corrected, LB_corrected)
+    global005sig_ZSess_UB[freq_band], global005sig_ZSess_LB[freq_band] = find_bounds_for_sig(ZSess_power_allFreq_byFrame[freq_band], UB_corrected, LB_corrected)
+
+# check how many of these random traces violate the p<0.05 generated by frame-wise shuffle test
+N_violations_UBcorrected = {}
+N_violations_LBcorrected = {}
+for freq_band in shuffMeans_traces_allFreq.keys():
+    N_violations_UBcorrected[freq_band], N_violations_LBcorrected[freq_band] = check_violations_sigBounds(shuffMeans_traces_allFreq[freq_band], global005sig_UB[freq_band], global005sig_LB[freq_band])
+    N_violations_ZSess_UBcorrected[freq_band], N_violations_ZSess_LBcorrected[freq_band] = check_violations_sigBounds(shuffMeans_ZSess_traces_allFreq[freq_band], global005sig_ZSess_UB[freq_band], global005sig_ZSess_LB[freq_band])
+
+# find where observed data crosses corrected bounds for first time
+for tb in range(len(Observed_DiffMeans)):
+    if Observed_DiffMeans[tb]>pw005sig_UB[tb]:
+        firstTB_P005sig = tb
+        break
+# 
+for tb in range(len(Observed_DiffMeans_ZSess)):
+    if Observed_DiffMeans_ZSess[tb]>pw005sig_Zsess_UB[tb]:
+        firstTB_ZSess_P005sig = tb
+        break
+
+# visualize
+for shuff_trace in shuffMeans_traces:
+    plt.plot(shuff_trace, alpha=0.1)
+plt.plot(pw005sig_UB, 'g--')
+plt.plot(pw005sig_LB, 'g--')
+plt.plot(global005sig_UB, 'm--')
+plt.plot(global005sig_LB, 'm--')
+plt.plot(shuff_DiffMeans, 'b--')
+plt.plot(Observed_DiffMeans, 'k-')
+plt.show()
+#
+for shuff_trace in shuffMeans_ZSess_traces:
+    plt.plot(shuff_trace, alpha=0.1)
+plt.plot(pw005sig_Zsess_UB, 'g--')
+plt.plot(pw005sig_Zsess_LB, 'g--')
+plt.plot(global005sig_ZSess_UB, 'm--')
+plt.plot(global005sig_ZSess_LB, 'm--')
+plt.plot(shuff_ZSess_DiffMeans, 'b--')
+plt.plot(Observed_DiffMeans_ZSess, 'k-')
+plt.show()
 
 # FIN
