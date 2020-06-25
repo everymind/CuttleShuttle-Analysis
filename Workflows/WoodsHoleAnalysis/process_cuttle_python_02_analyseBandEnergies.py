@@ -304,22 +304,22 @@ def check_violations_sigBounds(shuffDiffMeansTraces, sig_upperBound, sig_lowerBo
             outOfBounds_lower += 1
     return outOfBounds_upper, outOfBounds_lower
 
-analysis_type_str = 'ProcessCuttlePython'
-preprocess_str =  'Zscored_baseSub'
-metric_str = 'power at frequency'
-prey_type_str = 'all'
-catches_dict =  allCatches_baseSub_Zscored_Frame
-misses_dict = allMisses_baseSub_Zscored_Frame
-sigUB = pw005sig_UB
-sigLB = pw005sig_LB
-sigUB_corrected = global005sig_UB
-sigLB_corrected = global005sig_LB
-shuffDiff = shuff_DiffMeans
-firstSigFrame = firstFrame_P005sig
-TGB_bucket = TGB_bucket_raw
-baseline_len = baseline_frames
-plots_dir = plots_folder
-todays_dt = todays_datetime
+# analysis_type_str = 'ProcessCuttlePython'
+# preprocess_str =  'Zscored_baseSub'
+# metric_str = 'power at frequency'
+# prey_type_str = 'all'
+# catches_dict =  allCatches_baseSub_Zscored_Frame
+# misses_dict = allMisses_baseSub_Zscored_Frame
+# sigUB = pw005sig_UB
+# sigLB = pw005sig_LB
+# sigUB_corrected = global005sig_UB
+# sigLB_corrected = global005sig_LB
+# shuffDiff = shuff_DiffMeans
+# firstSigFrame = firstFrame_P005sig
+# TGB_bucket = TGB_bucket_raw
+# baseline_len = baseline_frames
+# plots_dir = plots_folder
+# todays_dt = todays_datetime
 
 def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
@@ -691,13 +691,13 @@ for freq_band in shuffMeans_traces_allFreq.keys():
 firstFrame_P005sig = {}
 for freq_band in Observed_DiffMeans_allFreq.keys():
     for frame in range(len(Observed_DiffMeans_allFreq[freq_band])):
-        if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame]:
+        if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_LB[freq_band][frame]:
             firstFrame_P005sig[freq_band] = frame
             continue
 firstFrame_ZSess_P005sig = {}
 for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
     for frame in range(len(Observed_DiffMeans_ZSess_allFreq[freq_band])):
-        if Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_UB[freq_band][frame]:
+        if Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_UB[freq_band][frame] or Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_LB[freq_band][frame]:
             firstFrame_ZSess_P005sig[freq_band] = frame
             continue
 
