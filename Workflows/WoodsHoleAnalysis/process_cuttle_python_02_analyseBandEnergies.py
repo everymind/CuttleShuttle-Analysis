@@ -432,6 +432,39 @@ for freq_band in ZSess_power_allFreq_byFrame
     for timebin in sorted(ZSess_power_allFreq_byFrame[freq_band].keys()):
         shuff_ZSess_DiffMeans.append(ZSess_power_allFreq_byFrame[freq_band][timebin]['mean'])
 
+# calculate real difference of mean catch and mean miss
+allA_allC_Z_allFreq = {}
+allA_allM_Z_allFreq = {}
+for animal in allCatches_baseSub_Zscored_Frame:
+    for freq_band in allCatches_baseSub_Zscored_Frame[animal]:
+        for trial in allCatches_baseSub_Zscored_Frame[animal][freq_band]:
+            allA_allC_Z.setdefault(freq_band,[]).append(trial)
+        for trial in allMisses_baseSub_Zscored_Frame[animal][freq_band]:
+            allA_allM_Z.setdefault(freq_band,[]).append(trial)
+allA_allC_Z_allFreq_mean = {}
+allA_allM_Z_allFreq_mean = {}
+Observed_DiffMeans_allFreq = {}
+for freq_band in allA_allC_Z_allFreq.keys():
+    allA_allC_Z_allFreq_mean[freq_band] = np.nanmean(allA_allC_Z_allFreq[freq_band], axis=0)
+    allA_allM_Z_allFreq_mean[freq_band] = np.nanmean(allA_allM_Z_allFreq[freq_band], axis=0)
+    Observed_DiffMeans_allFreq[freq_band] = allA_allC_Z_allFreq_mean[freq_band] - allA_allM_Z_allFreq_mean[freq_band]
+#
+allA_allC_ZSess_allFreq = {}
+allA_allM_ZSess_allFreq = {}
+for animal in allCatches_baseSub_Zscored_Sess:
+    for freq_band in allCatches_baseSub_Zscored_Sess[animal]:
+        for trial in allCatches_baseSub_Zscored_Sess[animal][freq_band]:
+            allA_allC_ZSess_allFreq.setdefault(freq_band,[]).append(trial)
+        for trial in allMisses_baseSub_Zscored_Sess[animal][freq_band]:
+            allA_allM_ZSess_allFreq.setdefault(freq_band,[]).append(trial)
+
+allA_allC_ZSess_allFreq_mean = {}
+allA_allM_ZSess_allFreq_mean = {}
+Observed_DiffMeans_ZSess_allFreq = {}
+for freq_band in allA_allC_ZSess_allFreq.keys():
+    allA_allC_ZSess_allFreq_mean[freq_band] = np.nanmean(allA_allC_ZSess_allFreq[freq_band], axis=0)
+    allA_allM_ZSess_allFreq_mean[freq_band] = np.nanmean(allA_allM_ZSess_allFreq[freq_band], axis=0)
+    Observed_DiffMeans_ZSess_allFreq[freq_band] = allA_allC_ZSess_allFreq_mean[freq_band] - allA_allM_ZSess_allFreq_mean[freq_band]
 
 
 
