@@ -398,18 +398,18 @@ for freq_band in range(7):
 
 # zscored by entire dataset
 allA_allFreq_ZSess_byFrame_C, allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M, allA_allFreq_ZSess_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, 0, -1, "all")
-ZSessEdgeScores_byFrame = {}
+ZSess_power_allFreq_byFrame = {}
 for freq_band in range(7):
-    ZSessEdgeScores_byFrame[freq_band] = {}
+    ZSess_power_allFreq_byFrame[freq_band] = {}
     for frame in range(360):
         # collect all edge scores for each time bin
-        ZSessEdgeScores_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+        ZSess_power_allFreq_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
         for trial in allA_allFreq_ZSess_byFrame_C[freq_band]:
-            ZSessEdgeScores_byFrame[freq_band][frame]['catch'].append(trial[frame])
+            ZSess_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
         for trial in allA_allFreq_ZSess_byFrame_M[freq_band]:
-            ZSessEdgeScores_byFrame[freq_band][frame]['miss'].append(trial[frame])
+            ZSess_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
         # shuffle test each time bin
-        ZSessEdgeScores_byFrame[freq_band][frame]['SPerf'], ZSessEdgeScores_byFrame[freq_band][frame]['pval'], ZSessEdgeScores_byFrame[freq_band][frame]['mean'] = shuffle_test(ZSessEdgeScores_byFrame[freq_band][frame]['catch'], ZSessEdgeScores_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M_N, True, plots_folder, todays_datetime)
+        ZSess_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZSess_power_allFreq_byFrame[freq_band][frame]['pval'], ZSess_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZSess_power_allFreq_byFrame[freq_band][frame]['catch'], ZSess_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M_N, True, plots_folder, todays_datetime)
 
 #######################################################
 ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
@@ -419,7 +419,18 @@ for freq_band in range(7):
 UB_pointwise = 97.5
 LB_pointwise = 2.5
 pw005sig_UB, pw005sig_LB = find_bounds_for_sig(Z_power_allFreq_byFrame, UB_pointwise, LB_pointwise)
-pw005sig_Zsess_UB, pw005sig_Zsess_LB = find_bounds_for_sig(ZSessEdgeScores_byFrame, UB_pointwise, LB_pointwise)
+pw005sig_Zsess_UB, pw005sig_Zsess_LB = find_bounds_for_sig(ZSess_power_allFreq_byFrame, UB_pointwise, LB_pointwise)
+
+# collect shuffled mean of each frame
+shuff_DiffMeans = {}
+for freq_band in Z_power_allFreq_byFrame.keys():
+    for timebin in sorted(Z_power_allFreq_byFrame[freq_band].keys()):
+        shuff_DiffMeans.setdefault(freq_band,[]).append(Z_power_allFreq_byFrame[freq_band][timebin]['mean'])
+#
+shuff_ZSess_DiffMeans = {}
+for freq_band in ZSess_power_allFreq_byFrame
+    for timebin in sorted(ZSess_power_allFreq_byFrame[freq_band].keys()):
+        shuff_ZSess_DiffMeans.append(ZSess_power_allFreq_byFrame[freq_band][timebin]['mean'])
 
 
 
