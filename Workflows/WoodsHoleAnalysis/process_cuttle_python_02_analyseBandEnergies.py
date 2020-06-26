@@ -535,6 +535,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         plt.close()
 
 ###
+plot_zscored_data = False
 visualize_random_traces = False
 plot_shuffle_tests = False
 
@@ -626,15 +627,14 @@ for session_date in dailyMisses_baseSub:
 #######################################################
 ### ------------ PLOT THE ZSCORED DATA ------------ ###
 #######################################################
-
-## individual animals
-plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-
-# sanity check
-for session_date in dailyTS_baseSub:
-    plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-    plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+if plot_zscored_data:
+    ## individual animals
+    plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    # sanity check
+    for session_date in dailyTS_baseSub:
+        plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 
 ########################################################
 ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
