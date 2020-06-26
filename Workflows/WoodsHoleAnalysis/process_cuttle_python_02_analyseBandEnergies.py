@@ -831,7 +831,7 @@ plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_base
 # this one is for the paper
 plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 # without labels
-plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 
 
 
