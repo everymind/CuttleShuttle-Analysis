@@ -401,10 +401,11 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         # plot real diff of means
         plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
         # plot significant time bins as shaded region
-        sig_x = range(firstSigFrame[freq_band], 360)
-        plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
-        plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
-        plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigFrame[freq_band]/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+        if firstSigFrame[freq_band] is not None:
+            sig_x = range(firstSigFrame[freq_band], 360)
+            plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
+            plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigFrame[freq_band]/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
         plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
@@ -515,9 +516,10 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         # plot real diff of means
         plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
         # plot significant time bins as shaded region
-        sig_x = range(firstSigFrame[freq_band], 360)
-        plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
-        plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
+        if firstSigFrame[freq_band] is not None:
+            sig_x = range(firstSigFrame[freq_band], 360)
+            plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
         #plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigFrame[freq_band]/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
@@ -770,8 +772,8 @@ for st in range(shuffMeans_ZSess_traces_allFreq_N):
 for freq_band in shuffMeans_ZSess_traces_allFreq.keys():
     shuffMeans_ZSess_traces_allFreq[freq_band] = np.array(shuffMeans_ZSess_traces_allFreq[freq_band])
 # correct the p<0.05 bounds
-UB_corrected = 99.993
-LB_corrected = 0.007
+UB_corrected = 99.995
+LB_corrected = 0.005
 global005sig_UB = {}
 global005sig_LB = {}
 global005sig_ZSess_UB = {}
@@ -787,20 +789,37 @@ N_violations_ZSess_LBcorrected = {}
 for freq_band in shuffMeans_traces_allFreq.keys():
     N_violations_UBcorrected[freq_band], N_violations_LBcorrected[freq_band] = check_violations_sigBounds(shuffMeans_traces_allFreq[freq_band], global005sig_UB[freq_band], global005sig_LB[freq_band])
     N_violations_ZSess_UBcorrected[freq_band], N_violations_ZSess_LBcorrected[freq_band] = check_violations_sigBounds(shuffMeans_ZSess_traces_allFreq[freq_band], global005sig_ZSess_UB[freq_band], global005sig_ZSess_LB[freq_band])
-# find where observed data crosses corrected bounds for first time
+# find where observed data crosses corrected pointwise bounds for first time just before crossing global bounds
+firstFrame_globalP005sig = {}
 firstFrame_P005sig = {}
 for freq_band in Observed_DiffMeans_allFreq.keys():
-    firstFrame_P005sig[freq_band] = {}
     for frame in range(len(Observed_DiffMeans_allFreq[freq_band])):
-        if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
-            firstFrame_P005sig[freq_band] = frame
-            continue
+        if Observed_DiffMeans_allFreq[freq_band][frame]>global005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<global005sig_LB[freq_band][frame]:
+            firstFrame_globalP005sig[freq_band] = frame
+            break
+    if freq_band in firstFrame_globalP005sig.keys() and firstFrame_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
+        backwards_from_first_global_crossing = np.flip(range(firstFrame_globalP005sig[freq_band]))
+        for frame in backwards_from_first_global_crossing:
+            if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
+                firstFrame_P005sig[freq_band] = frame
+                break
+    else:
+        firstFrame_P005sig[freq_band] = None
+firstFrame_ZSess_globalP005sig = {}
 firstFrame_ZSess_P005sig = {}
 for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
     for frame in range(len(Observed_DiffMeans_ZSess_allFreq[freq_band])):
-        if Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_UB[freq_band][frame] or Observed_DiffMeans_ZSess_allFreq[freq_band][frame]<pw005sig_Zsess_LB[freq_band][frame]:
-            firstFrame_ZSess_P005sig[freq_band] = frame
-            continue
+        if Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>global005sig_ZSess_UB[freq_band][frame] or Observed_DiffMeans_ZSess_allFreq[freq_band][frame]<global005sig_ZSess_LB[freq_band][frame]:
+            firstFrame_ZSess_globalP005sig[freq_band] = frame
+            break
+    if freq_band in firstFrame_ZSess_globalP005sig.keys() and firstFrame_ZSess_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
+        backwards_from_first_global_crossing = np.flip(range(firstFrame_ZSess_globalP005sig[freq_band]))
+        for frame in backwards_from_first_global_crossing:
+            if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_Zsess_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_Zsess_LB[freq_band][frame]:
+                firstFrame_ZSess_P005sig[freq_band] = frame
+                break
+    else:
+        firstFrame_ZSess_P005sig[freq_band] = None
 # visualize
 if visualize == True:
     for freq_band in shuffMeans_traces_allFreq.keys():
