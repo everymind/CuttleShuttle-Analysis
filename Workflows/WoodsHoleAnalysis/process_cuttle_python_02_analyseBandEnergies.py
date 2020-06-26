@@ -304,23 +304,6 @@ def check_violations_sigBounds(shuffDiffMeansTraces, sig_upperBound, sig_lowerBo
             outOfBounds_lower += 1
     return outOfBounds_upper, outOfBounds_lower
 
-analysis_type_str = 'ProcessCuttlePython'
-preprocess_str =  'Zscored_baseSub'
-metric_str = 'power at frequency'
-prey_type_str = 'all'
-catches_dict =  allCatches_baseSub_Zscored_Frame
-misses_dict = allMisses_baseSub_Zscored_Frame
-sigUB = pw005sig_UB
-sigLB = pw005sig_LB
-sigUB_corrected = global005sig_UB
-sigLB_corrected = global005sig_LB
-shuffDiff = shuff_DiffMeans
-firstSigFrame = firstFrame_P005sig
-TGB_bucket = TGB_bucket_raw
-baseline_len = baseline_frames
-plots_dir = plots_folder
-todays_dt = todays_datetime
-
 def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
     ### POOL ACROSS ANIMALS ### 
@@ -428,6 +411,120 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
         plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.legend(loc='upper left')
+        # save and show fig
+        plt.savefig(figure_path)
+        plt.show(block=False)
+        plt.pause(1)
+        plt.close()
+
+def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+    img_type = ['.png', '.pdf']
+    ### POOL ACROSS ANIMALS ### 
+    allA_C_allFreq = {}
+    allA_C_N = {}
+    allA_M_allFreq = {}
+    allA_M_N = {}
+    for animal in catches_dict.keys():
+        for freq_band in catches_dict[animal].keys():
+            thisA_C_N = len(catches_dict[animal][freq_band])
+            if thisA_C_N != 0:
+                allA_C_N[freq_band] = allA_C_N.setdefault(freq_band,0) + thisA_C_N
+                for trial in catches_dict[animal][freq_band]:
+                    allA_C_allFreq.setdefault(freq_band,[]).append(trial)
+    for animal in misses_dict.keys():
+        for freq_band in misses_dict[animal].keys():
+            thisA_M_N = len(misses_dict[animal][freq_band])
+            if thisA_M_N != 0:
+                allA_M_N[freq_band] = allA_M_N.setdefault(freq_band,0) + thisA_M_N
+                for trial in misses_dict[animal][freq_band]:
+                    allA_M_allFreq.setdefault(freq_band,[]).append(trial)
+    allA_C_allF_mean = {}
+    allA_C_allF_std = {}
+    allA_M_allF_mean = {}
+    allA_M_allF_std = {}
+    ObservedDiff_allF = {}
+    for freq_band in allA_C_allFreq.keys():
+        allA_C_allF_mean[freq_band] = np.nanmean(allA_C_allFreq[freq_band], axis=0)
+        allA_C_allF_std[freq_band] = np.nanstd(allA_C_allFreq[freq_band], axis=0, ddof=1)
+        allA_M_allF_mean[freq_band] = np.nanmean(allA_M_allFreq[freq_band], axis=0)
+        allA_M_allF_std[freq_band] = np.nanstd(allA_M_allFreq[freq_band], axis=0, ddof=1)
+        ObservedDiff_allF[freq_band] = allA_C_allF_mean[freq_band] - allA_M_allF_mean[freq_band]
+    # plot each frequency band separately
+    for freq_band in allA_C_allF_mean.keys():
+        # set fig path and title
+        figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
+        figure_path = os.path.join(plots_dir, figure_name)
+        figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        # draw fig
+        plt.figure(figsize=(16,16), dpi=200)
+        plt.suptitle(figure_title, fontsize=12, y=0.99)
+        # subplot: real data and std 
+        plt.subplot(2,1,1)
+        plt.title('Observed data', fontsize=10, color='grey', style='italic')
+        plt.ylabel("Z-scored change from baseline in power")
+        plot_xticks = np.arange(0, len(allA_C_allF_mean[freq_band]), step=60)
+        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+        plt.ylim(-1.5,3.0)
+        #plt.xlim(0,180)
+        plt.xlabel("Seconds")
+        plt.grid(b=True, which='major', linestyle='-')
+        # set colors
+        color_meanM = [1.0, 0.0, 0.0, 0.8]
+        color_stdM = [0.9, 0.0, 0.0, 0.1]
+        color_meanC = [0.0, 0.0, 1.0, 0.8]
+        color_stdC = [0.0, 0.0, 0.9, 0.1]
+        color_pointwiseP005 = [0.0, 0.5, 0.0, 1.0]
+        color_globalP005 = [1.0, 0.65, 0.0, 1.0]
+        color_obsDiffMeans = [0.0, 0.0, 0.0, 1.0]
+        color_shuffDiffMeans = [0.467, 0.537, 0.6, 1.0]
+        # plot mean of catches and misses for each frequency band
+        x_frames = range(360)
+        UpperBound_M = allA_M_allF_mean[freq_band] + allA_M_allF_std[freq_band]
+        LowerBound_M = allA_M_allF_mean[freq_band] - allA_M_allF_std[freq_band]
+        UpperBound_C = allA_C_allF_mean[freq_band] + allA_C_allF_std[freq_band]
+        LowerBound_C = allA_C_allF_mean[freq_band] - allA_C_allF_std[freq_band]
+        plt.plot(allA_M_allF_mean[freq_band], linewidth=2, color=color_meanM, label='Miss, Freq Band '+str(freq_band))
+        plt.fill_between(x_frames, UpperBound_M, LowerBound_M, color=color_stdM)
+        plt.plot(allA_C_allF_mean[freq_band], linewidth=2, color=color_meanC, label='Catch, Freq Band'+str(freq_band))
+        plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
+        # label events
+        ymin, ymax = plt.ylim()
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
+        #plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+        #plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.legend()
+        #subplot: difference of observed means vs shuffled diff of means
+        plt.subplot(2,1,2)
+        plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
+        plt.ylabel("Difference of z-scored means in power at frequency band")
+        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+        plt.ylim(-1.5,3.0)
+        #plt.xlim(0,180)
+        plt.xlabel("Seconds")
+        plt.grid(b=True, which='major', linestyle='-')
+        # plot pointwise p<0.05
+        plt.plot(sigUB[freq_band], linestyle='--', color=color_pointwiseP005, label='Pointwise p<0.05 for Freq Band '+str(freq_band))
+        plt.plot(sigLB[freq_band], linestyle='--', color=color_pointwiseP005)
+        # plot corrected (global) p<0.05
+        plt.plot(sigUB_corrected[freq_band], linestyle='--', color=color_globalP005, label='Global p<0.05 for Freq Band '+str(freq_band))
+        plt.plot(sigLB_corrected[freq_band], linestyle='--', color=color_globalP005)
+        # plot shuffled diff of means
+        plt.plot(shuffDiff[freq_band], linewidth=1.5, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means for Freq Band '+str(freq_band))
+        # plot real diff of means
+        plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
+        # plot significant time bins as shaded region
+        sig_x = range(firstSigFrame[freq_band], 360)
+        plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
+        plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
+        #plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigFrame[freq_band]/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+        # label events
+        ymin, ymax = plt.ylim()
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
+        #plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+        #plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save and show fig
         plt.savefig(figure_path)
@@ -693,13 +790,13 @@ for freq_band in shuffMeans_traces_allFreq.keys():
 firstFrame_P005sig = {}
 for freq_band in Observed_DiffMeans_allFreq.keys():
     for frame in range(len(Observed_DiffMeans_allFreq[freq_band])):
-        if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_LB[freq_band][frame]:
+        if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
             firstFrame_P005sig[freq_band] = frame
             continue
 firstFrame_ZSess_P005sig = {}
 for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
     for frame in range(len(Observed_DiffMeans_ZSess_allFreq[freq_band])):
-        if Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_UB[freq_band][frame] or Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_LB[freq_band][frame]:
+        if Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_Zsess_UB[freq_band][frame] or Observed_DiffMeans_ZSess_allFreq[freq_band][frame]<pw005sig_Zsess_LB[freq_band][frame]:
             firstFrame_ZSess_P005sig[freq_band] = frame
             continue
 # visualize
@@ -735,7 +832,7 @@ plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'ZscoredSess_
 
 
 # without labels
-plot_allA_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 
 
 
