@@ -800,7 +800,10 @@ for freq_band in Observed_DiffMeans_allFreq.keys():
     if freq_band in firstFrame_globalP005sig.keys() and firstFrame_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
         backwards_from_first_global_crossing = np.flip(range(firstFrame_globalP005sig[freq_band]))
         for frame in backwards_from_first_global_crossing:
-            if Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_LB[freq_band][frame]:
+            if Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]>global005sig_UB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_UB[freq_band][frame]:
+                firstFrame_P005sig[freq_band] = frame + 1
+                break
+            elif Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]<global005sig_LB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_LB[freq_band][frame]:
                 firstFrame_P005sig[freq_band] = frame + 1
                 break
     else:
@@ -815,7 +818,10 @@ for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
     if freq_band in firstFrame_ZSess_globalP005sig.keys() and firstFrame_ZSess_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
         backwards_from_first_global_crossing = np.flip(range(firstFrame_ZSess_globalP005sig[freq_band]))
         for frame in backwards_from_first_global_crossing:
-            if Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_Zsess_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_Zsess_LB[freq_band][frame]:
+            if Observed_DiffMeans_ZSess_allFreq[freq_band][firstFrame_ZSess_globalP005sig[freq_band]]>global005sig_ZSess_UB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_Zsess_UB[freq_band][frame]:
+                firstFrame_ZSess_P005sig[freq_band] = frame + 1
+                break
+            elif Observed_DiffMeans_ZSess_allFreq[freq_band][firstFrame_ZSess_globalP005sig[freq_band]]<global005sig_ZSess_LB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_Zsess_LB[freq_band][frame]:
                 firstFrame_ZSess_P005sig[freq_band] = frame + 1
                 break
     else:
