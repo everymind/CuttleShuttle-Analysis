@@ -574,7 +574,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--loc", nargs='?', default='laptop')
+    parser.add_argument("--run_type", nargs='?', default='laptop')
     parser.add_argument("--plotZScore", nargs='?', default='False')
     parser.add_argument("--plotRandomTraces", nargs='?', default='False')
     parser.add_argument("--plotShuffles", nargs='?', default='False')
@@ -582,7 +582,7 @@ if __name__=='__main__':
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
     ###################################
-    data_folder, plots_folder = load_data(args.loc)
+    data_folder, plots_folder = load_data(args.run_type)
     logging.info('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
     print('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
     ###################################
