@@ -40,12 +40,12 @@ logging.basicConfig(filename="process_cuttle_python_02_" + now.strftime("%Y-%m-%
 ##########################################################
 def load_data(run_type='prototype'):
     if run_type == 'prototype':
-        data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-        plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
+        data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
     elif run_type == 'collab':
-        data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-        plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
-    return data_folder, plots_folder
+        data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
+    return data_dir, plots_dir
 ##########################################################
 
 ### FUNCTIONS ###
@@ -574,7 +574,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--run_type", nargs='?', default='laptop')
+    parser.add_argument("--run_type", nargs='?', default='prototype')
     parser.add_argument("--plotZScore", nargs='?', default='False')
     parser.add_argument("--plotRandomTraces", nargs='?', default='False')
     parser.add_argument("--plotShuffles", nargs='?', default='False')
