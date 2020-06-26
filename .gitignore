@@ -5,4 +5,5 @@ Bonsai.VideoAnnotations/Bonsai.VideoAnnotations/bin
 Bonsai.VideoAnnotations/Bonsai.VideoAnnotations/obj
 *.ipynb_checkpoints*
 Workflows/plots
+*.log
 
