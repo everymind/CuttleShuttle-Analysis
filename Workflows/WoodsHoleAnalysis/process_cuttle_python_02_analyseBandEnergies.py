@@ -545,7 +545,7 @@ todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
 cwd = os.getcwd()
 # source data and output locations
 data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
+plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
 # from data folder, collect all binary files with power-at-freq-band data
 all_data = glob.glob(data_folder + os.sep + "*.npy")
 
