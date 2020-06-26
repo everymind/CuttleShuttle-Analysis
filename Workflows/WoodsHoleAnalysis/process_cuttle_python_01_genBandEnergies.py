@@ -5,6 +5,12 @@ process_cuttle_python.py
 Process cropped and aligned video of cuttlefish, measure contrast in multiple spatial bands
 Generate intermediate files with power of each spatial band for each frame
 
+Optional inputs to script:
+"--run_type": 'prototype' (default) or 'collab'
+"--display": False (default) or True
+"--saveVid": False (default) or True
+"--ROI": 'backOnly' (default) or 'entireCuttlefish'
+
 @author: ARK/DK
 """
 import os
@@ -12,8 +18,42 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import datetime
+import logging
+import pdb
+import argparse
 
-### FUNCTIONS ###
+###################################
+# SET CURRENT WORKING DIRECTORY
+###################################
+cwd = os.getcwd()
+###################################
+# SCRIPT LOGGER
+###################################
+# grab today's date
+now = datetime.datetime.now()
+logging.basicConfig(filename="process_cuttle_python_01_" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".log", filemode='w', level=logging.INFO)
+###################################
+# FUNCTIONS
+###################################
+
+##########################################################
+#### MODIFY THIS FIRST FUNCTION BASED ON THE LOCATIONS OF:
+# 1) data_folder (parent folder with all intermediate data)
+# AND
+# 2) plots_folder (parent folder for all plots output from analysis scripts)
+### Current default uses a debugging source dataset
+##########################################################
+def load_data(run_type='prototype'):
+    if run_type == 'prototype':
+        video_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots'
+        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots\intermediates'
+    elif run_type == 'collab':
+        video_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots'
+        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots\intermediates'
+    return video_dir, plots_dir
+##########################################################
+
 def genBandMasks(number_bands, crop_roi):
     # expected format for crop_roi = [roi_ul_x, roi_ul_y, roi_lr_x, roi_lr_y]
     # Measure ROI size
@@ -126,43 +166,63 @@ def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, ban
     if display_bool:
         cv2.destroyAllWindows()
 
-### BEGIN ANALYSIS ###
-# source data and output locations
-video_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots'
-plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis'
-# Specify params
-display = False
-save = False
-# Specify crop ROI (upper left pixel (x,y) and lower right pixel (x,y))
-# Only back of cuttlefish
-roi_ul_x = 600
-roi_ul_y = 350
-roi_lr_x = 1400
-roi_lr_y = 750
-CropRoi = [roi_ul_x, roi_ul_y, roi_lr_x, roi_lr_y]
-# Entire cuttlefish
-#roi_ul_x = 300
-#roi_ul_y = 100
-#roi_lr_x = 1700
-#roi_lr_y = 1000
-
-### LOOP THRU VIDEO FOLDER ###
-all_vids = glob.glob(video_folder + os.sep + "*.avi")
-#all_vids = all_vids[:10] # for debugging
-for video_path in all_vids: 
-    # Open video
-    video = cv2.VideoCapture(video_path)
-    # Read video parameters
-    width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    # Generate band masks
-    NumBands = 7
-    BandMasks = genBandMasks(NumBands, CropRoi)
-    # If displaying, open display window
-    if display:
-        cv2.namedWindow("Display")
-    computeFilteredVid(num_frames, NumBands, video, video_path, CropRoi, BandMasks, display, save, plots_folder)
-    video.release()
+##########################################################
+# BEGIN SCRIPT
+##########################################################
+if __name__=='__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--a", nargs='?', default="check_string_for_empty")
+    parser.add_argument("--run_type", nargs='?', default='prototype')
+    parser.add_argument("--display", nargs='?', default=False)
+    parser.add_argument("--saveVid", nargs='?', default=False)
+    parser.add_argument("--ROI", nargs='?', default='backOnly')
+    args = parser.parse_args()
+    ###################################
+    # SOURCE DATA AND OUTPUT FILE LOCATIONS 
+    ###################################
+    video_folder, plots_folder = load_data(args.run_type)
+    logging.info('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
+    print('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
+    ###################################
+    # DISPLAY AND SAVE TOGGLES
+    ###################################
+    display = args.display
+    save = args.saveVid
+    ###################################
+    # SPECIFY CROP ROI (upper left pixel (x,y) and lower right pixel (x,y))
+    ###################################
+    # Only back of cuttlefish
+    if args.ROI == 'backOnly':
+        roi_ul_x = 600
+        roi_ul_y = 350
+        roi_lr_x = 1400
+        roi_lr_y = 750
+    # Entire cuttlefish
+    if args.ROI == 'entireCuttlefish':
+        roi_ul_x = 300
+        roi_ul_y = 100
+        roi_lr_x = 1700
+        roi_lr_y = 1000
+    CropRoi = [roi_ul_x, roi_ul_y, roi_lr_x, roi_lr_y]
+    ###################################
+    # COLLECT VIDEOS FROM VIDEO_FOLDER
+    ###################################
+    all_vids = glob.glob(video_folder + os.sep + "*.avi")
+    # Loop through videos and process
+    for video_path in all_vids: 
+        # Open video
+        video = cv2.VideoCapture(video_path)
+        # Read video parameters
+        width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        # Generate band masks
+        NumBands = 7
+        BandMasks = genBandMasks(NumBands, CropRoi)
+        # If displaying, open display window
+        if display:
+            cv2.namedWindow("Display")
+        computeFilteredVid(num_frames, NumBands, video, video_path, CropRoi, BandMasks, display, save, plots_folder)
+        video.release()
 
 #FIN
