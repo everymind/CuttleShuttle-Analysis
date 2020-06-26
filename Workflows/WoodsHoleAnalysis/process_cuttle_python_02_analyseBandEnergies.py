@@ -304,22 +304,22 @@ def check_violations_sigBounds(shuffDiffMeansTraces, sig_upperBound, sig_lowerBo
             outOfBounds_lower += 1
     return outOfBounds_upper, outOfBounds_lower
 
-# analysis_type_str = 'ProcessCuttlePython'
-# preprocess_str =  'Zscored_baseSub'
-# metric_str = 'power at frequency'
-# prey_type_str = 'all'
-# catches_dict =  allCatches_baseSub_Zscored_Frame
-# misses_dict = allMisses_baseSub_Zscored_Frame
-# sigUB = pw005sig_UB
-# sigLB = pw005sig_LB
-# sigUB_corrected = global005sig_UB
-# sigLB_corrected = global005sig_LB
-# shuffDiff = shuff_DiffMeans
-# firstSigFrame = firstFrame_P005sig
-# TGB_bucket = TGB_bucket_raw
-# baseline_len = baseline_frames
-# plots_dir = plots_folder
-# todays_dt = todays_datetime
+analysis_type_str = 'ProcessCuttlePython'
+preprocess_str =  'Zscored_baseSub'
+metric_str = 'power at frequency'
+prey_type_str = 'all'
+catches_dict =  allCatches_baseSub_Zscored_Frame
+misses_dict = allMisses_baseSub_Zscored_Frame
+sigUB = pw005sig_UB
+sigLB = pw005sig_LB
+sigUB_corrected = global005sig_UB
+sigLB_corrected = global005sig_LB
+shuffDiff = shuff_DiffMeans
+firstSigFrame = firstFrame_P005sig
+TGB_bucket = TGB_bucket_raw
+baseline_len = baseline_frames
+plots_dir = plots_folder
+todays_dt = todays_datetime
 
 def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
@@ -419,7 +419,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
         # plot significant time bins as shaded region
         sig_x = range(firstSigFrame[freq_band], 360)
-        plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame:], sigUB[freq_band][firstSigFrame:], color='cyan', alpha=0.3)
+        plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
         plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
         plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigFrame[freq_band]/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
@@ -434,6 +434,9 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         plt.show(block=False)
         plt.pause(1)
         plt.close()
+
+###
+visualize = False
 
 ### BEGIN ANALYSIS ###
 # grab today's date
@@ -700,25 +703,26 @@ for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
             firstFrame_ZSess_P005sig[freq_band] = frame
             continue
 # visualize
-for freq_band in shuffMeans_traces_allFreq.keys():
-    for shuff_trace in shuffMeans_traces_allFreq[freq_band]:
-        plt.plot(shuff_trace, alpha=0.1)
-    plt.plot(pw005sig_UB[freq_band], 'g--')
-    plt.plot(pw005sig_LB[freq_band], 'g--')
-    plt.plot(global005sig_UB[freq_band], 'm--')
-    plt.plot(global005sig_LB[freq_band], 'm--')
-    plt.plot(shuff_DiffMeans[freq_band], 'b--')
-    plt.plot(Observed_DiffMeans_allFreq[freq_band], 'k-')
-    plt.show()
-    for shuff_trace in shuffMeans_ZSess_traces_allFreq[freq_band]:
-        plt.plot(shuff_trace, alpha=0.1)
-    plt.plot(pw005sig_Zsess_UB[freq_band], 'g--')
-    plt.plot(pw005sig_Zsess_LB[freq_band], 'g--')
-    plt.plot(global005sig_ZSess_UB[freq_band], 'm--')
-    plt.plot(global005sig_ZSess_LB[freq_band], 'm--')
-    plt.plot(shuff_ZSess_DiffMeans[freq_band], 'b--')
-    plt.plot(Observed_DiffMeans_ZSess_allFreq[freq_band], 'k-')
-    plt.show()
+if visualize == True:
+    for freq_band in shuffMeans_traces_allFreq.keys():
+        for shuff_trace in shuffMeans_traces_allFreq[freq_band]:
+            plt.plot(shuff_trace, alpha=0.1)
+        plt.plot(pw005sig_UB[freq_band], 'g--')
+        plt.plot(pw005sig_LB[freq_band], 'g--')
+        plt.plot(global005sig_UB[freq_band], 'm--')
+        plt.plot(global005sig_LB[freq_band], 'm--')
+        plt.plot(shuff_DiffMeans[freq_band], 'b--')
+        plt.plot(Observed_DiffMeans_allFreq[freq_band], 'k-')
+        plt.show()
+        for shuff_trace in shuffMeans_ZSess_traces_allFreq[freq_band]:
+            plt.plot(shuff_trace, alpha=0.1)
+        plt.plot(pw005sig_Zsess_UB[freq_band], 'g--')
+        plt.plot(pw005sig_Zsess_LB[freq_band], 'g--')
+        plt.plot(global005sig_ZSess_UB[freq_band], 'm--')
+        plt.plot(global005sig_ZSess_LB[freq_band], 'm--')
+        plt.plot(shuff_ZSess_DiffMeans[freq_band], 'b--')
+        plt.plot(Observed_DiffMeans_ZSess_allFreq[freq_band], 'k-')
+        plt.show()
 
 #######################################################
 ### ------------ PLOT THE SHUFFLE DATA ------------ ###
