@@ -575,9 +575,9 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
     parser.add_argument("--run_type", nargs='?', default='prototype')
-    parser.add_argument("--plotZScore", nargs='?', default='False')
-    parser.add_argument("--plotRandomTraces", nargs='?', default='False')
-    parser.add_argument("--plotShuffles", nargs='?', default='False')
+    parser.add_argument("--plotZScore", nargs='?', default=False)
+    parser.add_argument("--plotRandomTraces", nargs='?', default=False)
+    parser.add_argument("--plotShuffles", nargs='?', default=False)
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
