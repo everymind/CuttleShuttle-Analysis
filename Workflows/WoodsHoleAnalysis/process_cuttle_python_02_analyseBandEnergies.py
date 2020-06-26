@@ -534,6 +534,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
 
 ###
 visualize = False
+plot_shuffle_tests = False
 
 ### BEGIN ANALYSIS ###
 # grab today's date
@@ -652,7 +653,7 @@ for freq_band in range(7):
         for trial in allA_allFreq_Z_byFrame_M[freq_band]:
             Z_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
         # shuffle test each time bin
-        Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, False, plots_folder, todays_datetime)
+        Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, todays_datetime)
 
 # zscored by entire dataset
 allA_allFreq_ZSess_byFrame_C, allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M, allA_allFreq_ZSess_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, 0, -1, "all")
@@ -667,7 +668,7 @@ for freq_band in range(7):
         for trial in allA_allFreq_ZSess_byFrame_M[freq_band]:
             ZSess_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
         # shuffle test each time bin
-        ZSess_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZSess_power_allFreq_byFrame[freq_band][frame]['pval'], ZSess_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZSess_power_allFreq_byFrame[freq_band][frame]['catch'], ZSess_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M_N, True, plots_folder, todays_datetime)
+        ZSess_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZSess_power_allFreq_byFrame[freq_band][frame]['pval'], ZSess_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZSess_power_allFreq_byFrame[freq_band][frame]['catch'], ZSess_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredSess-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZSess_byFrame_C_N, allA_allFreq_ZSess_byFrame_M_N, plot_shuffle_tests, plots_folder, todays_datetime)
 
 #######################################################
 ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
@@ -789,6 +790,7 @@ for freq_band in shuffMeans_traces_allFreq.keys():
 # find where observed data crosses corrected bounds for first time
 firstFrame_P005sig = {}
 for freq_band in Observed_DiffMeans_allFreq.keys():
+    firstFrame_P005sig[freq_band] = {}
     for frame in range(len(Observed_DiffMeans_allFreq[freq_band])):
         if Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
             firstFrame_P005sig[freq_band] = frame
@@ -828,9 +830,6 @@ if visualize == True:
 plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 # this one is for the paper
 plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-
-
-
 # without labels
 plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 
