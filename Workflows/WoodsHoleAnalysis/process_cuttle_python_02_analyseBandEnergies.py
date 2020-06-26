@@ -535,7 +535,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         plt.close()
 
 ###
-visualize = False
+visualize_random_traces = False
 plot_shuffle_tests = False
 
 ### BEGIN ANALYSIS ###
@@ -821,7 +821,7 @@ for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
     else:
         firstFrame_ZSess_P005sig[freq_band] = None
 # visualize
-if visualize == True:
+if visualize_random_traces == True:
     for freq_band in shuffMeans_traces_allFreq.keys():
         for shuff_trace in shuffMeans_traces_allFreq[freq_band]:
             plt.plot(shuff_trace, alpha=0.1)
