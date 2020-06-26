@@ -680,11 +680,11 @@ UB_pointwise = 97.5
 LB_pointwise = 2.5
 pw005sig_UB = {}
 pw005sig_LB = {}
-pw005sig_Zsess_UB = {}
-pw005sig_Zsess_LB = {}
+pw005sig_ZSess_UB = {}
+pw005sig_ZSess_LB = {}
 for freq_band in Z_power_allFreq_byFrame.keys():
     pw005sig_UB[freq_band], pw005sig_LB[freq_band] = find_bounds_for_sig(Z_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
-    pw005sig_Zsess_UB[freq_band], pw005sig_Zsess_LB[freq_band] = find_bounds_for_sig(ZSess_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
+    pw005sig_ZSess_UB[freq_band], pw005sig_ZSess_LB[freq_band] = find_bounds_for_sig(ZSess_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
 
 # collect shuffled mean of each frame
 shuff_DiffMeans = {}
@@ -772,8 +772,8 @@ for st in range(shuffMeans_ZSess_traces_allFreq_N):
 for freq_band in shuffMeans_ZSess_traces_allFreq.keys():
     shuffMeans_ZSess_traces_allFreq[freq_band] = np.array(shuffMeans_ZSess_traces_allFreq[freq_band])
 # correct the p<0.05 bounds
-UB_corrected = 99.995
-LB_corrected = 0.005
+UB_corrected = 99.996
+LB_corrected = 0.004
 global005sig_UB = {}
 global005sig_LB = {}
 global005sig_ZSess_UB = {}
@@ -798,13 +798,12 @@ for freq_band in Observed_DiffMeans_allFreq.keys():
             firstFrame_globalP005sig[freq_band] = frame
             break
     if freq_band in firstFrame_globalP005sig.keys() and firstFrame_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
-        backwards_from_first_global_crossing = np.flip(range(firstFrame_globalP005sig[freq_band]))
-        for frame in backwards_from_first_global_crossing:
-            if Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]>global005sig_UB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_UB[freq_band][frame]:
-                firstFrame_P005sig[freq_band] = frame + 1
+        for frame in range(0,firstFrame_globalP005sig[freq_band]):
+            if Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]>global005sig_UB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame]:
+                firstFrame_P005sig[freq_band] = frame
                 break
-            elif Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]<global005sig_LB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_LB[freq_band][frame]:
-                firstFrame_P005sig[freq_band] = frame + 1
+            elif Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]<global005sig_LB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
+                firstFrame_P005sig[freq_band] = frame
                 break
     else:
         firstFrame_P005sig[freq_band] = None
@@ -816,13 +815,12 @@ for freq_band in Observed_DiffMeans_ZSess_allFreq.keys():
             firstFrame_ZSess_globalP005sig[freq_band] = frame
             break
     if freq_band in firstFrame_ZSess_globalP005sig.keys() and firstFrame_ZSess_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
-        backwards_from_first_global_crossing = np.flip(range(firstFrame_ZSess_globalP005sig[freq_band]))
-        for frame in backwards_from_first_global_crossing:
-            if Observed_DiffMeans_ZSess_allFreq[freq_band][firstFrame_ZSess_globalP005sig[freq_band]]>global005sig_ZSess_UB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_Zsess_UB[freq_band][frame]:
-                firstFrame_ZSess_P005sig[freq_band] = frame + 1
+        for frame in range(0,firstFrame_ZSess_globalP005sig[freq_band]):
+            if Observed_DiffMeans_ZSess_allFreq[freq_band][firstFrame_ZSess_globalP005sig[freq_band]]>global005sig_ZSess_UB[freq_band][firstFrame_ZSess_globalP005sig[freq_band]] and Observed_DiffMeans_ZSess_allFreq[freq_band][frame]>pw005sig_ZSess_UB[freq_band][frame]:
+                firstFrame_ZSess_P005sig[freq_band] = frame
                 break
-            elif Observed_DiffMeans_ZSess_allFreq[freq_band][firstFrame_ZSess_globalP005sig[freq_band]]<global005sig_ZSess_LB[freq_band][frame] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_Zsess_LB[freq_band][frame]:
-                firstFrame_ZSess_P005sig[freq_band] = frame + 1
+            elif Observed_DiffMeans_ZSess_allFreq[freq_band][firstFrame_ZSess_globalP005sig[freq_band]]<global005sig_ZSess_LB[freq_band][firstFrame_ZSess_globalP005sig[freq_band]] and Observed_DiffMeans_ZSess_allFreq[freq_band][frame]<pw005sig_ZSess_LB[freq_band][frame]:
+                firstFrame_ZSess_P005sig[freq_band] = frame
                 break
     else:
         firstFrame_ZSess_P005sig[freq_band] = None
@@ -840,8 +838,8 @@ if visualize_random_traces == True:
         plt.show()
         for shuff_trace in shuffMeans_ZSess_traces_allFreq[freq_band]:
             plt.plot(shuff_trace, alpha=0.1)
-        plt.plot(pw005sig_Zsess_UB[freq_band], 'g--')
-        plt.plot(pw005sig_Zsess_LB[freq_band], 'g--')
+        plt.plot(pw005sig_ZSess_UB[freq_band], 'g--')
+        plt.plot(pw005sig_ZSess_LB[freq_band], 'g--')
         plt.plot(global005sig_ZSess_UB[freq_band], 'm--')
         plt.plot(global005sig_ZSess_LB[freq_band], 'm--')
         plt.plot(shuff_ZSess_DiffMeans[freq_band], 'b--')
@@ -854,9 +852,9 @@ if visualize_random_traces == True:
 ### POOL ACROSS ANIMALS
 plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 # this one is for the paper
-plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_ZSess_UB, pw005sig_ZSess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 # without labels
-plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_Zsess_UB, pw005sig_Zsess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_ZSess_UB, pw005sig_ZSess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 
 
 
