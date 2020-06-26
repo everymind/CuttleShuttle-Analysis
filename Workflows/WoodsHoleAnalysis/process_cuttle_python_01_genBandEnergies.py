@@ -5,7 +5,7 @@ process_cuttle_python.py
 Process cropped and aligned video of cuttlefish, measure contrast in multiple spatial bands
 Generate intermediate files with power of each spatial band for each frame
 
-Optional inputs to script:
+Optional flags:
 "--run_type": 'prototype' (default) or 'collab'
 "--display": False (default) or True
 "--saveVid": False (default) or True
