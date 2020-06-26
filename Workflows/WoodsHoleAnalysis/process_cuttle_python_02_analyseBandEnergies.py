@@ -341,7 +341,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         # set fig path and title
         figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        figure_title = 'Z-scored by ' + preprocess_str.split('_')[1] + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
         # draw fig
         plt.figure(figsize=(16,16), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -456,7 +456,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         # set fig path and title
         figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        figure_title = 'Z-scored by ' + preprocess_str.split('_')[1] + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
         # draw fig
         plt.figure(figsize=(16,16), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -850,9 +850,9 @@ if visualize_random_traces == True:
 ### ------------ PLOT THE SHUFFLE DATA ------------ ###
 #######################################################
 ### POOL ACROSS ANIMALS
-plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 # this one is for the paper
-plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_ZSess_UB, pw005sig_ZSess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Session_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_ZSess_UB, pw005sig_ZSess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 # without labels
 plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'ZscoredSess_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Sess, allMisses_baseSub_Zscored_Sess, pw005sig_ZSess_UB, pw005sig_ZSess_LB, global005sig_ZSess_UB, global005sig_ZSess_LB, shuff_ZSess_DiffMeans, firstFrame_ZSess_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
 
