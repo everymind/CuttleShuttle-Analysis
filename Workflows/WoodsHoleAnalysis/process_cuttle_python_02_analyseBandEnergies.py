@@ -39,10 +39,10 @@ logging.basicConfig(filename="process_cuttle_python_02_" + now.strftime("%Y-%m-%
 ### Current default uses a debugging source dataset
 ##########################################################
 def load_data(run_type='prototype'):
-    if location == 'prototype':
+    if run_type == 'prototype':
         data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
         plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
-    elif location == 'collab':
+    elif run_type == 'collab':
         data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
         plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
     return data_folder, plots_folder
@@ -671,12 +671,12 @@ if __name__=='__main__':
     #######################################################
     if plot_zscored_data:
         ## individual animals
-        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, now)
+        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, now)
         # sanity check
         for session_date in dailyTS_baseSub:
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+            plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, now)
+            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, now)
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
@@ -697,7 +697,7 @@ if __name__=='__main__':
             for trial in allA_allFreq_Z_byFrame_M[freq_band]:
                 Z_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
             # shuffle test each time bin
-            Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, todays_datetime)
+            Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, now)
     # zscored by entire dataset
     allA_allFreq_ZTrial_byFrame_C, allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M, allA_allFreq_ZTrial_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, 0, -1, "all")
     ZTrial_power_allFreq_byFrame = {}
@@ -711,12 +711,12 @@ if __name__=='__main__':
             for trial in allA_allFreq_ZTrial_byFrame_M[freq_band]:
                 ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
             # shuffle test each time bin
-            ZTrial_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZTrial_power_allFreq_byFrame[freq_band][frame]['pval'], ZTrial_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'], ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M_N, plot_shuffle_tests, plots_folder, todays_datetime)
+            ZTrial_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZTrial_power_allFreq_byFrame[freq_band][frame]['pval'], ZTrial_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'], ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M_N, plot_shuffle_tests, plots_folder, now)
     #######################################################
     ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
     #######################################################
-    logging.info('Calculating upper and lower bounds for p<0.05')
-    print('Calculating upper and lower bounds for p<0.05')
+    logging.info('Calculating upper and lower bounds for p<0.05...')
+    print('Calculating upper and lower bounds for p<0.05...')
     # pointwise p<0.05 bounds
     UB_pointwise = 97.5
     LB_pointwise = 2.5
@@ -741,8 +741,8 @@ if __name__=='__main__':
     #######################################################
     ### -- CALCULATE REAL/OBSERVED DIFF OF MEANS -- ###
     #######################################################
-    logging.info('Calculating observed difference of means')
-    print('Calculating observed difference of means')
+    logging.info('Calculating observed difference of means...')
+    print('Calculating observed difference of means...')
     # by frame
     allA_allC_Z_allFreq = {}
     allA_allM_Z_allFreq = {}
@@ -896,10 +896,10 @@ if __name__=='__main__':
     ### ------------ PLOT THE SHUFFLE DATA ------------ ###
     #######################################################
     ### POOL ACROSS ANIMALS
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, now)
     # this one is for the paper
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, now)
     # without labels
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, todays_datetime)
+    plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, now)
 
 # FIN
