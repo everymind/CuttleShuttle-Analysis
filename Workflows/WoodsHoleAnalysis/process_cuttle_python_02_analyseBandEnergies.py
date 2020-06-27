@@ -910,6 +910,8 @@ if __name__=='__main__':
     #######################################################
     ### ------------ PLOT THE SHUFFLE DATA ------------ ###
     #######################################################
+    logging.info('Plotting shuffle data...')
+    print('Plotting shuffle data...')
     ### POOL ACROSS ANIMALS
     plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
     # this one is for the paper
