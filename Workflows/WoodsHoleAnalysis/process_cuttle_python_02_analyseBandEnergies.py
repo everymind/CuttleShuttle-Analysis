@@ -33,7 +33,8 @@ cwd = os.getcwd()
 ###################################
 # grab today's date
 now = datetime.datetime.now()
-logging.basicConfig(filename="process_cuttle_python_02_" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".log", filemode='w', level=logging.INFO)
+today_dateTime = now.strftime("%Y-%m-%d_%H-%M-%S")
+logging.basicConfig(filename="process_cuttle_python_02_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
 ###################################
 # FUNCTIONS
 ###################################
@@ -440,7 +441,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         plt.plot(shuffDiff[freq_band], linewidth=1.5, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means for Freq Band '+str(freq_band))
         # plot real diff of means
         plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
-        # plot significant time bins as shaded region
+        # plot significant frames as shaded region
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
@@ -555,7 +556,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         plt.plot(shuffDiff[freq_band], linewidth=1.5, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means for Freq Band '+str(freq_band))
         # plot real diff of means
         plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
-        # plot significant time bins as shaded region
+        # plot significant frames as shaded region
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
@@ -634,7 +635,7 @@ if __name__=='__main__':
     all_catches, all_misses = categorize_by_animal_catchVmiss(all_data)
     # organize by prey type
     all_raw = [all_catches, all_misses]
-    # time bin for moment tentacles go ballistic
+    # frame for moment tentacles go ballistic
     TGB_bucket_raw = 180
     ########################################################
     ### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
@@ -677,12 +678,12 @@ if __name__=='__main__':
     #######################################################
     if plot_zscored_data:
         ## individual animals
-        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, now)
-        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, now)
+        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
         # sanity check
         for session_date in dailyTS_baseSub:
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, now)
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, now)
+            plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
@@ -691,6 +692,8 @@ if __name__=='__main__':
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     ### POOL ACROSS ALL ANIMALS, make a shuffle test of every frame
     # zscored by frame
+    logging.info('Shuffle Tests of data Z-scored by frame...')
+    print('Shuffle Tests of data Z-scored by frame...')
     allA_allFreq_Z_byFrame_C, allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M, allA_allFreq_Z_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, 0, -1, "all")
     Z_power_allFreq_byFrame = {}
     for freq_band in range(7):
@@ -702,22 +705,24 @@ if __name__=='__main__':
                 Z_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
             for trial in allA_allFreq_Z_byFrame_M[freq_band]:
                 Z_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
-            # shuffle test each time bin
-            Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, now)
-    # zscored by entire dataset
+            # shuffle test each frame
+            Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
+    # zscored by trial
+    logging.info('Shuffle Tests of data Z-scored by trial...')
+    print('Shuffle Tests of data Z-scored by trial...')
     allA_allFreq_ZTrial_byFrame_C, allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M, allA_allFreq_ZTrial_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, 0, -1, "all")
     ZTrial_power_allFreq_byFrame = {}
     for freq_band in range(7):
         ZTrial_power_allFreq_byFrame[freq_band] = {}
         for frame in range(360):
-            # collect all edge scores for each time bin
+            # collect all edge scores for each frame
             ZTrial_power_allFreq_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
             for trial in allA_allFreq_ZTrial_byFrame_C[freq_band]:
                 ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
             for trial in allA_allFreq_ZTrial_byFrame_M[freq_band]:
                 ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
-            # shuffle test each time bin
-            ZTrial_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZTrial_power_allFreq_byFrame[freq_band][frame]['pval'], ZTrial_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'], ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M_N, plot_shuffle_tests, plots_folder, now)
+            # shuffle test each frame
+            ZTrial_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZTrial_power_allFreq_byFrame[freq_band][frame]['pval'], ZTrial_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'], ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
     #######################################################
     ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
     #######################################################
@@ -906,10 +911,10 @@ if __name__=='__main__':
     ### ------------ PLOT THE SHUFFLE DATA ------------ ###
     #######################################################
     ### POOL ACROSS ANIMALS
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, now)
+    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
     # this one is for the paper
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, now)
+    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
     # without labels
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, now)
+    plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 
 # FIN
