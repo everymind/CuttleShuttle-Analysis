@@ -11,7 +11,7 @@ Optional flags:
 "--saveVid": False (default) or True
 "--ROI": 'backOnly' (default) or 'entireCuttlefish'
 
-@author: ARK/DK
+@author: Adam R Kampff and Danbee Kim
 """
 import os
 import glob

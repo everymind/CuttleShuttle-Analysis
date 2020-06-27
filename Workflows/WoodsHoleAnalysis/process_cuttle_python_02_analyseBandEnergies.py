@@ -12,7 +12,7 @@ Optional flags:
 "--plotRandomTraces": False (default) or True
 "--plotShuffles": False (default) or True
 
-@author: ARK/DK
+@author: Danbee Kim and Adam R Kampff
 """
 import os
 import glob
