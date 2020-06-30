@@ -117,9 +117,9 @@ def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
                 thisFreq_baseSub_std_byTrial = np.nanstd(allFreq_allTrials_baseSub[freq_band], ddof=1)
                 baseSub_TS[animal][freq_band]['trials'] = allFreq_allTrials_baseSub[freq_band]
                 baseSub_TS[animal][freq_band]['mean frame'] = thisFreq_baseSub_mean_byFrame
-                baseSub_TS[animal][freq_band]['mean session'] = thisFreq_baseSub_mean_byTrial
+                baseSub_TS[animal][freq_band]['mean trial'] = thisFreq_baseSub_mean_byTrial
                 baseSub_TS[animal][freq_band]['std frame'] = thisFreq_baseSub_std_byFrame
-                baseSub_TS[animal][freq_band]['std session'] = thisFreq_baseSub_std_byTrial
+                baseSub_TS[animal][freq_band]['std trial'] = thisFreq_baseSub_std_byTrial
         except Exception:
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return baseSub_TS
@@ -137,7 +137,7 @@ def zScored_powerAtFreq(Zscore_type, dict_to_Zscore, dict_for_mean_std):
                 if Zscore_type=='trial':
                     trial_zscored = []
                     for frame in trial:
-                        frame_zscored = (frame - dict_for_mean_std[animal][freq_band]['mean session'])/dict_for_mean_std[animal][freq_band]['std session']
+                        frame_zscored = (frame - dict_for_mean_std[animal][freq_band]['mean trial'])/dict_for_mean_std[animal][freq_band]['std trial']
                         trial_zscored.append(frame_zscored)
                 zScored_dict[animal][freq_band].append(trial_zscored)
     return zScored_dict
