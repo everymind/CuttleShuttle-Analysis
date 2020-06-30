@@ -34,7 +34,7 @@ cwd = os.getcwd()
 # grab today's date
 now = datetime.datetime.now()
 today_dateTime = now.strftime("%Y-%m-%d_%H-%M-%S")
-logging.basicConfig(filename="process_cuttle_python_02_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
+logging.basicConfig(filename="process_cuttle_python_03_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
 ###################################
 # FUNCTIONS
 ###################################
@@ -633,7 +633,6 @@ if __name__=='__main__':
     all_TS = categorize_by_animal(all_data)
     # collect all power-at-frequency-band data and categorize by animal and type (catch vs miss)
     all_catches, all_misses = categorize_by_animal_catchVmiss(all_data)
-    # organize by prey type
     all_raw = [all_catches, all_misses]
     # frame for moment tentacles go ballistic
     TGB_bucket_raw = 180
