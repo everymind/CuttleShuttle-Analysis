@@ -132,6 +132,16 @@ def plot_percentChange_indiv_animals_allFreq(analysis_type_str, preprocess_str, 
             plt.close()
             print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
+analysis_type_str = 'ProcessCuttlePython'
+preprocess_str = 'PercentChange_Frame'
+metric_str = 'power at frequency band'
+prey_type_str = 'all'
+allA_mean_var_dict = percentChange_allAnimals
+TGB_bucket = TGB_bucket_raw
+baseline_len = baseline_frames
+plots_dir = plots_folder
+todays_dt = today_dateTime
+
 def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_mean_var_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
     img_type = ['.png', '.pdf']
     # calculate total number of tentacle shots
@@ -142,17 +152,23 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     pooled_means = {}
     pooled_vars = {}
     for freq_band in allA_mean_var_dict['N'].keys():
+        # find pooled mean
         pooled_mean_numerator = []
-        pooled_var_numerator = []
         pooled_denominator = []
         for animal in range(len(allA_mean_var_dict['N'][freq_band])):
             this_animal_mean_numerator = allA_mean_var_dict['N'][freq_band][animal]*allA_mean_var_dict['Mean'][freq_band][animal]
-            this_animal_var_numerator = allA_mean_var_dict['N'][freq_band][animal]*allA_mean_var_dict['Var'][freq_band][animal]
             pooled_mean_numerator.append(this_animal_mean_numerator)
-            pooled_var_numerator.append(this_animal_var_numerator)
             pooled_denominator.append(allA_mean_var_dict['N'][freq_band][animal])
         this_freq_pooled_mean = np.sum(pooled_mean_numerator, axis=0)/np.sum(pooled_denominator)
-        this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/np.sum(pooled_denominator)
+        # find pooled variance
+        pooled_var_numerator = []
+        for animal in range(len(allA_mean_var_dict['N'][freq_band])):
+            this_animal_var_numerator = []
+            for trial in allA_mean_var_dict['trials'][freq_band][animal]:
+                this_trial_var = np.square(trial-this_freq_pooled_mean)
+                this_animal_var_numerator.append(this_trial_var)
+            pooled_var_numerator.append(np.sum(this_animal_var_numerator, axis=0))
+        this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/(np.sum(pooled_denominator)-1)
         pooled_means[freq_band] = this_freq_pooled_mean
         pooled_vars[freq_band] = this_freq_pooled_var
     # set fig path and title
@@ -311,7 +327,7 @@ allTS_percentChange = percent_change_from_baseline(all_TS, 'all', baseline_frame
 #######################################################
 plot_percentChange_indiv_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', allTS_percentChange, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # pool across all animals to plot mean percent change in each frequency for all animals
-percentChange_allAnimals = {'N': {}, 'Mean': {}, 'Var': {}}
+percentChange_allAnimals = {'N': {}, 'Mean': {}, 'trials': {}}
 for animal in allTS_percentChange.keys():
     for freq_band in allTS_percentChange[animal].keys():
         this_animal_this_freq_N = len(allTS_percentChange[animal][freq_band]['trials'])
@@ -319,7 +335,7 @@ for animal in allTS_percentChange.keys():
         this_animal_this_freq_var = allTS_percentChange[animal][freq_band]['std frame']
         percentChange_allAnimals['N'].setdefault(freq_band,[]).append(this_animal_this_freq_N)
         percentChange_allAnimals['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
-        percentChange_allAnimals['Var'].setdefault(freq_band,[]).append(this_animal_this_freq_var)
+        percentChange_allAnimals['trials'].setdefault(freq_band,[]).append(allTS_percentChange[animal][freq_band]['trials'])
 # plot
 plot_percentChange_pooled_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # pick out certain frequencies to plot
