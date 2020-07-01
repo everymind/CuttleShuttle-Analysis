@@ -218,18 +218,24 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     # calculate mean and variance across all animals
     pooled_means = {}
     pooled_vars = {}
-    for freq_band in list_of_freqs_to_plot:
+    for freq_band in allA_mean_var_dict['N'].keys():
+        # find pooled mean
         pooled_mean_numerator = []
-        pooled_var_numerator = []
         pooled_denominator = []
         for animal in range(len(allA_mean_var_dict['N'][freq_band])):
             this_animal_mean_numerator = allA_mean_var_dict['N'][freq_band][animal]*allA_mean_var_dict['Mean'][freq_band][animal]
-            this_animal_var_numerator = allA_mean_var_dict['N'][freq_band][animal]*allA_mean_var_dict['Var'][freq_band][animal]
             pooled_mean_numerator.append(this_animal_mean_numerator)
-            pooled_var_numerator.append(this_animal_var_numerator)
             pooled_denominator.append(allA_mean_var_dict['N'][freq_band][animal])
         this_freq_pooled_mean = np.sum(pooled_mean_numerator, axis=0)/np.sum(pooled_denominator)
-        this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/np.sum(pooled_denominator)
+        # find pooled variance
+        pooled_var_numerator = []
+        for animal in range(len(allA_mean_var_dict['N'][freq_band])):
+            this_animal_var_numerator = []
+            for trial in allA_mean_var_dict['trials'][freq_band][animal]:
+                this_trial_var = np.square(trial-this_freq_pooled_mean)
+                this_animal_var_numerator.append(this_trial_var)
+            pooled_var_numerator.append(np.sum(this_animal_var_numerator, axis=0))
+        this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/(np.sum(pooled_denominator)-1)
         pooled_means[freq_band] = this_freq_pooled_mean
         pooled_vars[freq_band] = this_freq_pooled_var
     # set fig path and title
