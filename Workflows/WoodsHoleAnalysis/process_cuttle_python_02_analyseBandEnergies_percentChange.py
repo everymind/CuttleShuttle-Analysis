@@ -305,8 +305,8 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
         plt.text(TGB_bucket, ymax-25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         if firstFrame is not None:
-            plt.plot((firstFrame, firstFrame), (ymin, ymax-0.75), 'c--', linewidth=1)
-            plt.text(firstFrame, ymax-75, "Mean percent change in \n power deviates significantly \n from shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35')))
+            plt.plot((firstFrame, firstFrame), (ymin, ymax), 'c--', linewidth=1)
+            plt.text(firstFrame, ymax-75, "Mean percent change in \n power deviates significantly from \n shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center'), bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save fig
         plt.savefig(figure_path)
