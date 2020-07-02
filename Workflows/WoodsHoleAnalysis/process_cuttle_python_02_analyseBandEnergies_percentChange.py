@@ -132,63 +132,57 @@ def plot_percentChange_indiv_animals_allFreq(analysis_type_str, preprocess_str, 
             plt.close()
             print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
-analysis_type_str = 'ProcessCuttlePython'
-preprocess_str = 'PercentChange_Frame'
-metric_str = 'power at frequency band'
-prey_type_str = 'all'
-allA_mean_var_dict = percentChange_allAnimals
-TGB_bucket = TGB_bucket_raw
-baseline_len = baseline_frames
-plots_dir = plots_folder
-todays_dt = today_dateTime
-
-def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_mean_var_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
-    img_type = ['.png', '.pdf']
-    # calculate total number of tentacle shots
-    N_TS = 0
-    for animal in allA_mean_var_dict['N'][0]:
-        N_TS += animal
+def pooled_mean_var_allAnimals(allA_meanPercentChange_dict):
     # calculate mean and variance across all animals
     pooled_means = {}
     pooled_vars = {}
-    for freq_band in allA_mean_var_dict['N'].keys():
+    for freq_band in allA_meanPercentChange_dict['N'].keys():
         # find pooled mean
         pooled_mean_numerator = []
         pooled_denominator = []
-        for animal in range(len(allA_mean_var_dict['N'][freq_band])):
-            this_animal_mean_numerator = allA_mean_var_dict['N'][freq_band][animal]*allA_mean_var_dict['Mean'][freq_band][animal]
+        for animal in range(len(allA_meanPercentChange_dict['N'][freq_band])):
+            this_animal_mean_numerator = allA_meanPercentChange_dict['N'][freq_band][animal]*allA_meanPercentChange_dict['Mean'][freq_band][animal]
             pooled_mean_numerator.append(this_animal_mean_numerator)
-            pooled_denominator.append(allA_mean_var_dict['N'][freq_band][animal])
+            pooled_denominator.append(allA_meanPercentChange_dict['N'][freq_band][animal])
         this_freq_pooled_mean = np.sum(pooled_mean_numerator, axis=0)/np.sum(pooled_denominator)
         # find pooled variance
         pooled_var_numerator = []
-        for animal in range(len(allA_mean_var_dict['N'][freq_band])):
+        for animal in range(len(allA_meanPercentChange_dict['N'][freq_band])):
             this_animal_var_numerator = []
-            for trial in allA_mean_var_dict['trials'][freq_band][animal]:
+            for trial in allA_meanPercentChange_dict['trials'][freq_band][animal]:
                 this_trial_var = np.square(trial-this_freq_pooled_mean)
                 this_animal_var_numerator.append(this_trial_var)
             pooled_var_numerator.append(np.sum(this_animal_var_numerator, axis=0))
         this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/(np.sum(pooled_denominator)-1)
         pooled_means[freq_band] = this_freq_pooled_mean
         pooled_vars[freq_band] = this_freq_pooled_var
+    return pooled_means, pooled_vars
+
+def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
+    img_type = ['.png', '.pdf']
+    # calculate total number of tentacle shots
+    N_TS = 0
+    for animal in allA_meanPercentChange_dict['N'][0]:
+        N_TS += animal
+    pooled_means, pooled_vars = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     # set fig path and title
     if len(prey_type_str.split(' '))>1:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_allFreqBand_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
     else:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_allFreqBand_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
+    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
     # setup fig
     plt.figure(figsize=(16,16), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
     plt.ylabel("Percent change from baseline in power")
-    plot_xticks = np.arange(0, len(allA_mean_var_dict['Mean'][0][0]), step=60)
+    plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
     #plt.xlim(0,180)
-    plt.ylim(-600, 600)
+    plt.ylim(-800, 800)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
-    N_freq_bands = len(allA_mean_var_dict['N'].keys())
+    N_freq_bands = len(allA_meanPercentChange_dict['N'].keys())
     colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
     for freq_band in pooled_means.keys():
         x_frames = range(360)
@@ -199,9 +193,9 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     # plot events
     ymin, ymax = plt.ylim()
     plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-    plt.text(baseline_len, ymax-100, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.text(baseline_len, ymax-300, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-    plt.text(TGB_bucket, ymax-50, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.text(TGB_bucket, ymax-150, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save fig
     plt.savefig(figure_path)
@@ -209,56 +203,37 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     plt.pause(1)
     plt.close()
 
-def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_mean_var_dict, list_of_freqs_to_plot, TGB_bucket, baseline_len, plots_dir, todays_dt):
+def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, list_of_freqs_to_plot, TGB_bucket, baseline_len, plots_dir, todays_dt):
     img_type = ['.png', '.pdf']
     # calculate total number of tentacle shots
     N_TS = 0
-    for animal in allA_mean_var_dict['N'][0]:
+    for animal in allA_meanPercentChange_dict['N'][0]:
         N_TS += animal
-    # calculate mean and variance across all animals
-    pooled_means = {}
-    pooled_vars = {}
-    for freq_band in allA_mean_var_dict['N'].keys():
-        # find pooled mean
-        pooled_mean_numerator = []
-        pooled_denominator = []
-        for animal in range(len(allA_mean_var_dict['N'][freq_band])):
-            this_animal_mean_numerator = allA_mean_var_dict['N'][freq_band][animal]*allA_mean_var_dict['Mean'][freq_band][animal]
-            pooled_mean_numerator.append(this_animal_mean_numerator)
-            pooled_denominator.append(allA_mean_var_dict['N'][freq_band][animal])
-        this_freq_pooled_mean = np.sum(pooled_mean_numerator, axis=0)/np.sum(pooled_denominator)
-        # find pooled variance
-        pooled_var_numerator = []
-        for animal in range(len(allA_mean_var_dict['N'][freq_band])):
-            this_animal_var_numerator = []
-            for trial in allA_mean_var_dict['trials'][freq_band][animal]:
-                this_trial_var = np.square(trial-this_freq_pooled_mean)
-                this_animal_var_numerator.append(this_trial_var)
-            pooled_var_numerator.append(np.sum(this_animal_var_numerator, axis=0))
-        this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/(np.sum(pooled_denominator)-1)
-        pooled_means[freq_band] = this_freq_pooled_mean
-        pooled_vars[freq_band] = this_freq_pooled_var
+    pooled_means, pooled_vars = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     # set fig path and title
     freq_bands_str = 'freqBands'
-    for freq_band in list_of_freqs_to_plot:
-        freq_bands_str += str(freq_band)+'-'
+    for index in range(len(list_of_freqs_to_plot)):
+        if index == len(list_of_freqs_to_plot)-1:
+            freq_bands_str += str(list_of_freqs_to_plot[index])
+        else:
+            freq_bands_str += str(list_of_freqs_to_plot[index])+'-'
     if len(prey_type_str.split(' '))>1:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_'+freq_bands_str+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
     else:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_'+freq_bands_str+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}, showing frequency bands {fb}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS), fb=freq_bands_str[9:])
+    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}, showing frequency bands {fb}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS), fb=freq_bands_str[9:])
     # setup fig
     plt.figure(figsize=(16,16), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
     plt.ylabel("Percent change from baseline in power")
-    plot_xticks = np.arange(0, len(allA_mean_var_dict['Mean'][0][0]), step=60)
+    plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
     #plt.xlim(0,180)
-    plt.ylim(-600, 600)
+    plt.ylim(-2000, 2000)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
-    N_freq_bands = len(allA_mean_var_dict['N'].keys())
+    N_freq_bands = len(allA_meanPercentChange_dict['N'].keys())
     colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
     for freq_band in list_of_freqs_to_plot:
         x_frames = range(360)
@@ -269,9 +244,9 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     # plot events
     ymin, ymax = plt.ylim()
     plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-    plt.text(baseline_len, ymax-100, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.text(baseline_len, ymax-400, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-    plt.text(TGB_bucket, ymax-50, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.text(TGB_bucket, ymax-200, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save fig
     plt.savefig(figure_path)
@@ -279,6 +254,56 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     plt.pause(1)
     plt.close()
 
+def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, fake_baselines_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
+    img_type = ['.png', '.pdf']
+    # calculate total number of tentacle shots
+    N_TS = 0
+    for animal in allA_meanPercentChange_dict['N'][0]:
+        N_TS += animal
+    pooled_percentChange_means, pooled_percentChange_vars = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
+    for freq_band in fake_baselines_dict.keys():
+        fakeBase_means = np.nanmean(fake_baselines_dict[freq_band], axis=0)
+        fakeBase_vars = np.nanstd(fake_baselines_dict[freq_band], axis=0, ddof=1)
+        # set fig path and title
+        if len(prey_type_str.split(' '))>1:
+            figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
+        else:
+            figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_allFreqBand'+str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
+        figure_path = os.path.join(plots_dir, figure_name)
+        figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
+        # setup fig
+        plt.figure(figsize=(16,16), dpi=200)
+        plt.suptitle(figure_title, fontsize=12, y=0.99)
+        plt.ylabel("Percent change from baseline in power")
+        plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
+        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+        #plt.xlim(0,180)
+        plt.ylim(-200, 200)
+        plt.xlabel("Seconds")
+        plt.grid(b=True, which='major', linestyle='-')
+        # plot fake baseline mean and var
+        x_frames = range(360)
+        upper_var = fakeBase_means + fakeBase_vars
+        lower_var = fakeBase_means - fakeBase_vars
+        plt.fill_between(x_frames, upper_var, lower_var, color=[1.0, 0.0, 0.0, 0.3])
+        plt.plot(fakeBase_means, linewidth=2, color=[1.0, 0.0, 0.0, 1.0], label='Shuffled baseline frames')
+        # plot mean of observed trials
+        upper_bound = pooled_percentChange_means[freq_band] + pooled_percentChange_vars[freq_band]
+        lower_bound = pooled_percentChange_means[freq_band] - pooled_percentChange_vars[freq_band]
+        plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.3])
+        plt.plot(pooled_percentChange_means[freq_band], linewidth=2, color=[0.0, 0.0, 1.0, 1.0], label='Observed data')
+        # plot events
+        ymin, ymax = plt.ylim()
+        plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+        plt.text(baseline_len, ymax-50, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+        plt.text(TGB_bucket, ymax-25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.legend(loc='upper left')
+        # save fig
+        plt.savefig(figure_path)
+        plt.show(block=False)
+        plt.pause(1)
+        plt.close()
 
 ###################################
 # SOURCE DATA AND OUTPUT FILE LOCATIONS 
@@ -347,3 +372,29 @@ plot_percentChange_pooled_animals_allFreq('ProcessCuttlePython', 'PercentChange_
 # pick out certain frequencies to plot
 plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [0,1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+#####################################################################
+### ------ SHUFFLE TEST: ONSET OF SIG CHANGE FROM BASELINE ------ ###
+#####################################################################
+# generate fake 6-second time courses, taking data from baseline
+N_random_baselines = 500
+len_fake_timecourse = 360
+# create pool of data that can be used for creating fake baseline time courses
+pool_of_baseline_frames = {}
+for animal in allTS_percentChange.keys():
+    for freq_band in allTS_percentChange[animal].keys():
+        #print('Extracting baselines from {n} trials from {a}, freq band {fb}'.format(n=len(allTS_percentChange[animal][freq_band]['trials']), a=animal, fb=freq_band))
+        for trial in allTS_percentChange[animal][freq_band]['trials']:
+            for frame in range(baseline_frames):
+                pool_of_baseline_frames.setdefault(freq_band,[]).append(trial[frame])
+allFreq_fakeBase = {}
+for freq_band in pool_of_baseline_frames.keys():
+    fake_baselines = np.zeros((N_random_baselines,len_fake_timecourse))
+    for num in range(N_random_baselines):
+        shuffled_baseline_frames = np.random.permutation(pool_of_baseline_frames[freq_band])
+        fake_baselines[num] = shuffled_baseline_frames[:len_fake_timecourse]
+    allFreq_fakeBase[freq_band] = fake_baselines
+# compare fake baselines to real data
+plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase_Frame', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+
+
+
