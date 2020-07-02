@@ -290,14 +290,23 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         # plot mean of observed trials
         upper_bound = pooled_percentChange_means[freq_band] + pooled_percentChange_vars[freq_band]
         lower_bound = pooled_percentChange_means[freq_band] - pooled_percentChange_vars[freq_band]
-        plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.3])
+        plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.1])
         plt.plot(pooled_percentChange_means[freq_band], linewidth=2, color=[0.0, 0.0, 1.0, 1.0], label='Observed data')
+        # find frame when pooled_percentChange_mean crosses upper_var or lower_var of fake baselines
+        firstFrame = None
+        for frame in range(len(pooled_percentChange_means[freq_band])):
+            if pooled_percentChange_means[freq_band][frame]>upper_var[frame] or pooled_percentChange_means[freq_band][frame]<lower_var[frame]:
+                firstFrame = frame
+                break
         # plot events
         ymin, ymax = plt.ylim()
         plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
         plt.text(baseline_len, ymax-50, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
         plt.text(TGB_bucket, ymax-25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        if firstFrame is not None:
+            plt.plot((firstFrame, firstFrame), (ymin, ymax-0.75), 'c--', linewidth=1)
+            plt.text(firstFrame, ymax-75, "Mean percent change in \n power deviates significantly \n from shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35')))
         plt.legend(loc='upper left')
         # save fig
         plt.savefig(figure_path)
@@ -376,7 +385,7 @@ plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange
 ### ------ SHUFFLE TEST: ONSET OF SIG CHANGE FROM BASELINE ------ ###
 #####################################################################
 # generate fake 6-second time courses, taking data from baseline
-N_random_baselines = 500
+N_random_baselines = 1000
 len_fake_timecourse = 360
 # create pool of data that can be used for creating fake baseline time courses
 pool_of_baseline_frames = {}
@@ -396,5 +405,4 @@ for freq_band in pool_of_baseline_frames.keys():
 # compare fake baselines to real data
 plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase_Frame', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 
-
-
+# FIN
