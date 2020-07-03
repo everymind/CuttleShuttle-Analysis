@@ -135,7 +135,7 @@ def plot_percentChange_indiv_animals_allFreq(analysis_type_str, preprocess_str, 
 def pooled_mean_var_allAnimals(allA_meanPercentChange_dict):
     # calculate mean and variance across all animals
     pooled_means = {}
-    pooled_vars = {}
+    pooled_stds = {}
     for freq_band in allA_meanPercentChange_dict['N'].keys():
         # find pooled mean
         pooled_mean_numerator = []
@@ -154,9 +154,9 @@ def pooled_mean_var_allAnimals(allA_meanPercentChange_dict):
                 this_animal_var_numerator.append(this_trial_var)
             pooled_var_numerator.append(np.sum(this_animal_var_numerator, axis=0))
         this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/(np.sum(pooled_denominator)-1)
-        pooled_means[freq_band] = this_freq_pooled_mean
-        pooled_vars[freq_band] = this_freq_pooled_var
-    return pooled_means, pooled_vars
+        pooled_means[freq_band] = np.sqrt(this_freq_pooled_mean)
+        pooled_stds[freq_band] = np.sqrt(this_freq_pooled_var)
+    return pooled_means, pooled_stds
 
 def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
     img_type = ['.png', '.pdf']
@@ -164,7 +164,7 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     N_TS = 0
     for animal in allA_meanPercentChange_dict['N'][0]:
         N_TS += animal
-    pooled_means, pooled_vars = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
+    pooled_means, pooled_stds = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     # set fig path and title
     if len(prey_type_str.split(' '))>1:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_allFreqBand_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
@@ -186,8 +186,8 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
     for freq_band in pooled_means.keys():
         x_frames = range(360)
-        upper_var = pooled_means[freq_band] + pooled_vars[freq_band]
-        lower_var = pooled_means[freq_band] - pooled_vars[freq_band]
+        upper_var = pooled_means[freq_band] + pooled_stds[freq_band]
+        lower_var = pooled_means[freq_band] - pooled_stds[freq_band]
         plt.fill_between(x_frames, upper_var, lower_var, color=colors[freq_band], alpha=0.03)
         plt.plot(pooled_means[freq_band], linewidth=2, color=colors[freq_band], alpha=0.5, label='Freq Band {fb}'.format(fb=freq_band))
     # plot events
@@ -209,7 +209,7 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     N_TS = 0
     for animal in allA_meanPercentChange_dict['N'][0]:
         N_TS += animal
-    pooled_means, pooled_vars = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
+    pooled_means, pooled_stds = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     # set fig path and title
     freq_bands_str = 'freqBands'
     for index in range(len(list_of_freqs_to_plot)):
@@ -237,8 +237,8 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
     for freq_band in list_of_freqs_to_plot:
         x_frames = range(360)
-        upper_var = pooled_means[freq_band] + pooled_vars[freq_band]
-        lower_var = pooled_means[freq_band] - pooled_vars[freq_band]
+        upper_var = pooled_means[freq_band] + pooled_stds[freq_band]
+        lower_var = pooled_means[freq_band] - pooled_stds[freq_band]
         plt.fill_between(x_frames, upper_var, lower_var, color=colors[freq_band], alpha=0.05)
         plt.plot(pooled_means[freq_band], linewidth=2, color=colors[freq_band], alpha=0.5, label='Freq Band {fb}'.format(fb=freq_band))
     # plot events
