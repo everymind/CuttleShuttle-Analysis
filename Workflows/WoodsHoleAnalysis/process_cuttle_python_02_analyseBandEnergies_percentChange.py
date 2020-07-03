@@ -154,7 +154,7 @@ def pooled_mean_var_allAnimals(allA_meanPercentChange_dict):
                 this_animal_var_numerator.append(this_trial_var)
             pooled_var_numerator.append(np.sum(this_animal_var_numerator, axis=0))
         this_freq_pooled_var = np.sum(pooled_var_numerator, axis=0)/(np.sum(pooled_denominator)-1)
-        pooled_means[freq_band] = np.sqrt(this_freq_pooled_mean)
+        pooled_means[freq_band] = this_freq_pooled_mean
         pooled_stds[freq_band] = np.sqrt(this_freq_pooled_var)
     return pooled_means, pooled_stds
 
