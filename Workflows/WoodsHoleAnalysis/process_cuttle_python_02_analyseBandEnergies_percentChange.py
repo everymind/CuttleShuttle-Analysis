@@ -268,7 +268,7 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         if len(prey_type_str.split(' '))>1:
             figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
         else:
-            figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_allFreqBand'+str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
+            figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
         figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
         # setup fig
@@ -278,7 +278,7 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         #plt.xlim(0,180)
-        plt.ylim(-200, 200)
+        plt.ylim(-100, 100)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
         # plot fake baseline mean and var
@@ -301,12 +301,12 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         # plot events
         ymin, ymax = plt.ylim()
         plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-        plt.text(baseline_len, ymax-50, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.text(baseline_len, ymax-40, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        plt.text(TGB_bucket, ymax-25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax-20, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         if firstFrame is not None:
             plt.plot((firstFrame, firstFrame), (ymin, ymax), 'c--', linewidth=1)
-            plt.text(firstFrame, ymax-75, "Mean percent change in \n power deviates significantly from \n shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center'), bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+            plt.text(firstFrame, ymax-30, "Mean percent change in \n power deviates significantly from \n shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center'), bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save fig
         plt.savefig(figure_path)
