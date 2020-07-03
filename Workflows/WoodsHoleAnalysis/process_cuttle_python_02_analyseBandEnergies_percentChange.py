@@ -171,7 +171,7 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     else:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_allFreqBand_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
+    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show standard deviation \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
     # setup fig
     plt.figure(figsize=(16,16), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -222,7 +222,7 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     else:
         figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_'+freq_bands_str+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}, showing frequency bands {fb}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS), fb=freq_bands_str[9:])
+    figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show standard deviation \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}, showing frequency bands {fb}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS), fb=freq_bands_str[9:])
     # setup fig
     plt.figure(figsize=(16,16), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -270,7 +270,7 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         else:
             figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show variance \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
+        figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show standard deviation \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
         # setup fig
         plt.figure(figsize=(16,16), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
