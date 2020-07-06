@@ -236,6 +236,9 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     N_freq_bands = len(allA_meanPercentChange_dict['N'].keys())
     colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
     for freq_band in list_of_freqs_to_plot:
+        for animal in allA_meanPercentChange_dict['trials'][freq_band].keys():
+            for trial in allA_meanPercentChange_dict['trials'][freq_band][animal]:
+                plt.plot(trial, linewidth=1, color=colors[freq_band], alpha=0.01)
         x_frames = range(360)
         upper_var = pooled_means[freq_band] + pooled_stds[freq_band]
         lower_var = pooled_means[freq_band] - pooled_stds[freq_band]
@@ -356,7 +359,7 @@ TGB_bucket_raw = 180
 ########################################################
 ### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
 ########################################################
-baseline_frames = 150 #frames
+baseline_frames = 120 #frames
 # convert power at frequency into percent change from baseline
 dailyTS_percentChange = {}
 for session_date in all_TS_daily:
