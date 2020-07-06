@@ -640,7 +640,7 @@ if __name__=='__main__':
     ### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
     ########################################################
     # baseline subtraction
-    baseline_frames = 150 #frames
+    baseline_frames = 120 #frames
     # baseline subtract, all TS
     dailyTS_baseSub = {}
     for session_date in all_TS_daily:
