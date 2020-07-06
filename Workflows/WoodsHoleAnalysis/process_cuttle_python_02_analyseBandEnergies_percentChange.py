@@ -265,10 +265,10 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         N_TS += animal
     pooled_percentChange_means, pooled_percentChange_stds = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     for freq_band in fake_baselines_dict.keys():
-        pooled_percentChange_stdE = (pooled_percentChange_stds[freq_band]/(N_TS-1))
+        pooled_percentChange_stdE = (pooled_percentChange_stds[freq_band]/np.sqrt(N_TS))
         fakeBase_mean = np.nanmean(fake_baselines_dict[freq_band], axis=0)
         fakeBase_std = np.nanstd(fake_baselines_dict[freq_band], axis=0, ddof=1)
-        fakeBase_stdError = fakeBase_std/(N_TS-1)
+        fakeBase_stdError = fakeBase_std/np.sqrt(N_TS)
         # set fig path and title
         if len(prey_type_str.split(' '))>1:
             figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
