@@ -230,7 +230,7 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
     #plt.xlim(0,180)
-    plt.ylim(-200, 200)
+    plt.ylim(-150, 200)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
     N_freq_bands = len(allA_meanPercentChange_dict['N'].keys())
@@ -238,7 +238,7 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     for freq_band in list_of_freqs_to_plot:
         for animal in allA_meanPercentChange_dict['trials'][freq_band]:
             for trial in animal:
-                plt.plot(trial, linewidth=1, color=colors[freq_band], alpha=0.01)
+                plt.plot(trial, linewidth=1, color=colors[freq_band], alpha=0.02)
         x_frames = range(360)
         upper_var = pooled_means[freq_band] + pooled_stds[freq_band]
         lower_var = pooled_means[freq_band] - pooled_stds[freq_band]
@@ -247,9 +247,9 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     # plot events
     ymin, ymax = plt.ylim()
     plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-    plt.text(baseline_len, ymax-400, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.text(baseline_len, ymax-50, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-    plt.text(TGB_bucket, ymax-200, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.text(TGB_bucket, ymax-25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save fig
     plt.savefig(figure_path)
