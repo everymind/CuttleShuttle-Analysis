@@ -257,7 +257,7 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     plt.pause(1)
     plt.close()
 
-def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, fake_baselines_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
+def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, fake_baselines_dict, fake_baselines_N, TGB_bucket, baseline_len, plots_dir, todays_dt):
     img_type = ['.png', '.pdf']
     # calculate total number of tentacle shots
     N_TS = 0
@@ -265,10 +265,10 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         N_TS += animal
     pooled_percentChange_means, pooled_percentChange_stds = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     for freq_band in fake_baselines_dict.keys():
-        pooled_percentChange_stdE = (pooled_percentChange_stds[freq_band]/np.sqrt(N_TS))
+        pooled_percentChange_stdE = pooled_percentChange_stds[freq_band]/np.sqrt(N_TS)
         fakeBase_mean = np.nanmean(fake_baselines_dict[freq_band], axis=0)
         fakeBase_std = np.nanstd(fake_baselines_dict[freq_band], axis=0, ddof=1)
-        fakeBase_stdError = fakeBase_std/np.sqrt(N_TS)
+        fakeBase_stdError = fakeBase_std/np.sqrt(fake_baselines_N)
         # set fig path and title
         if len(prey_type_str.split(' '))>1:
             figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
@@ -283,7 +283,7 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         #plt.xlim(0,180)
-        plt.ylim(-100, 100)
+        plt.ylim(-50, 75)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
         # plot fake baseline mean and var
@@ -408,6 +408,6 @@ for freq_band in pool_of_baseline_frames.keys():
         fake_baselines[num] = shuffled_baseline_frames[:len_fake_timecourse]
     allFreq_fakeBase[freq_band] = fake_baselines
 # compare fake baselines to real data
-plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase_Frame', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase_Frame', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, N_random_baselines, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 
 # FIN
