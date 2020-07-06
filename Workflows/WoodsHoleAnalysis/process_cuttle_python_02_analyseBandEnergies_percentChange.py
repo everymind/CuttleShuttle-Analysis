@@ -173,7 +173,7 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     figure_path = os.path.join(plots_dir, figure_name)
     figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show standard deviation \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
     # setup fig
-    plt.figure(figsize=(16,16), dpi=200)
+    plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
     plt.ylabel("Percent change from baseline in power")
     plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
@@ -186,9 +186,9 @@ def plot_percentChange_pooled_animals_allFreq(analysis_type_str, preprocess_str,
     colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
     for freq_band in pooled_means.keys():
         x_frames = range(360)
-        upper_var = pooled_means[freq_band] + pooled_stds[freq_band]
-        lower_var = pooled_means[freq_band] - pooled_stds[freq_band]
-        plt.fill_between(x_frames, upper_var, lower_var, color=colors[freq_band], alpha=0.03)
+        upper_std = pooled_means[freq_band] + pooled_stds[freq_band]
+        lower_std = pooled_means[freq_band] - pooled_stds[freq_band]
+        plt.fill_between(x_frames, upper_std, lower_std, color=colors[freq_band], alpha=0.03)
         plt.plot(pooled_means[freq_band], linewidth=2, color=colors[freq_band], alpha=0.5, label='Freq Band {fb}'.format(fb=freq_band))
     # plot events
     ymin, ymax = plt.ylim()
@@ -224,13 +224,13 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     figure_path = os.path.join(plots_dir, figure_name)
     figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Transparent regions show standard deviation \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}, showing frequency bands {fb}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS), fb=freq_bands_str[9:])
     # setup fig
-    plt.figure(figsize=(16,16), dpi=200)
+    plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
     plt.ylabel("Percent change from baseline in power")
     plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
     #plt.xlim(0,180)
-    plt.ylim(-150, 200)
+    plt.ylim(-100, 300)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
     N_freq_bands = len(allA_meanPercentChange_dict['N'].keys())
@@ -238,11 +238,11 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     for freq_band in list_of_freqs_to_plot:
         for animal in allA_meanPercentChange_dict['trials'][freq_band]:
             for trial in animal:
-                plt.plot(trial, linewidth=1, color=colors[freq_band], alpha=0.02)
+                plt.plot(trial, linewidth=1, color=colors[freq_band], alpha=0.03)
         x_frames = range(360)
-        upper_var = pooled_means[freq_band] + pooled_stds[freq_band]
-        lower_var = pooled_means[freq_band] - pooled_stds[freq_band]
-        plt.fill_between(x_frames, upper_var, lower_var, color=colors[freq_band], alpha=0.05)
+        upper_std = pooled_means[freq_band] + pooled_stds[freq_band]
+        lower_std = pooled_means[freq_band] - pooled_stds[freq_band]
+        plt.fill_between(x_frames, upper_std, lower_std, color=colors[freq_band], alpha=0.05)
         plt.plot(pooled_means[freq_band], linewidth=2, color=colors[freq_band], alpha=0.5, label='Freq Band {fb}'.format(fb=freq_band))
     # plot events
     ymin, ymax = plt.ylim()
@@ -263,10 +263,12 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
     N_TS = 0
     for animal in allA_meanPercentChange_dict['N'][0]:
         N_TS += animal
-    pooled_percentChange_means, pooled_percentChange_vars = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
+    pooled_percentChange_means, pooled_percentChange_stds = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
     for freq_band in fake_baselines_dict.keys():
-        fakeBase_means = np.nanmean(fake_baselines_dict[freq_band], axis=0)
-        fakeBase_vars = np.nanstd(fake_baselines_dict[freq_band], axis=0, ddof=1)
+        pooled_percentChange_stdE = (pooled_percentChange_stds[freq_band]/(N_TS-1))
+        fakeBase_mean = np.nanmean(fake_baselines_dict[freq_band], axis=0)
+        fakeBase_std = np.nanstd(fake_baselines_dict[freq_band], axis=0, ddof=1)
+        fakeBase_stdError = fakeBase_std/(N_TS-1)
         # set fig path and title
         if len(prey_type_str.split(' '))>1:
             figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
@@ -286,19 +288,19 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plt.grid(b=True, which='major', linestyle='-')
         # plot fake baseline mean and var
         x_frames = range(360)
-        upper_var = fakeBase_means + fakeBase_vars
-        lower_var = fakeBase_means - fakeBase_vars
-        plt.fill_between(x_frames, upper_var, lower_var, color=[1.0, 0.0, 0.0, 0.3])
-        plt.plot(fakeBase_means, linewidth=2, color=[1.0, 0.0, 0.0, 1.0], label='Shuffled baseline frames')
+        upper_stdE = fakeBase_mean + fakeBase_stdError
+        lower_stdE = fakeBase_mean - fakeBase_stdError
+        plt.fill_between(x_frames, upper_stdE, lower_stdE, color=[1.0, 0.0, 0.0, 0.3])
+        plt.plot(fakeBase_mean, linewidth=2, color=[1.0, 0.0, 0.0, 1.0], label='Shuffled baseline frames')
         # plot mean of observed trials
-        upper_bound = pooled_percentChange_means[freq_band] + pooled_percentChange_vars[freq_band]
-        lower_bound = pooled_percentChange_means[freq_band] - pooled_percentChange_vars[freq_band]
+        upper_bound = pooled_percentChange_means[freq_band] + pooled_percentChange_stdE
+        lower_bound = pooled_percentChange_means[freq_band] - pooled_percentChange_stdE
         plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.1])
         plt.plot(pooled_percentChange_means[freq_band], linewidth=2, color=[0.0, 0.0, 1.0, 1.0], label='Observed data')
-        # find frame when pooled_percentChange_mean crosses upper_var or lower_var of fake baselines
+        # find frame when pooled_percentChange_mean crosses upper_stdE or lower_stdE of fake baselines
         firstFrame = None
         for frame in range(len(pooled_percentChange_means[freq_band])):
-            if pooled_percentChange_means[freq_band][frame]>upper_var[frame] or pooled_percentChange_means[freq_band][frame]<lower_var[frame]:
+            if pooled_percentChange_means[freq_band][frame]>upper_stdE[frame] or pooled_percentChange_means[freq_band][frame]<lower_stdE[frame]:
                 firstFrame = frame
                 break
         # plot events
@@ -388,7 +390,7 @@ plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange
 ### ------ SHUFFLE TEST: ONSET OF SIG CHANGE FROM BASELINE ------ ###
 #####################################################################
 # generate fake 6-second time courses, taking data from baseline
-N_random_baselines = 1000
+N_random_baselines = 140
 len_fake_timecourse = 360
 # create pool of data that can be used for creating fake baseline time courses
 pool_of_baseline_frames = {}
