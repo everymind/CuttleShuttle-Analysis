@@ -277,15 +277,19 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         figure_path = os.path.join(plots_dir, figure_name)
         figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show standard error of the mean \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
         # setup fig
-        plt.figure(figsize=(16,16), dpi=200)
+        plt.figure(figsize=(16,9), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
         plt.ylabel("Percent change from baseline in power")
         plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         #plt.xlim(0,180)
-        plt.ylim(-50, 75)
+        plt.ylim(-100, 150)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
+        # plot all observed trials
+        for animal in allA_meanPercentChange_dict['trials'][freq_band]:
+            for trial in animal:
+                plt.plot(trial, linewidth=1, color=[0.0, 0.5, 1.0, 0.05])
         # plot fake baseline mean and var
         x_frames = range(360)
         upper_stdE = fakeBase_mean + fakeBase_stdError
@@ -295,7 +299,7 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         # plot mean of observed trials
         upper_bound = pooled_percentChange_means[freq_band] + pooled_percentChange_stdE
         lower_bound = pooled_percentChange_means[freq_band] - pooled_percentChange_stdE
-        plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.1])
+        plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.3])
         plt.plot(pooled_percentChange_means[freq_band], linewidth=2, color=[0.0, 0.0, 1.0, 1.0], label='Observed data')
         # find frame when pooled_percentChange_mean crosses upper_stdE or lower_stdE of fake baselines
         firstFrame = None
@@ -309,9 +313,9 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plt.text(baseline_len, ymax-20, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
         plt.text(TGB_bucket, ymax-10, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-        if firstFrame is not None:
-            plt.plot((firstFrame, firstFrame), (ymin, ymax), 'c--', linewidth=1)
-            plt.text(firstFrame, ymax-15, "Mean percent change in \n power deviates significantly from \n shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center'), bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+        # if firstFrame is not None:
+        #     plt.plot((firstFrame, firstFrame), (ymin, ymax), 'c--', linewidth=1)
+        #     plt.text(firstFrame, ymax-15, "Mean percent change in \n power deviates significantly from \n shuffled baseline at {s:.2f} seconds".format(s=firstFrame/60, fontsize='small', ha='center'), bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save fig
         plt.savefig(figure_path)
@@ -390,7 +394,7 @@ plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange
 ### ------ SHUFFLE TEST: ONSET OF SIG CHANGE FROM BASELINE ------ ###
 #####################################################################
 # generate fake 6-second time courses, taking data from baseline
-N_random_baselines = 140
+N_random_baselines = 100
 len_fake_timecourse = 360
 # create pool of data that can be used for creating fake baseline time courses
 pool_of_baseline_frames = {}
