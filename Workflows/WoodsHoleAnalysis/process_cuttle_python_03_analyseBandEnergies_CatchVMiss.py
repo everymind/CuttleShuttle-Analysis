@@ -142,6 +142,34 @@ def zScored_powerAtFreq(Zscore_type, dict_to_Zscore, dict_for_mean_std):
                 zScored_dict[animal][freq_band].append(trial_zscored)
     return zScored_dict
 
+def percent_change_from_baseline(TS_dict, prey_type, baseline_len):
+    percentChange_TS = {}
+    # make baseline for each animal, catch vs miss
+    for animal in TS_dict: 
+        percentChange_TS[animal] = {}
+        try:
+            # baseline subtract each frequency during each trial
+            allFreq_allTrials_percentChange = {}
+            for i,trial in enumerate(TS_dict[animal]):
+                for freq_band in trial:
+                    percentChange_TS[animal][freq_band] = {}
+                    this_freq_baseline = np.nanmean(TS_dict[animal][i][freq_band][0:baseline_len])
+                    this_freq_percentChange = [(float(x/this_freq_baseline)-1)*100 for x in TS_dict[animal][i][freq_band]]
+                    allFreq_allTrials_percentChange.setdefault(freq_band,[]).append(this_freq_percentChange)
+            for freq_band in allFreq_allTrials_percentChange:
+                thisFreq_baseSub_mean_byFrame = np.nanmean(allFreq_allTrials_percentChange[freq_band], axis=0)
+                thisFreq_baseSub_mean_byTrial = np.nanmean(allFreq_allTrials_percentChange[freq_band])
+                thisFreq_baseSub_std_byFrame = np.nanstd(allFreq_allTrials_percentChange[freq_band], axis=0, ddof=1)
+                thisFreq_baseSub_std_byTrial = np.nanstd(allFreq_allTrials_percentChange[freq_band], ddof=1)
+                percentChange_TS[animal][freq_band]['trials'] = allFreq_allTrials_percentChange[freq_band]
+                percentChange_TS[animal][freq_band]['mean frame'] = thisFreq_baseSub_mean_byFrame
+                percentChange_TS[animal][freq_band]['mean trial'] = thisFreq_baseSub_mean_byTrial
+                percentChange_TS[animal][freq_band]['std frame'] = thisFreq_baseSub_std_byFrame
+                percentChange_TS[animal][freq_band]['std trial'] = thisFreq_baseSub_std_byTrial
+        except Exception:
+            print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
+    return percentChange_TS
+
 def plot_indiv_animals_each_freq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
     # plot individual animals
     img_type = ['.png', '.pdf']
@@ -582,6 +610,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
     parser.add_argument("--run_type", nargs='?', default='prototype')
+    parser.add_argument("--units", nargs='?', default='percent_change')
     parser.add_argument("--plotZScore", nargs='?', default=False)
     parser.add_argument("--plotRandomTraces", nargs='?', default=False)
     parser.add_argument("--plotShuffles", nargs='?', default=False)
@@ -598,6 +627,10 @@ if __name__=='__main__':
     plot_zscored_data = args.plotZScore
     visualize_random_traces = args.plotRandomTraces
     plot_shuffle_tests = args.plotShuffles
+    ###################################
+    # ANALYSIS METRIC TOGGLES
+    ###################################
+    units = args.units
     ###################################
     # COLLECT DATA FROM DATA_FOLDER
     ###################################
@@ -634,94 +667,101 @@ if __name__=='__main__':
     # collect all power-at-frequency-band data and categorize by animal and type (catch vs miss)
     all_catches, all_misses = categorize_by_animal_catchVmiss(all_data)
     all_raw = [all_catches, all_misses]
-    # frame for moment tentacles go ballistic
-    TGB_bucket_raw = 180
     ########################################################
-    ### ------ DATA NORMALIZATION/STANDARDIZATION ------ ###
+    ### ------ TIMING INFO/MOMENTS OF INTEREST ------ ###
     ########################################################
+    TGB_bucket_raw = 180 # frame for moment tentacles go ballistic
+    baseline_frames = 90 # length of baseline period in frames
+    vids_total_length = 360 # length of analysed video clips in frames
+    #########################################################################################
+    ### ------ DATA NORMALIZATION/STANDARDIZATION: BASELINE SUBTRACTION AND ZSCORE ------ ###
+    #########################################################################################
     # baseline subtraction
-    baseline_frames = 120 #frames
-    # baseline subtract, all TS
-    dailyTS_baseSub = {}
-    for session_date in all_TS_daily:
-        dailyTS_baseSub[session_date] = baseSub_powerAtFreq(all_TS_daily[session_date], 'all', baseline_frames)
-    allTS_baseSub = baseSub_powerAtFreq(all_TS, 'all', baseline_frames)
-    # baseline subtract, catch vs miss
-    dailyCatches_baseSub = {}
-    dailyMisses_baseSub = {}
-    for session_date in all_catches_daily:
-        dailyCatches_baseSub[session_date] = baseSub_powerAtFreq(all_catches_daily[session_date], 'all', baseline_frames)
-    for session_date in all_misses_daily:
-        dailyMisses_baseSub[session_date] = baseSub_powerAtFreq(all_misses_daily[session_date], 'all', baseline_frames)
-    allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
-    allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
-    # zscore each animal so that I can pool all trials into a "superanimal"
-    allTS_baseSub_Zscored = zScored_powerAtFreq('frame', allTS_baseSub, allTS_baseSub)
-    allCatches_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
-    allMisses_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
-    allTS_baseSub_Zscored_Frame_Trial = zScored_powerAtFreq('trial', allTS_baseSub, allTS_baseSub)
-    allCatches_baseSub_Zscored_Trial = zScored_powerAtFreq('trial', allCatches_baseSub, allTS_baseSub)
-    allMisses_baseSub_Zscored_Trial = zScored_powerAtFreq('trial', allMisses_baseSub, allTS_baseSub)
-    # zscore full trial for each animal to characterize dynamics during entire tentacle shot clip
-    dailyTS_baseSub_Zscored_Trial = {}
-    for session_date in dailyTS_baseSub:
-        dailyTS_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyTS_baseSub[session_date], dailyTS_baseSub[session_date])
-    dailyCatches_baseSub_Zscored_Trial = {}
-    dailyMisses_baseSub_Zscored_Trial = {}
-    for session_date in dailyCatches_baseSub:
-        dailyCatches_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyCatches_baseSub[session_date], dailyTS_baseSub[session_date])
-    for session_date in dailyMisses_baseSub:
-        dailyMisses_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyMisses_baseSub[session_date], dailyTS_baseSub[session_date])
-    #######################################################
-    ### ------------ PLOT THE ZSCORED DATA ------------ ###
-    #######################################################
-    if plot_zscored_data:
-        ## individual animals
-        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-        plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-        # sanity check
+    if units=='zscore':
+        # baseline subtract, all TS
+        dailyTS_baseSub = {}
+        for session_date in all_TS_daily:
+            dailyTS_baseSub[session_date] = baseSub_powerAtFreq(all_TS_daily[session_date], 'all', baseline_frames)
+        allTS_baseSub = baseSub_powerAtFreq(all_TS, 'all', baseline_frames)
+        # baseline subtract, catch vs miss
+        dailyCatches_baseSub = {}
+        dailyMisses_baseSub = {}
+        for session_date in all_catches_daily:
+            dailyCatches_baseSub[session_date] = baseSub_powerAtFreq(all_catches_daily[session_date], 'all', baseline_frames)
+        for session_date in all_misses_daily:
+            dailyMisses_baseSub[session_date] = baseSub_powerAtFreq(all_misses_daily[session_date], 'all', baseline_frames)
+        allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
+        allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
+        # zscore each animal so that I can pool all trials into a "superanimal"
+        allTS_baseSub_Zscored = zScored_powerAtFreq('frame', allTS_baseSub, allTS_baseSub)
+        allCatches_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
+        allMisses_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
+        allTS_baseSub_Zscored_Frame_Trial = zScored_powerAtFreq('trial', allTS_baseSub, allTS_baseSub)
+        allCatches_baseSub_Zscored_Trial = zScored_powerAtFreq('trial', allCatches_baseSub, allTS_baseSub)
+        allMisses_baseSub_Zscored_Trial = zScored_powerAtFreq('trial', allMisses_baseSub, allTS_baseSub)
+        # zscore full trial for each animal to characterize dynamics during entire tentacle shot clip
+        dailyTS_baseSub_Zscored_Trial = {}
         for session_date in dailyTS_baseSub:
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            dailyTS_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyTS_baseSub[session_date], dailyTS_baseSub[session_date])
+        dailyCatches_baseSub_Zscored_Trial = {}
+        dailyMisses_baseSub_Zscored_Trial = {}
+        for session_date in dailyCatches_baseSub:
+            dailyCatches_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyCatches_baseSub[session_date], dailyTS_baseSub[session_date])
+        for session_date in dailyMisses_baseSub:
+            dailyMisses_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyMisses_baseSub[session_date], dailyTS_baseSub[session_date])
+        metrics_to_shuffleTest = {'ZScored_by_frame':[allCatches_baseSub_Zscored_Frame,allMisses_baseSub_Zscored_Frame], 'ZScored_by_trial':[allCatches_baseSub_Zscored_Trial,allMisses_baseSub_Zscored_Trial]}
+        #######################################################
+        ### ------------ PLOT THE ZSCORED DATA ------------ ###
+        #######################################################
+        if plot_zscored_data:
+            ## individual animals
+            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            # sanity check
+            for session_date in dailyTS_baseSub:
+                plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+                plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+    ######################################################################################
+    ### ------ DATA NORMALIZATION/STANDARDIZATION: PERCENT CHANGE FROM BASELINE ------ ###
+    ######################################################################################
+    if units=='percent_change': 
+        # convert power at frequency into percent change from baseline
+        dailyTS_percentChange = {}
+        for session_date in all_TS_daily:
+            dailyTS_percentChange[session_date] = percent_change_from_baseline(all_TS_daily[session_date], 'all', baseline_frames)
+        allTS_percentChange = percent_change_from_baseline(all_TS, 'all', baseline_frames)
+        # percent change, catch vs miss
+        dailyCatches_percentChange = {}
+        dailyMisses_percentChange = {}
+        for session_date in all_catches_daily:
+            dailyCatches_percentChange[session_date] = percent_change_from_baseline(all_catches_daily[session_date], 'all', baseline_frames)
+        for session_date in all_misses_daily:
+            dailyMisses_percentChange[session_date] = percent_change_from_baseline(all_misses_daily[session_date], 'all', baseline_frames)
+        allCatches_percentChange = percent_change_from_baseline(all_catches, 'all', baseline_frames)
+        allMisses_percentChange = percent_change_from_baseline(all_misses, 'all', baseline_frames)
+        metrics_to_shuffleTest = {'Percent_Change':[allCatches_percentChange,allMisses_percentChange]}
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
-    No_of_Shuffles = 200
+    No_of_Shuffles = 20000
     logging.info('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
-    ### POOL ACROSS ALL ANIMALS, make a shuffle test of every frame
-    # zscored by frame
-    logging.info('Shuffle Tests of data Z-scored by frame...')
-    print('Shuffle Tests of data Z-scored by frame...')
-    allA_allFreq_Z_byFrame_C, allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M, allA_allFreq_Z_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, 0, -1, "all")
-    Z_power_allFreq_byFrame = {}
-    for freq_band in range(7):
-        Z_power_allFreq_byFrame[freq_band] = {}
-        for frame in range(360):
-            # collect all power scores for each frame
-            Z_power_allFreq_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
-            for trial in allA_allFreq_Z_byFrame_C[freq_band]:
-                Z_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
-            for trial in allA_allFreq_Z_byFrame_M[freq_band]:
-                Z_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
-            # shuffle test each frame
-            Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
-    # zscored by trial
-    logging.info('Shuffle Tests of data Z-scored by trial...')
-    print('Shuffle Tests of data Z-scored by trial...')
-    allA_allFreq_ZTrial_byFrame_C, allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M, allA_allFreq_ZTrial_byFrame_M_N = pool_acrossA_keepTemporalStructure_eachFreq(allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, 0, -1, "all")
-    ZTrial_power_allFreq_byFrame = {}
-    for freq_band in range(7):
-        ZTrial_power_allFreq_byFrame[freq_band] = {}
-        for frame in range(360):
-            # collect all edge scores for each frame
-            ZTrial_power_allFreq_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
-            for trial in allA_allFreq_ZTrial_byFrame_C[freq_band]:
-                ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
-            for trial in allA_allFreq_ZTrial_byFrame_M[freq_band]:
-                ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
-            # shuffle test each frame
-            ZTrial_power_allFreq_byFrame[freq_band][frame]['SPerf'], ZTrial_power_allFreq_byFrame[freq_band][frame]['pval'], ZTrial_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'], ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-ZscoredTrial-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_ZTrial_byFrame_C_N, allA_allFreq_ZTrial_byFrame_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
+    ### POOL ACROSS ALL ANIMALS, make a shuffle test for each metric
+    for metric in metrics_to_shuffleTest.keys():
+        logging.info('Shuffle Tests of data {m}...'.format(m=metric))
+        print('Shuffle Tests of data {m}...'.format(m=metric))
+        allA_allFreq_catches, allA_allFreq_catches_N, allA_allFreq_misses, allA_allFreq_misses_N = pool_acrossA_keepTemporalStructure_eachFreq(metrics_to_shuffleTest[metric][0], metrics_to_shuffleTest[metric][1], 0, -1 , "all")
+        allFreq_shuffleTest = {}
+        for freq_band in allA_allFreq_catches.keys():
+            allFreq_shuffleTest[freq_band] = {}
+            for frame in range(vids_total_length):
+                allFreq_shuffleTest[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+                for trial in allA_allFreq_catches[freq_band]:
+                    allFreq_shuffleTest[freq_band][frame]['catch'].append(trial[frame])
+                for trial in allA_allFreq_misses[freq_band]:
+                    allFreq_shuffleTest[freq_band][frame]['miss'].append(trial[frame])
+                # shuffle test each frame
+                allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-{m}-Frame{f}-Freq{fb}'.format(m=metric, f=frame, fb=freq_band), 'AllMisses-{m}-Frame{f}-Freq{fb}'.format(m=metric, f=frame, fb=freq_band), allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
     #######################################################
     ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
     #######################################################
