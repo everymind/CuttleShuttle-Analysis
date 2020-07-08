@@ -750,7 +750,7 @@ if __name__=='__main__':
     for preprocess_type in preprocessed_data_to_shuffleTest.keys():
         logging.info('Shuffle Tests of {p} data...'.format(p=preprocess_type))
         print('Shuffle Tests of {p} data...'.format(p=preprocess_type))
-        allA_allFreq_catches, allA_allFreq_catches_N, allA_allFreq_misses, allA_allFreq_misses_N = pool_acrossA_keepTemporalStructure_eachFreq(metrics_to_shuffleTest[metric][0], metrics_to_shuffleTest[metric][1], 0, -1 , "all")
+        allA_allFreq_catches, allA_allFreq_catches_N, allA_allFreq_misses, allA_allFreq_misses_N = pool_acrossA_keepTemporalStructure_eachFreq(preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], 0, -1 , "all")
         allFreq_shuffleTest = {}
         for freq_band in allA_allFreq_catches.keys():
             allFreq_shuffleTest[freq_band] = {}
@@ -786,11 +786,11 @@ if __name__=='__main__':
         print('Calculating observed difference of means of {p} data...'.format(p=preprocess_type))
         allA_allC_allFreq = {}
         allA_allM_allFreq = {}
-        for animal in metrics_to_shuffleTest[metric][0].keys():
-            for freq_band in metrics_to_shuffleTest[metric][0][animal].keys():
-                for trial in metrics_to_shuffleTest[metric][0][animal][freq_band]:
+        for animal in preprocessed_data_to_shuffleTest[preprocess_type][0].keys():
+            for freq_band in preprocessed_data_to_shuffleTest[preprocess_type][0][animal].keys():
+                for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal][freq_band]:
                     allA_allC_allFreq.setdefault(freq_band,[]).append(trial)
-                for trial in metrics_to_shuffleTest[metric][1][animal][freq_band]:
+                for trial in preprocessed_data_to_shuffleTest[preprocess_type][1][animal][freq_band]:
                     allA_allM_allFreq.setdefault(freq_band,[]).append(trial)
         allA_allC_allFreq_mean = {}
         allA_allM_allFreq_mean = {}
@@ -878,8 +878,8 @@ if __name__=='__main__':
         logging.info('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
         print('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
         ### POOL ACROSS ANIMALS
-        plot_allA_allFreq_ShuffledDiffMeans('ProcessCuttlePython', preprocess_type, 'power at frequency', 'all', metrics_to_shuffleTest[metric][0], metrics_to_shuffleTest[metric][1], pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+        plot_allA_allFreq_ShuffledDiffMeans('ProcessCuttlePython', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
         # without labels
-        plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+        plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 
 # FIN
