@@ -686,7 +686,7 @@ if __name__=='__main__':
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
-    No_of_Shuffles = 20000
+    No_of_Shuffles = 200
     logging.info('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     ### POOL ACROSS ALL ANIMALS, make a shuffle test of every frame
@@ -698,12 +698,6 @@ if __name__=='__main__':
     for freq_band in range(7):
         Z_power_allFreq_byFrame[freq_band] = {}
         for frame in range(360):
-            # collect all power scores for each frame
-            Z_power_allFreq_byFrame[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
-            for trial in allA_allFreq_Z_byFrame_C[freq_band]:
-                Z_power_allFreq_byFrame[freq_band][frame]['catch'].append(trial[frame])
-            for trial in allA_allFreq_Z_byFrame_M[freq_band]:
-                Z_power_allFreq_byFrame[freq_band][frame]['miss'].append(trial[frame])
             # shuffle test each frame
             Z_power_allFreq_byFrame[freq_band][frame]['SPerf'], Z_power_allFreq_byFrame[freq_band][frame]['pval'], Z_power_allFreq_byFrame[freq_band][frame]['mean'] = shuffle_test(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), 'AllMisses-Zscored-Frame'+str(frame)+'-Freq'+str(freq_band), allA_allFreq_Z_byFrame_C_N, allA_allFreq_Z_byFrame_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
     # zscored by trial
