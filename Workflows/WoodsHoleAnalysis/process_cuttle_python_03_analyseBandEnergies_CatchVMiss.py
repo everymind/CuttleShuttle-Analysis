@@ -735,7 +735,7 @@ if __name__=='__main__':
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
-    No_of_Shuffles = 200
+    No_of_Shuffles = 20000
     logging.info('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     ### POOL ACROSS ALL ANIMALS, make a shuffle test for each metric
