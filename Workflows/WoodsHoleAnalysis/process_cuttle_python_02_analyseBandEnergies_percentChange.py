@@ -275,7 +275,7 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         else:
             figure_name = analysis_type_str+'_'+preprocess_str+'_allAnimals_freqBand'+str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show standard error of the mean \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
+        figure_title = 'Onset of significant percent change from shuffled baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, Transparent regions show 2 standard errors of the mean \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
         # setup fig
         plt.figure(figsize=(16,9), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -297,8 +297,8 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plt.fill_between(x_frames, upper_stdE, lower_stdE, color=[1.0, 0.0, 0.0, 0.3])
         plt.plot(fakeBase_mean, linewidth=2, color=[1.0, 0.0, 0.0, 1.0], label='Shuffled baseline frames')
         # plot mean of observed trials
-        upper_bound = pooled_percentChange_means[freq_band] + pooled_percentChange_stdE
-        lower_bound = pooled_percentChange_means[freq_band] - pooled_percentChange_stdE
+        upper_bound = pooled_percentChange_means[freq_band] + 2*pooled_percentChange_stdE
+        lower_bound = pooled_percentChange_means[freq_band] - 2*pooled_percentChange_stdE
         plt.fill_between(x_frames, upper_bound, lower_bound, color=[0.0, 0.0, 1.0, 0.3])
         plt.plot(pooled_percentChange_means[freq_band], linewidth=2, color=[0.0, 0.0, 1.0, 1.0], label='Observed data')
         # find frame when pooled_percentChange_mean crosses upper_stdE or lower_stdE of fake baselines
@@ -323,11 +323,82 @@ def plot_pooled_percentChange_from_fakeBase_allFreq(analysis_type_str, preproces
         plt.pause(1)
         plt.close()
 
+def plot_pooledA_percentChangeFromBase_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_meanPercentChange_dict, N_SEM, list_of_freqs_to_plot, end_of_baseline_frame, TGB_bucket, baseline_len, plots_dir, todays_dt):
+    img_type = ['.png', '.pdf']
+    # calculate total number of tentacle shots
+    N_TS = 0
+    for animal in allA_meanPercentChange_dict['N'][0]:
+        N_TS += animal
+    pooled_percentChange_means, pooled_percentChange_stds = pooled_mean_var_allAnimals(allA_meanPercentChange_dict)
+    freq_bands_str = 'freqBands'
+    if len(list_of_freqs_to_plot)==len(allA_meanPercentChange_dict['N'].keys()):
+        freq_bands_str = 'allFreqBands'
+    else:
+        for index in range(len(list_of_freqs_to_plot)):
+            if index == len(list_of_freqs_to_plot)-1:
+                freq_bands_str += str(list_of_freqs_to_plot[index])
+            else:
+                freq_bands_str += str(list_of_freqs_to_plot[index])+'-'
+    # set fig path and title
+    if len(prey_type_str.split(' '))>1:
+        figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+freq_bands_str+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
+    else:
+        figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+freq_bands_str+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Onset of significant percent change from zero (baseline) of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n {fb}, Transparent regions show {N_sem} standard errors of the mean \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_bands_str, N_sem=N_SEM, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
+    # setup fig
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    plt.ylabel("Percent change from baseline in power")
+    plot_xticks = np.arange(0, len(allA_meanPercentChange_dict['Mean'][0][0]), step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    #plt.xlim(0,180)
+    plt.ylim(-100, 150)
+    plt.xlabel("Seconds")
+    plt.grid(b=True, which='major', linestyle='-')
+    # plot mean of observed trials for all frequencies to be plotted
+    ymin, ymax = plt.ylim()
+    x_frames = range(360)
+    N_freq_bands = len(list_of_freqs_to_plot)
+    colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
+    for freq_band in list_of_freqs_to_plot:
+        pooled_percentChange_stdE = pooled_percentChange_stds[freq_band]/np.sqrt(N_TS)        
+        upper_bound = pooled_percentChange_means[freq_band] + N_SEM*pooled_percentChange_stdE
+        lower_bound = pooled_percentChange_means[freq_band] - N_SEM*pooled_percentChange_stdE
+        plt.fill_between(x_frames, upper_bound, lower_bound, color=colors[freq_band], alpha=0.3)
+        plt.plot(pooled_percentChange_means[freq_band], linewidth=2, color=colors[freq_band], alpha=1.0, label='Observed data, Freq Band {fb}'.format(fb=freq_band))
+        # find frame when bounds of pooled_percentChange_mean cross zero
+        firstFrame = None
+        for frame in range(end_of_baseline_frame, len(pooled_percentChange_means[freq_band])):
+            if lower_bound[frame]>0 or upper_bound[frame]<0:
+                firstFrame = frame
+                break
+        if firstFrame is not None:
+            plt.plot((firstFrame, firstFrame), (ymin, ymax), '--', color=colors[freq_band], linewidth=1)
+            plt.text(firstFrame, ymin+15+2*freq_band, "Band {fb} deviates significantly\n from baseline at {s:.2f} seconds".format(fb=freq_band, s=firstFrame/60, fontsize='smaller', ha='center'), bbox=dict(facecolor='white', edgecolor=colors[freq_band], boxstyle='round,pad=0.35')) 
+    # plot events
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax-50, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+    plt.text(TGB_bucket, ymax-25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 ###################################
 # SOURCE DATA AND OUTPUT FILE LOCATIONS 
 ###################################
 data_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
 plots_folder = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
+###################################
+# PLOT TOGGLES
+###################################
+plot_indiv_animals = False
+plot_pooled_animals = False
+plot_pooled_percentchange = False
 ###################################
 # COLLECT DATA FROM DATA_FOLDER
 ###################################
@@ -374,7 +445,8 @@ allTS_percentChange = percent_change_from_baseline(all_TS, 'all', baseline_frame
 #######################################################
 ### ------ PLOT PERCENT CHANGE FROM BASELINE ------ ###
 #######################################################
-plot_percentChange_indiv_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', allTS_percentChange, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+if plot_indiv_animals:
+    plot_percentChange_indiv_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', allTS_percentChange, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # pool across all animals to plot mean percent change in each frequency for all animals
 percentChange_allAnimals = {'N': {}, 'Mean': {}, 'trials': {}}
 for animal in allTS_percentChange.keys():
@@ -386,15 +458,16 @@ for animal in allTS_percentChange.keys():
         percentChange_allAnimals['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
         percentChange_allAnimals['trials'].setdefault(freq_band,[]).append(allTS_percentChange[animal][freq_band]['trials'])
 # plot
-plot_percentChange_pooled_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-# pick out certain frequencies to plot
-plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [0,1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-#####################################################################
-### ------ SHUFFLE TEST: ONSET OF SIG CHANGE FROM BASELINE ------ ###
-#####################################################################
+if plot_pooled_animals:
+    plot_percentChange_pooled_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+    # pick out certain frequencies to plot
+    plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [0,1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+    plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+######################################################################
+### ------ FAKE BASELINE: ONSET OF SIG CHANGE FROM BASELINE ------ ###
+######################################################################
 # generate fake 6-second time courses, taking data from baseline
-N_random_baselines = 100
+N_random_baselines = 140
 len_fake_timecourse = 360
 # create pool of data that can be used for creating fake baseline time courses
 pool_of_baseline_frames = {}
@@ -412,6 +485,13 @@ for freq_band in pool_of_baseline_frames.keys():
         fake_baselines[num] = shuffled_baseline_frames[:len_fake_timecourse]
     allFreq_fakeBase[freq_band] = fake_baselines
 # compare fake baselines to real data
-plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase_Frame', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, N_random_baselines, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-
+if plot_pooled_percentchange:
+    plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, N_random_baselines, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+####################################################################################
+### ------ POOLED ANIMALS + FREQ BANDS: ONSET OF SIG CHANGE FROM BASELINE ------ ###
+####################################################################################
+# 2 SEM
+plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 2, list(range(0,7)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+# 3 SEM
+plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 3, list(range(0,7)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # FIN
