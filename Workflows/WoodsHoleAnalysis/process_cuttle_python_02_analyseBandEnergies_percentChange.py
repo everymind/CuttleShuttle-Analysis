@@ -375,7 +375,7 @@ def plot_pooledA_percentChangeFromBase_allFreq(analysis_type_str, preprocess_str
                 break
         if firstFrame is not None:
             plt.plot((firstFrame, firstFrame), (ymin, ymax), '--', color=colors[freq_band], linewidth=1)
-            plt.text(firstFrame, ymin+15+5*freq_band, "Band {fb} deviates significantly\n from baseline at {s:.2f} seconds".format(fb=freq_band, s=firstFrame/60, fontsize='smaller', ha='center'), bbox=dict(facecolor='white', edgecolor=colors[freq_band], boxstyle='round,pad=0.35')) 
+            plt.text(firstFrame, ymin+3+12*freq_band, "Band {fb} deviates significantly\n from baseline at {s:.2f} seconds".format(fb=freq_band, s=firstFrame/60, fontsize='smaller', ha='center'), bbox=dict(facecolor='white', edgecolor=colors[freq_band], boxstyle='round,pad=0.35')) 
     # plot events
     plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
     plt.text(baseline_len, ymax-50, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
@@ -492,6 +492,10 @@ if plot_pooled_percentchange:
 ####################################################################################
 # 2 SEM
 plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 2, list(range(0,7)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 2, list(range(0,4)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 2, list(range(0,3)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # 3 SEM
 plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 3, list(range(0,7)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 3, list(range(0,4)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+plot_pooledA_percentChangeFromBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, 3, list(range(0,3)), baseline_frames, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # FIN
