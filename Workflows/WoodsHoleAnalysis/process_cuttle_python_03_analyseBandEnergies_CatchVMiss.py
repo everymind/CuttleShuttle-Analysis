@@ -761,7 +761,9 @@ if __name__=='__main__':
                 for trial in allA_allFreq_misses[freq_band]:
                     allFreq_shuffleTest[freq_band][frame]['miss'].append(trial[frame])
                 # shuffle test each frame
-                allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band), 'AllMisses-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band), allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
+                Group1String = 'AllCatches-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
+                Group2String = 'AllMisses-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
+                allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, Group1String, Group2String, allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
         #######################################################
         ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
         #######################################################
