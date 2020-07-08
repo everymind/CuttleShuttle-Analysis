@@ -157,15 +157,7 @@ def percent_change_from_baseline(TS_dict, prey_type, baseline_len):
                     this_freq_percentChange = [(float(x/this_freq_baseline)-1)*100 for x in TS_dict[animal][i][freq_band]]
                     allFreq_allTrials_percentChange.setdefault(freq_band,[]).append(this_freq_percentChange)
             for freq_band in allFreq_allTrials_percentChange:
-                thisFreq_baseSub_mean_byFrame = np.nanmean(allFreq_allTrials_percentChange[freq_band], axis=0)
-                thisFreq_baseSub_mean_byTrial = np.nanmean(allFreq_allTrials_percentChange[freq_band])
-                thisFreq_baseSub_std_byFrame = np.nanstd(allFreq_allTrials_percentChange[freq_band], axis=0, ddof=1)
-                thisFreq_baseSub_std_byTrial = np.nanstd(allFreq_allTrials_percentChange[freq_band], ddof=1)
-                percentChange_TS[animal][freq_band]['trials'] = allFreq_allTrials_percentChange[freq_band]
-                percentChange_TS[animal][freq_band]['mean frame'] = thisFreq_baseSub_mean_byFrame
-                percentChange_TS[animal][freq_band]['mean trial'] = thisFreq_baseSub_mean_byTrial
-                percentChange_TS[animal][freq_band]['std frame'] = thisFreq_baseSub_std_byFrame
-                percentChange_TS[animal][freq_band]['std trial'] = thisFreq_baseSub_std_byTrial
+                percentChange_TS[animal][freq_band] = allFreq_allTrials_percentChange[freq_band]
         except Exception:
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return percentChange_TS
@@ -739,11 +731,11 @@ if __name__=='__main__':
             dailyMisses_percentChange[session_date] = percent_change_from_baseline(all_misses_daily[session_date], 'all', baseline_frames)
         allCatches_percentChange = percent_change_from_baseline(all_catches, 'all', baseline_frames)
         allMisses_percentChange = percent_change_from_baseline(all_misses, 'all', baseline_frames)
-        preprocessed_data_to_shuffleTest = {'Percent_Change':[allCatches_percentChange,allMisses_percentChange]}
+        preprocessed_data_to_shuffleTest = {'Percent_Change':[allCatches_percentChange, allMisses_percentChange]}
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
-    No_of_Shuffles = 20000
+    No_of_Shuffles = 200
     logging.info('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     ### POOL ACROSS ALL ANIMALS, make a shuffle test for each metric
