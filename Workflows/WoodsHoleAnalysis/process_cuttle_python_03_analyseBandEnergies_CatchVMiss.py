@@ -373,7 +373,7 @@ def check_violations_sigBounds(shuffDiffMeansTraces, sig_upperBound, sig_lowerBo
             outOfBounds_lower += 1
     return outOfBounds_upper, outOfBounds_lower
 
-def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
     ### POOL ACROSS ANIMALS ### 
     allA_C_allFreq = {}
@@ -410,14 +410,14 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         # set fig path and title
         figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Z-scored by ' + preprocess_str.split('_')[1] + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        figure_title = preprocess_str + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
         # draw fig
         plt.figure(figsize=(16,16), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
         # subplot: real data and std 
         plt.subplot(2,1,1)
         plt.title('Observed data', fontsize=10, color='grey', style='italic')
-        plt.ylabel("Z-scored change from baseline in power")
+        plt.ylabel(preprocess_str+" change from baseline in power")
         plot_xticks = np.arange(0, len(allA_C_allF_mean[freq_band]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         plt.ylim(-2.5,3.0)
@@ -453,7 +453,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
         plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
-        plt.ylabel("Difference of z-scored means in power at frequency band")
+        plt.ylabel("Difference of "+preprocess_str+" means in "+metric_str)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         plt.ylim(-2.5,3.0)
         #plt.xlim(0,180)
@@ -488,7 +488,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans(analysis_type_str, preprocess_st
         plt.pause(1)
         plt.close()
 
-def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
     ### POOL ACROSS ANIMALS ### 
     allA_C_allFreq = {}
@@ -525,14 +525,14 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         # set fig path and title
         figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Z-scored by ' + preprocess_str.split('_')[1] + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        figure_title = preprocess_str+', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
         # draw fig
         plt.figure(figsize=(16,16), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
         # subplot: real data and std 
         plt.subplot(2,1,1)
         plt.title('Observed data', fontsize=10, color='grey', style='italic')
-        plt.ylabel("Z-scored change from baseline in power")
+        plt.ylabel(preprocess_str+" change from baseline in power")
         plot_xticks = np.arange(0, len(allA_C_allF_mean[freq_band]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         plt.ylim(-2.5,3.0)
@@ -568,7 +568,7 @@ def plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels(analysis_type_str, prep
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
         plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
-        plt.ylabel("Difference of z-scored means in power at frequency band")
+        plt.ylabel("Difference of "+preprocess_str+" means in "+metric_str)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         plt.ylim(-2.5,3.0)
         #plt.xlim(0,180)
@@ -692,7 +692,7 @@ if __name__=='__main__':
             dailyMisses_baseSub[session_date] = baseSub_powerAtFreq(all_misses_daily[session_date], 'all', baseline_frames)
         allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
         allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
-        # zscore each animal so that I can pool all trials into a "superanimal"
+        # zscore each animal in order to pool all trials into a "superanimal"
         allTS_baseSub_Zscored = zScored_powerAtFreq('frame', allTS_baseSub, allTS_baseSub)
         allCatches_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
         allMisses_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
@@ -709,7 +709,7 @@ if __name__=='__main__':
             dailyCatches_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyCatches_baseSub[session_date], dailyTS_baseSub[session_date])
         for session_date in dailyMisses_baseSub:
             dailyMisses_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyMisses_baseSub[session_date], dailyTS_baseSub[session_date])
-        metrics_to_shuffleTest = {'ZScored_by_frame':[allCatches_baseSub_Zscored_Frame,allMisses_baseSub_Zscored_Frame], 'ZScored_by_trial':[allCatches_baseSub_Zscored_Trial,allMisses_baseSub_Zscored_Trial]}
+        preprocessed_data_to_shuffleTest = {'ZScored_by_frame_baseSub':[allCatches_baseSub_Zscored_Frame,allMisses_baseSub_Zscored_Frame], 'ZScored_by_trial_baseSub':[allCatches_baseSub_Zscored_Trial,allMisses_baseSub_Zscored_Trial]}
         #######################################################
         ### ------------ PLOT THE ZSCORED DATA ------------ ###
         #######################################################
@@ -739,7 +739,7 @@ if __name__=='__main__':
             dailyMisses_percentChange[session_date] = percent_change_from_baseline(all_misses_daily[session_date], 'all', baseline_frames)
         allCatches_percentChange = percent_change_from_baseline(all_catches, 'all', baseline_frames)
         allMisses_percentChange = percent_change_from_baseline(all_misses, 'all', baseline_frames)
-        metrics_to_shuffleTest = {'Percent_Change':[allCatches_percentChange,allMisses_percentChange]}
+        preprocessed_data_to_shuffleTest = {'Percent_Change':[allCatches_percentChange,allMisses_percentChange]}
     ########################################################
     ### -------- SHUFFLE TESTS FOR SIGNIFICANCE -------- ###
     ########################################################
@@ -747,9 +747,9 @@ if __name__=='__main__':
     logging.info('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     ### POOL ACROSS ALL ANIMALS, make a shuffle test for each metric
-    for metric in metrics_to_shuffleTest.keys():
-        logging.info('Shuffle Tests of data {m}...'.format(m=metric))
-        print('Shuffle Tests of data {m}...'.format(m=metric))
+    for preprocess_type in preprocessed_data_to_shuffleTest.keys():
+        logging.info('Shuffle Tests of {p} data...'.format(p=preprocess_type))
+        print('Shuffle Tests of {p} data...'.format(p=preprocess_type))
         allA_allFreq_catches, allA_allFreq_catches_N, allA_allFreq_misses, allA_allFreq_misses_N = pool_acrossA_keepTemporalStructure_eachFreq(metrics_to_shuffleTest[metric][0], metrics_to_shuffleTest[metric][1], 0, -1 , "all")
         allFreq_shuffleTest = {}
         for freq_band in allA_allFreq_catches.keys():
@@ -761,201 +761,125 @@ if __name__=='__main__':
                 for trial in allA_allFreq_misses[freq_band]:
                     allFreq_shuffleTest[freq_band][frame]['miss'].append(trial[frame])
                 # shuffle test each frame
-                allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-{m}-Frame{f}-Freq{fb}'.format(m=metric, f=frame, fb=freq_band), 'AllMisses-{m}-Frame{f}-Freq{fb}'.format(m=metric, f=frame, fb=freq_band), allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
-    #######################################################
-    ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
-    #######################################################
-    logging.info('Calculating upper and lower bounds for p<0.05...')
-    print('Calculating upper and lower bounds for p<0.05...')
-    # pointwise p<0.05 bounds
-    UB_pointwise = 97.5
-    LB_pointwise = 2.5
-    pw005sig_UB = {}
-    pw005sig_LB = {}
-    pw005sig_ZTrial_UB = {}
-    pw005sig_ZTrial_LB = {}
-    for freq_band in Z_power_allFreq_byFrame.keys():
-        pw005sig_UB[freq_band], pw005sig_LB[freq_band] = find_bounds_for_sig(Z_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
-        pw005sig_ZTrial_UB[freq_band], pw005sig_ZTrial_LB[freq_band] = find_bounds_for_sig(ZTrial_power_allFreq_byFrame[freq_band], UB_pointwise, LB_pointwise)
-    # collect shuffled mean of each frame
-    # zscored by frame
-    shuff_DiffMeans = {}
-    for freq_band in Z_power_allFreq_byFrame.keys():
-        for frame in sorted(Z_power_allFreq_byFrame[freq_band].keys()):
-            shuff_DiffMeans.setdefault(freq_band,[]).append(Z_power_allFreq_byFrame[freq_band][frame]['mean'])
-    # zscored by trial
-    shuff_ZTrial_DiffMeans = {}
-    for freq_band in ZTrial_power_allFreq_byFrame.keys():
-        for frame in sorted(ZTrial_power_allFreq_byFrame[freq_band].keys()):
-            shuff_ZTrial_DiffMeans.setdefault(freq_band,[]).append(ZTrial_power_allFreq_byFrame[freq_band][frame]['mean'])
-    #######################################################
-    ### -- CALCULATE REAL/OBSERVED DIFF OF MEANS -- ###
-    #######################################################
-    logging.info('Calculating observed difference of means...')
-    print('Calculating observed difference of means...')
-    # by frame
-    allA_allC_Z_allFreq = {}
-    allA_allM_Z_allFreq = {}
-    for animal in allCatches_baseSub_Zscored_Frame.keys():
-        for freq_band in allCatches_baseSub_Zscored_Frame[animal].keys():
-            for trial in allCatches_baseSub_Zscored_Frame[animal][freq_band]:
-                allA_allC_Z_allFreq.setdefault(freq_band,[]).append(trial)
-            for trial in allMisses_baseSub_Zscored_Frame[animal][freq_band]:
-                allA_allM_Z_allFreq.setdefault(freq_band,[]).append(trial)
-    allA_allC_Z_allFreq_mean = {}
-    allA_allM_Z_allFreq_mean = {}
-    Observed_DiffMeans_allFreq = {}
-    for freq_band in allA_allC_Z_allFreq.keys():
-        allA_allC_Z_allFreq_mean[freq_band] = np.nanmean(allA_allC_Z_allFreq[freq_band], axis=0)
-        allA_allM_Z_allFreq_mean[freq_band] = np.nanmean(allA_allM_Z_allFreq[freq_band], axis=0)
-        Observed_DiffMeans_allFreq[freq_band] = allA_allC_Z_allFreq_mean[freq_band] - allA_allM_Z_allFreq_mean[freq_band]
-    # by session
-    allA_allC_ZTrial_allFreq = {}
-    allA_allM_ZTrial_allFreq = {}
-    for animal in allCatches_baseSub_Zscored_Trial:
-        for freq_band in allCatches_baseSub_Zscored_Trial[animal]:
-            for trial in allCatches_baseSub_Zscored_Trial[animal][freq_band]:
-                allA_allC_ZTrial_allFreq.setdefault(freq_band,[]).append(trial)
-            for trial in allMisses_baseSub_Zscored_Trial[animal][freq_band]:
-                allA_allM_ZTrial_allFreq.setdefault(freq_band,[]).append(trial)
-    allA_allC_ZTrial_allFreq_mean = {}
-    allA_allM_ZTrial_allFreq_mean = {}
-    Observed_DiffMeans_ZTrial_allFreq = {}
-    for freq_band in allA_allC_ZTrial_allFreq.keys():
-        allA_allC_ZTrial_allFreq_mean[freq_band] = np.nanmean(allA_allC_ZTrial_allFreq[freq_band], axis=0)
-        allA_allM_ZTrial_allFreq_mean[freq_band] = np.nanmean(allA_allM_ZTrial_allFreq[freq_band], axis=0)
-        Observed_DiffMeans_ZTrial_allFreq[freq_band] = allA_allC_ZTrial_allFreq_mean[freq_band] - allA_allM_ZTrial_allFreq_mean[freq_band]
-    ####################################################################
-    ### -- GENERATE RANDOM TRACES TO CORRECT THRESHOLD FOR P<0.05 -- ###
-    ####################################################################
-    No_of_random_traces = 1000
-    logging.info('Generating random traces to correct p<0.05 threshold, Number of random traces: %i' % (No_of_random_traces))
-    print('Generating random traces to correct p<0.05 threshold, Number of random traces: %i' % (No_of_random_traces))
-    ## zscored by frame
-    shuffledDiffMeans_ZFrame_allFreq = {}
-    for freq_band in Z_power_allFreq_byFrame.keys():
-        shuffledDiffMeans_ZFrame_allFreq[freq_band] = {}
-        for frame in Z_power_allFreq_byFrame[freq_band]:
-            shuffledDiffMeans_ZFrame_allFreq[freq_band][frame] = gen_shuffled_traces(Z_power_allFreq_byFrame[freq_band][frame]['catch'], Z_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_random_traces, len(Z_power_allFreq_byFrame[freq_band][frame]['catch']), len(Z_power_allFreq_byFrame[freq_band][frame]['miss']))
-    # convert to arrays for plotting
-    shuffMeans_traces_allFreq = {}
-    shuffMeans_traces_N = len(shuffledDiffMeans_ZFrame_allFreq[0][0])
-    for st in range(shuffMeans_traces_N):
-        for freq_band in shuffledDiffMeans_ZFrame_allFreq.keys():
-            this_trace = []
-            for frame in shuffledDiffMeans_ZFrame_allFreq[freq_band].keys():
-                this_trace.append(shuffledDiffMeans_ZFrame_allFreq[freq_band][frame][st][0])
-            shuffMeans_traces_allFreq.setdefault(freq_band,[]).append(this_trace)
-    for freq_band in shuffMeans_traces_allFreq.keys():
-        shuffMeans_traces_allFreq[freq_band] = np.array(shuffMeans_traces_allFreq[freq_band])
-    ## zscored by entire dataset
-    shuffledDiffMeans_ZTrial_byFrame = {}
-    for freq_band in ZTrial_power_allFreq_byFrame.keys():
-        shuffledDiffMeans_ZTrial_byFrame[freq_band] = {}
-        for frame in ZTrial_power_allFreq_byFrame[freq_band]:
-            shuffledDiffMeans_ZTrial_byFrame[freq_band][frame] = gen_shuffled_traces(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch'], ZTrial_power_allFreq_byFrame[freq_band][frame]['miss'], No_of_random_traces, len(ZTrial_power_allFreq_byFrame[freq_band][frame]['catch']), len(ZTrial_power_allFreq_byFrame[freq_band][frame]['miss']))
-    # convert to arrays for plotting
-    shuffMeans_ZTrial_traces_allFreq = {}
-    shuffMeans_ZTrial_traces_allFreq_N = len(shuffledDiffMeans_ZTrial_byFrame[0][0])
-    for st in range(shuffMeans_ZTrial_traces_allFreq_N):
-        for freq_band in shuffledDiffMeans_ZTrial_byFrame.keys():
-            this_trace = []
-            for frame in shuffledDiffMeans_ZTrial_byFrame[freq_band].keys():
-                this_trace.append(shuffledDiffMeans_ZTrial_byFrame[freq_band][frame][st][0])
-            shuffMeans_ZTrial_traces_allFreq.setdefault(freq_band,[]).append(this_trace)
-    for freq_band in shuffMeans_ZTrial_traces_allFreq.keys():
-        shuffMeans_ZTrial_traces_allFreq[freq_band] = np.array(shuffMeans_ZTrial_traces_allFreq[freq_band])
-    # correct the p<0.05 bounds
-    UB_corrected = 99.99
-    LB_corrected = 0.01
-    global005sig_UB = {}
-    global005sig_LB = {}
-    global005sig_ZTrial_UB = {}
-    global005sig_ZTrial_LB = {}
-    corrected = False
-    while not corrected:
-        no_violations = True
-        for freq_band in Z_power_allFreq_byFrame.keys():
-            global005sig_UB[freq_band], global005sig_LB[freq_band] = find_bounds_for_sig(Z_power_allFreq_byFrame[freq_band], UB_corrected, LB_corrected)
-            global005sig_ZTrial_UB[freq_band], global005sig_ZTrial_LB[freq_band] = find_bounds_for_sig(ZTrial_power_allFreq_byFrame[freq_band], UB_corrected, LB_corrected)
-            # check how many of these random traces violate the p<0.05 generated by frame-wise and trial-wise shuffle test
-            N_violations_UBcorrected, N_violations_LBcorrected = check_violations_sigBounds(shuffMeans_traces_allFreq[freq_band], global005sig_UB[freq_band], global005sig_LB[freq_band])
-            N_violations_ZTrial_UBcorrected, N_violations_ZTrial_LBcorrected = check_violations_sigBounds(shuffMeans_ZTrial_traces_allFreq[freq_band], global005sig_ZTrial_UB[freq_band], global005sig_ZTrial_LB[freq_band])
-            if N_violations_UBcorrected>=50 or N_violations_LBcorrected>=50 or N_violations_ZTrial_UBcorrected>=50 or N_violations_ZTrial_LBcorrected>=50:
-                no_violations = False
-                break
-        if no_violations:
-            logging.info('Upper bound corrected to %f, Lower bound corrected to %f' % (UB_corrected, LB_corrected))
-            print('Upper bound corrected to %f, Lower bound corrected to %f' % (UB_corrected, LB_corrected))
-            break
-        UB_corrected += 0.001
-        LB_corrected -= 0.001
-    # find where observed data crosses corrected pointwise bounds for first time just before crossing global bounds
-    firstFrame_globalP005sig = {}
-    firstFrame_P005sig = {}
-    for freq_band in Observed_DiffMeans_allFreq.keys():
-        for frame in range(len(Observed_DiffMeans_allFreq[freq_band])):
-            if Observed_DiffMeans_allFreq[freq_band][frame]>global005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<global005sig_LB[freq_band][frame]:
-                firstFrame_globalP005sig[freq_band] = frame
-                break
-        if freq_band in firstFrame_globalP005sig.keys() and firstFrame_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
-            for frame in range(0,firstFrame_globalP005sig[freq_band]):
-                if Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]>global005sig_UB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame]:
-                    firstFrame_P005sig[freq_band] = frame
-                    break
-                elif Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]<global005sig_LB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
-                    firstFrame_P005sig[freq_band] = frame
-                    break
-        else:
-            firstFrame_P005sig[freq_band] = None
-    firstFrame_ZTrial_globalP005sig = {}
-    firstFrame_ZTrial_P005sig = {}
-    for freq_band in Observed_DiffMeans_ZTrial_allFreq.keys():
-        for frame in range(len(Observed_DiffMeans_ZTrial_allFreq[freq_band])):
-            if Observed_DiffMeans_ZTrial_allFreq[freq_band][frame]>global005sig_ZTrial_UB[freq_band][frame] or Observed_DiffMeans_ZTrial_allFreq[freq_band][frame]<global005sig_ZTrial_LB[freq_band][frame]:
-                firstFrame_ZTrial_globalP005sig[freq_band] = frame
-                break
-        if freq_band in firstFrame_ZTrial_globalP005sig.keys() and firstFrame_ZTrial_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
-            for frame in range(0,firstFrame_ZTrial_globalP005sig[freq_band]):
-                if Observed_DiffMeans_ZTrial_allFreq[freq_band][firstFrame_ZTrial_globalP005sig[freq_band]]>global005sig_ZTrial_UB[freq_band][firstFrame_ZTrial_globalP005sig[freq_band]] and Observed_DiffMeans_ZTrial_allFreq[freq_band][frame]>pw005sig_ZTrial_UB[freq_band][frame]:
-                    firstFrame_ZTrial_P005sig[freq_band] = frame
-                    break
-                elif Observed_DiffMeans_ZTrial_allFreq[freq_band][firstFrame_ZTrial_globalP005sig[freq_band]]<global005sig_ZTrial_LB[freq_band][firstFrame_ZTrial_globalP005sig[freq_band]] and Observed_DiffMeans_ZTrial_allFreq[freq_band][frame]<pw005sig_ZTrial_LB[freq_band][frame]:
-                    firstFrame_ZTrial_P005sig[freq_band] = frame
-                    break
-        else:
-            firstFrame_ZTrial_P005sig[freq_band] = None
-    # visualize
-    if visualize_random_traces:
+                allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, 'AllCatches-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band), 'AllMisses-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band), allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
+        #######################################################
+        ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
+        #######################################################
+        logging.info('Calculating upper and lower bounds for p<0.05 of {p} data...'.format(p=preprocess_type))
+        print('Calculating upper and lower bounds for p<0.05 of {p} data...'.format(p=preprocess_type))
+        # pointwise p<0.05 bounds
+        UB_pointwise = 97.5
+        LB_pointwise = 2.5
+        pw005sig_UB = {}
+        pw005sig_LB = {}
+        for freq_band in allFreq_shuffleTest.keys():
+            pw005sig_UB[freq_band], pw005sig_LB[freq_band] = find_bounds_for_sig(allFreq_shuffleTest[freq_band], UB_pointwise, LB_pointwise)
+        # collect shuffled mean of each frame
+        shuff_DiffMeans = {}
+        for freq_band in allFreq_shuffleTest.keys():
+            for frame in sorted(allFreq_shuffleTest[freq_band].keys()):
+                shuff_DiffMeans.setdefault(freq_band,[]).append(allFreq_shuffleTest[freq_band][frame]['mean'])
+        #######################################################
+        ### -- CALCULATE REAL/OBSERVED DIFF OF MEANS -- ###
+        #######################################################
+        logging.info('Calculating observed difference of means of {p} data...'.format(p=preprocess_type))
+        print('Calculating observed difference of means of {p} data...'.format(p=preprocess_type))
+        allA_allC_allFreq = {}
+        allA_allM_allFreq = {}
+        for animal in metrics_to_shuffleTest[metric][0].keys():
+            for freq_band in metrics_to_shuffleTest[metric][0][animal].keys():
+                for trial in metrics_to_shuffleTest[metric][0][animal][freq_band]:
+                    allA_allC_allFreq.setdefault(freq_band,[]).append(trial)
+                for trial in metrics_to_shuffleTest[metric][1][animal][freq_band]:
+                    allA_allM_allFreq.setdefault(freq_band,[]).append(trial)
+        allA_allC_allFreq_mean = {}
+        allA_allM_allFreq_mean = {}
+        Observed_DiffMeans_allFreq = {}
+        for freq_band in allA_allC_allFreq.keys():
+            allA_allC_allFreq_mean[freq_band] = np.nanmean(allA_allC_allFreq[freq_band], axis=0)
+            allA_allM_allFreq_mean[freq_band] = np.nanmean(allA_allM_allFreq[freq_band], axis=0)
+            Observed_DiffMeans_allFreq[freq_band] = allA_allC_allFreq_mean[freq_band] - allA_allM_allFreq_mean[freq_band]
+        ####################################################################
+        ### -- GENERATE RANDOM TRACES TO CORRECT THRESHOLD FOR P<0.05 -- ###
+        ####################################################################
+        No_of_random_traces = 1000
+        logging.info('Generating random traces to correct p<0.05 threshold of {p} data, Number of random traces: {rt}'.format(p=preprocess_type, rt=No_of_random_traces))
+        print('Generating random traces to correct p<0.05 threshold of {p} data, Number of random traces: {rt}'.format(p=preprocess_type, rt=No_of_random_traces))
+        shuffledDiffMeans_allFreq = {}
+        for freq_band in allFreq_shuffleTest.keys():
+            shuffledDiffMeans_allFreq[freq_band] = {}
+            for frame in allFreq_shuffleTest[freq_band]:
+                shuffledDiffMeans_allFreq[freq_band][frame] = gen_shuffled_traces(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_random_traces, len(allFreq_shuffleTest[freq_band][frame]['catch']), len(allFreq_shuffleTest[freq_band][frame]['miss']))
+        # convert to arrays for plotting
+        shuffMeans_traces_allFreq = {}
+        shuffMeans_traces_N = len(shuffledDiffMeans_allFreq[0][0])
+        for st in range(shuffMeans_traces_N):
+            for freq_band in shuffledDiffMeans_allFreq.keys():
+                this_trace = []
+                for frame in shuffledDiffMeans_allFreq[freq_band].keys():
+                    this_trace.append(shuffledDiffMeans_allFreq[freq_band][frame][st][0])
+                shuffMeans_traces_allFreq.setdefault(freq_band,[]).append(this_trace)
         for freq_band in shuffMeans_traces_allFreq.keys():
-            for shuff_trace in shuffMeans_traces_allFreq[freq_band]:
-                plt.plot(shuff_trace, alpha=0.1)
-            plt.plot(pw005sig_UB[freq_band], 'g--')
-            plt.plot(pw005sig_LB[freq_band], 'g--')
-            plt.plot(global005sig_UB[freq_band], 'm--')
-            plt.plot(global005sig_LB[freq_band], 'm--')
-            plt.plot(shuff_DiffMeans[freq_band], 'b--')
-            plt.plot(Observed_DiffMeans_allFreq[freq_band], 'k-')
-            plt.show()
-            for shuff_trace in shuffMeans_ZTrial_traces_allFreq[freq_band]:
-                plt.plot(shuff_trace, alpha=0.1)
-            plt.plot(pw005sig_ZTrial_UB[freq_band], 'g--')
-            plt.plot(pw005sig_ZTrial_LB[freq_band], 'g--')
-            plt.plot(global005sig_ZTrial_UB[freq_band], 'm--')
-            plt.plot(global005sig_ZTrial_LB[freq_band], 'm--')
-            plt.plot(shuff_ZTrial_DiffMeans[freq_band], 'b--')
-            plt.plot(Observed_DiffMeans_ZTrial_allFreq[freq_band], 'k-')
-            plt.show()
-    #######################################################
-    ### ------------ PLOT THE SHUFFLE DATA ------------ ###
-    #######################################################
-    logging.info('Plotting shuffle data...')
-    print('Plotting shuffle data...')
-    ### POOL ACROSS ANIMALS
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Frame_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-    # this one is for the paper
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans('ProcessCuttlePython', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-    # without labels
-    plot_allA_allFreq_Zscored_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', 'Zscored_Trial_baseSub', 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            shuffMeans_traces_allFreq[freq_band] = np.array(shuffMeans_traces_allFreq[freq_band])
+        # correct the p<0.05 bounds
+        UB_corrected = 99.99
+        LB_corrected = 0.01
+        global005sig_UB = {}
+        global005sig_LB = {}
+        corrected = False
+        while not corrected:
+            no_violations = True
+            for freq_band in allFreq_shuffleTest.keys():
+                global005sig_UB[freq_band], global005sig_LB[freq_band] = find_bounds_for_sig(allFreq_shuffleTest[freq_band], UB_corrected, LB_corrected)
+                # check how many of these random traces violate the p<0.05 generated by frame-wise and trial-wise shuffle test
+                N_violations_UBcorrected, N_violations_LBcorrected = check_violations_sigBounds(shuffMeans_traces_allFreq[freq_band], global005sig_UB[freq_band], global005sig_LB[freq_band])
+                if N_violations_UBcorrected>=50 or N_violations_LBcorrected>=50:
+                    no_violations = False
+                    break
+            if no_violations:
+                logging.info('Upper bound corrected to %f, Lower bound corrected to %f' % (UB_corrected, LB_corrected))
+                print('Upper bound corrected to %f, Lower bound corrected to %f' % (UB_corrected, LB_corrected))
+                break
+            UB_corrected += 0.001
+            LB_corrected -= 0.001
+        # find where observed data crosses corrected pointwise bounds for first time just before crossing global bounds
+        firstFrame_globalP005sig = {}
+        firstFrame_P005sig = {}
+        for freq_band in Observed_DiffMeans_allFreq.keys():
+            for frame in range(len(Observed_DiffMeans_allFreq[freq_band])):
+                if Observed_DiffMeans_allFreq[freq_band][frame]>global005sig_UB[freq_band][frame] or Observed_DiffMeans_allFreq[freq_band][frame]<global005sig_LB[freq_band][frame]:
+                    firstFrame_globalP005sig[freq_band] = frame
+                    break
+            if freq_band in firstFrame_globalP005sig.keys() and firstFrame_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
+                for frame in range(0,firstFrame_globalP005sig[freq_band]):
+                    if Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]>global005sig_UB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame]:
+                        firstFrame_P005sig[freq_band] = frame
+                        break
+                    elif Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]<global005sig_LB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]<pw005sig_LB[freq_band][frame]:
+                        firstFrame_P005sig[freq_band] = frame
+                        break
+            else:
+                firstFrame_P005sig[freq_band] = None
+        # visualize
+        if visualize_random_traces:
+            for freq_band in shuffMeans_traces_allFreq.keys():
+                for shuff_trace in shuffMeans_traces_allFreq[freq_band]:
+                    plt.plot(shuff_trace, alpha=0.1)
+                plt.plot(pw005sig_UB[freq_band], 'g--')
+                plt.plot(pw005sig_LB[freq_band], 'g--')
+                plt.plot(global005sig_UB[freq_band], 'm--')
+                plt.plot(global005sig_LB[freq_band], 'm--')
+                plt.plot(shuff_DiffMeans[freq_band], 'b--')
+                plt.plot(Observed_DiffMeans_allFreq[freq_band], 'k-')
+                plt.show()
+        #######################################################
+        ### ------------ PLOT THE SHUFFLE DATA ------------ ###
+        #######################################################
+        logging.info('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
+        print('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
+        ### POOL ACROSS ANIMALS
+        plot_allA_allFreq_ShuffledDiffMeans('ProcessCuttlePython', preprocess_type, 'power at frequency', 'all', metrics_to_shuffleTest[metric][0], metrics_to_shuffleTest[metric][1], pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+        # without labels
+        plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, pw005sig_ZTrial_UB, pw005sig_ZTrial_LB, global005sig_ZTrial_UB, global005sig_ZTrial_LB, shuff_ZTrial_DiffMeans, firstFrame_ZTrial_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 
 # FIN
