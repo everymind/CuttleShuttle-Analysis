@@ -341,9 +341,9 @@ def plot_pooledA_percentChangeFromBase_allFreq(analysis_type_str, preprocess_str
                 freq_bands_str += str(list_of_freqs_to_plot[index])+'-'
     # set fig path and title
     if len(prey_type_str.split(' '))>1:
-        figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+freq_bands_str+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
+        figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+freq_bands_str+'_'+str(N_SEM)+'SEM_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
     else:
-        figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+freq_bands_str+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
+        figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+freq_bands_str+'_'+str(N_SEM)+'SEM_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
     figure_path = os.path.join(plots_dir, figure_name)
     figure_title = 'Onset of significant percent change from zero (baseline) of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n {fb}, Transparent regions show {N_sem} standard errors of the mean \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=freq_bands_str, N_sem=N_SEM, b=str(baseline_len/60), p=prey_type_str, Nts=str(N_TS))
     # setup fig
