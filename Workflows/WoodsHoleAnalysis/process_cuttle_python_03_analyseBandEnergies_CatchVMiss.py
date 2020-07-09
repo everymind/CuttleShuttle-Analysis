@@ -416,8 +416,8 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-50,120)
-            label_pos_mult = 100
+            plt.ylim(-100,200)
+            label_pos_mult = 50
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -456,8 +456,8 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-50,120)
-            label_pos_mult = 100
+            plt.ylim(-100,200)
+            label_pos_mult = 50
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -541,8 +541,8 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-50,120)
-            label_pos_mult = 100
+            plt.ylim(-100,200)
+            label_pos_mult = 50
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -581,8 +581,8 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-50,120)
-            label_pos_mult = 100
+            plt.ylim(-100,200)
+            label_pos_mult = 50
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
