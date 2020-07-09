@@ -416,8 +416,15 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-100,200)
-            label_pos_mult = 50
+            if freq_band == 0:
+                plt.ylim(-40,30)
+                label_pos_mult = 20
+            elif freq_band == 1 or freq_band == 2:
+                plt.ylim(-80,180)
+                label_pos_mult = 90
+            else: 
+                plt.ylim(-150, 150)
+                label_pos_mult = 85
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -442,10 +449,10 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
         plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
-        plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), 'm--', linewidth=1)
+        plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend()
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
@@ -456,8 +463,15 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-100,200)
-            label_pos_mult = 50
+            if freq_band == 0:
+                plt.ylim(-40,30)
+                label_pos_mult = 20
+            elif freq_band == 1 or freq_band == 2:
+                plt.ylim(-80,180)
+                label_pos_mult = 90
+            else: 
+                plt.ylim(-150, 150)
+                label_pos_mult = 85
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -475,14 +489,14 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
-            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75*label_pos_mult), 'c--', linewidth=1)
-            plt.text(firstSigFrame[freq_band], ymax-0.75*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8*label_pos_mult), 'c--', linewidth=1)
+            plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
-        plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), 'm--', linewidth=1)
+        plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save and show fig
         plt.savefig(figure_path)
@@ -541,8 +555,15 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-100,200)
-            label_pos_mult = 50
+            if freq_band == 0:
+                plt.ylim(-40,30)
+                label_pos_mult = 20
+            elif freq_band == 1 or freq_band == 2:
+                plt.ylim(-80,180)
+                label_pos_mult = 90
+            else: 
+                plt.ylim(-150, 150)
+                label_pos_mult = 85
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -567,10 +588,10 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
-        #plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), 'm--', linewidth=1)
+        #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        #plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend()
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
@@ -581,8 +602,15 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
             plt.ylim(-2.5,3.0)
             label_pos_mult = 1
         elif preprocess_str.split('_')[0] == 'Percent':
-            plt.ylim(-100,200)
-            label_pos_mult = 50
+            if freq_band == 0:
+                plt.ylim(-40,30)
+                label_pos_mult = 20
+            elif freq_band == 1 or freq_band == 2:
+                plt.ylim(-80,180)
+                label_pos_mult = 90
+            else: 
+                plt.ylim(-150, 150)
+                label_pos_mult = 85
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -600,14 +628,14 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
-            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
-        #plt.text(firstSigFrame[freq_band], ymax-0.75*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8), 'c--', linewidth=1)
+        #plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
-        #plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), 'm--', linewidth=1)
+        #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        #plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save and show fig
         plt.savefig(figure_path)
