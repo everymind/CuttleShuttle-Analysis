@@ -412,7 +412,12 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
         plt.ylabel(preprocess_str+" change from baseline in power")
         plot_xticks = np.arange(0, len(allA_C_allF_mean[freq_band]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-        plt.ylim(-2.5,3.0)
+        if preprocess_str.split('_')[0] == 'ZScored':
+            plt.ylim(-2.5,3.0)
+            label_pos_mult = 1
+        elif preprocess_str.split('_')[0] == 'Percent':
+            plt.ylim(-50,120)
+            label_pos_mult = 100
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -437,17 +442,22 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
         plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
-        plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
+        plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend()
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
         plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
         plt.ylabel("Difference of "+preprocess_str+" means in "+metric_str)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-        plt.ylim(-2.5,3.0)
+        if preprocess_str.split('_')[0] == 'ZScored':
+            plt.ylim(-2.5,3.0)
+            label_pos_mult = 1
+        elif preprocess_str.split('_')[0] == 'Percent':
+            plt.ylim(-50,120)
+            label_pos_mult = 100
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -465,14 +475,14 @@ def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metri
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
-            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
-            plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75*label_pos_mult), 'c--', linewidth=1)
+            plt.text(firstSigFrame[freq_band], ymax-0.75*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
-        plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
+        plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save and show fig
         plt.savefig(figure_path)
@@ -527,7 +537,12 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.ylabel(preprocess_str+" change from baseline in power")
         plot_xticks = np.arange(0, len(allA_C_allF_mean[freq_band]), step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-        plt.ylim(-2.5,3.0)
+        if preprocess_str.split('_')[0] == 'ZScored':
+            plt.ylim(-2.5,3.0)
+            label_pos_mult = 1
+        elif preprocess_str.split('_')[0] == 'Percent':
+            plt.ylim(-50,120)
+            label_pos_mult = 100
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -552,17 +567,22 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
-        #plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
+        #plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        #plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        #plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend()
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
         plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
         plt.ylabel("Difference of "+preprocess_str+" means in "+metric_str)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-        plt.ylim(-2.5,3.0)
+        if preprocess_str.split('_')[0] == 'ZScored':
+            plt.ylim(-2.5,3.0)
+            label_pos_mult = 1
+        elif preprocess_str.split('_')[0] == 'Percent':
+            plt.ylim(-50,120)
+            label_pos_mult = 100
         #plt.xlim(0,180)
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
@@ -581,13 +601,13 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
             plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.75), 'c--', linewidth=1)
-        #plt.text(firstSigFrame[freq_band], ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+        #plt.text(firstSigFrame[freq_band], ymax-0.75*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
-        #plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75*label_pos_mult), 'm--', linewidth=1)
+        #plt.text(baseline_len, ymax-0.75*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        #plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        #plt.text(TGB_bucket, ymax-0.25*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
         # save and show fig
         plt.savefig(figure_path)
