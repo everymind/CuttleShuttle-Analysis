@@ -448,7 +448,7 @@ allTS_percentChange = percent_change_from_baseline(all_TS, 'all', baseline_frame
 if plot_indiv_animals:
     plot_percentChange_indiv_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', allTS_percentChange, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # pool across all animals to plot mean percent change in each frequency for all animals
-percentChange_allAnimals = {'N': {}, 'Mean': {}, 'trials': {}, 'std': {}, 'sterr': {}, 't-test': {}}
+percentChange_allAnimals = {'N': {}, 'Mean': {}, 'trials': {}, 'std pooled': {}, 'sterr pooled': {}, 't-test pooled': {}}
 for animal in allTS_percentChange.keys():
     for freq_band in allTS_percentChange[animal].keys():
         this_animal_this_freq_N = len(allTS_percentChange[animal][freq_band]['trials'])
@@ -460,13 +460,13 @@ for animal in allTS_percentChange.keys():
 # calculate standard deviation and standard error during all tentacle shots for each freq band
 for freq_band in percentChange_allAnimals['trials']:
     all_trials = []
-    for animal in percentChange_allAnimals['trials'][freq_band]:
-        for trial in percentChange_allAnimals['trials'][freq_band]:
+    for animal in range(len(percentChange_allAnimals['trials'][freq_band])):
+        for trial in percentChange_allAnimals['trials'][freq_band][animal]:
             all_trials.append(trial)
     std_this_fb = np.nanstd(all_trials, axis=0, ddof=1)
     sterr_this_fb = std_this_fb/np.sqrt(sum(percentChange_allAnimals['N'][freq_band]))
-    percentChange_allAnimals['std'].setdefault(freq_band,[]).append(std_this_fb)
-    percentChange_allAnimals['sterr'].setdefault(freq_band,[]).append(sterr_this_fb)
+    percentChange_allAnimals['std pooled'].setdefault(freq_band,[]).append(std_this_fb)
+    percentChange_allAnimals['sterr pooled'].setdefault(freq_band,[]).append(sterr_this_fb)
 # calculate one sample t-test on each frame to find when there is sig deviation from zero percent change
 for freq_band in percentChange_allAnimals['Mean']:
     for frame in 
@@ -476,30 +476,6 @@ if plot_pooled_animals:
     # pick out certain frequencies to plot
     plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [0,1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
     plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-######################################################################
-### ------ FAKE BASELINE: ONSET OF SIG CHANGE FROM BASELINE ------ ###
-######################################################################
-# generate fake 6-second time courses, taking data from baseline
-N_random_baselines = 140
-len_fake_timecourse = 360
-# create pool of data that can be used for creating fake baseline time courses
-pool_of_baseline_frames = {}
-for animal in allTS_percentChange.keys():
-    for freq_band in allTS_percentChange[animal].keys():
-        #print('Extracting baselines from {n} trials from {a}, freq band {fb}'.format(n=len(allTS_percentChange[animal][freq_band]['trials']), a=animal, fb=freq_band))
-        for trial in allTS_percentChange[animal][freq_band]['trials']:
-            for frame in range(baseline_frames):
-                pool_of_baseline_frames.setdefault(freq_band,[]).append(trial[frame])
-allFreq_fakeBase = {}
-for freq_band in pool_of_baseline_frames.keys():
-    fake_baselines = np.zeros((N_random_baselines,len_fake_timecourse))
-    for num in range(N_random_baselines):
-        shuffled_baseline_frames = np.random.permutation(pool_of_baseline_frames[freq_band])
-        fake_baselines[num] = shuffled_baseline_frames[:len_fake_timecourse]
-    allFreq_fakeBase[freq_band] = fake_baselines
-# compare fake baselines to real data
-if plot_pooled_percentchange:
-    plot_pooled_percentChange_from_fakeBase_allFreq('ProcessCuttlePython', 'PercentChangeFromFakeBase', 'power at frequency band', 'all', percentChange_allAnimals, allFreq_fakeBase, N_random_baselines, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 ####################################################################################
 ### ------ POOLED ANIMALS + FREQ BANDS: ONSET OF SIG CHANGE FROM BASELINE ------ ###
 ####################################################################################
