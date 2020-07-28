@@ -448,7 +448,7 @@ allTS_percentChange = percent_change_from_baseline(all_TS, 'all', baseline_frame
 if plot_indiv_animals:
     plot_percentChange_indiv_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', allTS_percentChange, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 # pool across all animals to plot mean percent change in each frequency for all animals
-percentChange_allAnimals = {'N': {}, 'Mean': {}, 'trials': {}, 'std': {}, 'sterr': {}}
+percentChange_allAnimals = {'N': {}, 'Mean': {}, 'trials': {}, 'std': {}, 'sterr': {}, 't-test': {}}
 for animal in allTS_percentChange.keys():
     for freq_band in allTS_percentChange[animal].keys():
         this_animal_this_freq_N = len(allTS_percentChange[animal][freq_band]['trials'])
@@ -456,16 +456,20 @@ for animal in allTS_percentChange.keys():
         this_animal_this_freq_var = allTS_percentChange[animal][freq_band]['std frame']
         percentChange_allAnimals['N'].setdefault(freq_band,[]).append(this_animal_this_freq_N)
         percentChange_allAnimals['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
-        for trial in allTS_percentChange[animal][freq_band]['trials']:
-            percentChange_allAnimals['trials'].setdefault(freq_band,[]).append(trial)
+        percentChange_allAnimals['trials'].setdefault(freq_band,[]).append(allTS_percentChange[animal][freq_band]['trials'])
 # calculate standard deviation and standard error during all tentacle shots for each freq band
 for freq_band in percentChange_allAnimals['trials']:
-    std_this_fb = np.nanstd(percentChange_allAnimals['trials'][freq_band], axis=0, ddof=1)
+    all_trials = []
+    for animal in percentChange_allAnimals['trials'][freq_band]:
+        for trial in percentChange_allAnimals['trials'][freq_band]:
+            all_trials.append(trial)
+    std_this_fb = np.nanstd(all_trials, axis=0, ddof=1)
     sterr_this_fb = std_this_fb/np.sqrt(sum(percentChange_allAnimals['N'][freq_band]))
     percentChange_allAnimals['std'].setdefault(freq_band,[]).append(std_this_fb)
     percentChange_allAnimals['sterr'].setdefault(freq_band,[]).append(sterr_this_fb)
-# calculate one sample t-test on each frame to find when sig deviation from zero percent change
-
+# calculate one sample t-test on each frame to find when there is sig deviation from zero percent change
+for freq_band in percentChange_allAnimals['Mean']:
+    for frame in 
 # plot
 if plot_pooled_animals:
     plot_percentChange_pooled_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
