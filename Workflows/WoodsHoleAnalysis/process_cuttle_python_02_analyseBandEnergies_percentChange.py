@@ -232,6 +232,27 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     plt.pause(1)
     plt.close()
 
+def collect_across_animals(percent_change_dict, animal, freq_band, collected_dict, ts_category_str):
+    collected_dict[ts_category_str] = {'N': {}, 'Mean': {}, 'trials': {}}
+    this_animal_this_freq_N = len(percent_change_dict[animal][freq_band]['trials'])
+    this_animal_this_freq_mean = percent_change_dict[animal][freq_band]['mean frame']
+    collected_dict[ts_category_str]['N'].setdefault(freq_band,[]).append(this_animal_this_freq_N)
+    collected_dict[ts_category_str]['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
+    collected_dict[ts_category_str]['trials'].setdefault(freq_band,[]).append(percent_change_dict[animal][freq_band]['trials'])
+
+def pool_across_animals(collected_dict, freq_band, pooled_dict, pooled_by_tb, ts_category_str):
+    pooled_dict[ts_category_str] = {'pooled mean': {}, 'pooled N': {}, 'pooled trials': {}}
+    pooled_trials = []
+    for animal in range(len(collected_dict[ts_category_str]['trials'][freq_band])):
+        for trial in collected_dict[ts_category_str]['trials'][freq_band][animal]:
+            pooled_trials.append(trial)
+            for timebucket, percent_change in enumerate(trial):
+                pooled_by_tb[ts_category_str].setdefault(freq_band,{}).setdefault(timebucket,[]).append(percent_change)
+    pooled_N_this_fb = sum(collected_dict[ts_category_str]['N'][freq_band])
+    mean_this_fb = np.nanmean(pooled_trials, axis=0)
+    pooled_dict[ts_category_str]['pooled mean'][freq_band] = mean_this_fb
+    pooled_dict[ts_category_str]['pooled N'][freq_band] = pooled_N_this_fb
+    pooled_dict[ts_category_str]['pooled trials'][freq_band] = pooled_trials
 
 def plot_pooledA_percentChangeFromBase_allFreq_std_sterr(analysis_type_str, preprocess_str, metric_str, prey_type_str, pooledA_stats_dict, list_of_freqs_to_plot, end_of_baseline_frame, TGB_bucket, baseline_len, plots_dir, todays_dt):
     img_type = ['.png', '.pdf']
@@ -501,53 +522,19 @@ allMisses_percentChange = percent_change_from_baseline(all_misses, 'all', baseli
 percentChange_allAnimals = {'all': {}, 'catches': {}, 'misses': {}}
 for animal in allTS_percentChange.keys():
     for freq_band in allTS_percentChange[animal].keys():
-        pool_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'all')
-        pool_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'catches')
-        pool_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'misses')
+        collect_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'all')
+        collect_across_animals(allCatches_percentChange, animal, freq_band, percentChange_allAnimals, 'catches')
+        collect_across_animals(allMisses_percentChange, animal, freq_band, percentChange_allAnimals, 'misses')
 #######################################################
 ### ------ ONSET OF SIG CHANGE FROM BASELINE ------ ###
 #######################################################
 # create pools of all tentacle shots for each freq band
-percentChange_stats_pooledAnimals = {'pooled mean, all': {}, 'pooled N, all': {}, 'pooled trials, all': {}, 'pooled mean, catches': {}, 'pooled N, catches': {}, 'pooled trials, catches': {}, 'pooled mean, misses': {}, 'pooled N, misses': {}, 'pooled trials, misses': {}}
-
-def pool_across_animals(percent_change_dict, animal, freq_band, pooled_dict, ts_category_str):
-    pooled_dict[ts_category_str] = {'N': {}, 'Mean': {}, 'trials': {}}
-    this_animal_this_freq_N = len(percent_change_dict[animal][freq_band]['trials'])
-    this_animal_this_freq_mean = percent_change_dict[animal][freq_band]['mean frame']
-    pooled_dict[ts_category_str]['N'].setdefault(freq_band,[]).append(this_animal_this_freq_N)
-    pooled_dict[ts_category_str]['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
-    pooled_dict[ts_category_str]['trials'].setdefault(freq_band,[]).append(percent_change_dict[animal][freq_band]['trials'])
-
-
-percentChange_stats_pooledAnimals = {'all': {}, 'catches': {}, 'misses': {}}
-percentChange_pooled_by_timebucket = {'all': {}, 'catches': {}, 'misses': {}}
-for freq_band in percentChange_allAnimals['trials']:
-    all_trials = []
-    all_catches = []
-    all_misses = []
-    for animal in range(len(percentChange_allAnimals['trials, all'][freq_band])):
-        for trial in percentChange_allAnimals['trials, all'][freq_band][animal]:
-            all_trials.append(trial)
-            for timebucket, percent_change in enumerate(trial):
-                percentChange_pooled_by_timebucket.setdefault(freq_band,{}).setdefault(timebucket,[]).append(percent_change)
-    pooled_N_this_fb = sum(percentChange_allAnimals['N'][freq_band])
-    mean_this_fb = np.nanmean(all_trials, axis=0)
-    percentChange_stats_pooledAnimals['pooled mean'][freq_band] = mean_this_fb
-    percentChange_stats_pooledAnimals['pooled N'][freq_band] = pooled_N_this_fb
-    percentChange_stats_pooledAnimals['pooled trials'][freq_band] = all_trials
-# create pools of all catches for each freq band
-for freq_band in percentChange_allAnimals_catches['trials']:
-    all_trials = []
-    for animal in range(len(percentChange_allAnimals_catches['trials'][freq_band])):
-        for trial in percentChange_allAnimals_catches['trials'][freq_band][animal]:
-            all_trials.append(trial)
-            for timebucket, percent_change in enumerate(trial):
-                percentChange_pooled_by_timebucket_catches.setdefault(freq_band,{}).setdefault(timebucket,[]).append(percent_change)
-    pooled_N_this_fb = sum(percentChange_allAnimals_catches['N'][freq_band])
-    mean_this_fb = np.nanmean(all_trials, axis=0)
-    percentChange_stats_pooledAnimals_catches['pooled mean'][freq_band] = mean_this_fb
-    percentChange_stats_pooledAnimals_catches['pooled N'][freq_band] = pooled_N_this_fb
-    percentChange_stats_pooledAnimals_catches['pooled trials'][freq_band] = all_trials
+percentChange_pooledAnimals = {'all': {}, 'catches': {}, 'misses': {}}
+percentChange_pooled_by_TB = {'all': {}, 'catches': {}, 'misses': {}}
+for freq_band in percentChange_allAnimals['all']['trials']:
+    pool_across_animals(percentChange_allAnimals, freq_band, percentChange_pooledAnimals, percentChange_pooled_by_TB, 'all')
+    pool_across_animals(percentChange_allAnimals, freq_band, percentChange_pooledAnimals, percentChange_pooled_by_TB, 'catches')
+    pool_across_animals(percentChange_allAnimals, freq_band, percentChange_pooledAnimals, percentChange_pooled_by_TB, 'misses')
 # calculate distribution of values during baseline
 pool_of_observed_baseline_values = {}
 for freq_band in percentChange_allAnimals['trials']:
