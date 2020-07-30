@@ -459,7 +459,7 @@ plot_indiv_animals = False
 plot_pooled_animals = False
 plot_pooled_percentchange = False
 plot_baseline_hist = False
-plot_3sigCI = True
+plot_3sigCI = False
 plot_pooled_std_sterr = False
 ###################################
 # COLLECT DATA FROM DATA_FOLDER
@@ -567,8 +567,10 @@ for freq_band in pool_of_observed_baseline_values:
 # plot 3 standard deviations bounds of the baseline on top of traces of all tentacle shots
 for freq_band in baseline_stats['mean']:
     all_trials_this_freq_band = percentChange_stats_pooledAnimals['pooled trials'][freq_band]
+    # visualize distribution of onset of tentacle shot pattern
     if plot_3sigCI:
         plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', freq_band, all_trials_this_freq_band, baseline_stats, baseline_frames, TGB_bucket_raw)
+    # numerically calculate when each individual trace leaves the 3sigCI
 
 
 
