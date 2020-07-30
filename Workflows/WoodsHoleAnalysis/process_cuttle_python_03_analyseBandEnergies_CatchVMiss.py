@@ -893,7 +893,7 @@ if __name__=='__main__':
                     firstFrame_globalP005sig[freq_band] = frame
                     break
             if freq_band in firstFrame_globalP005sig.keys() and firstFrame_globalP005sig[freq_band] != len(Observed_DiffMeans_allFreq[freq_band])-1:
-                for frame in range(0,firstFrame_globalP005sig[freq_band]):
+                for frame in range(baseline_frames,firstFrame_globalP005sig[freq_band]):
                     if Observed_DiffMeans_allFreq[freq_band][firstFrame_globalP005sig[freq_band]]>global005sig_UB[freq_band][firstFrame_globalP005sig[freq_band]] and Observed_DiffMeans_allFreq[freq_band][frame]>pw005sig_UB[freq_band][frame]:
                         firstFrame_P005sig[freq_band] = frame
                         break
