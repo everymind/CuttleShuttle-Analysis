@@ -350,6 +350,35 @@ def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metri
     plt.pause(1)
     plt.close()
 
+def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, freq_band, pooled_trials_this_fb, baseline_stats_dict, baseline_len, TGB_bucket):
+    N_TS = len(pooled_trials_this_fb)
+    # set fig path and title
+    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_FreqBand'+str(freq_band)+'_3sigCI_'+today_dateTime+'.png'
+    figure_path = os.path.join(plots_folder, figure_name)
+    figure_title = 'Distribution of percent change from mean baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=str(freq_band), b=str(baseline_frames/60), p=prey_type_str, Nts=str(N_TS))
+    # setup fig
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    for trial in pooled_trials_this_fb:
+        plt.plot(trial, color='b', alpha=0.05)
+    mean_baseline = baseline_stats_dict['mean'][freq_band]
+    baseline_3sigCI = baseline_stats_dict['std'][freq_band]*3
+    upper_bound = mean_baseline+baseline_3sigCI
+    lower_bound = mean_baseline-baseline_3sigCI
+    plt.plot(mean_baseline, linewidth=3, color='r')
+    plt.fill_between(range(360), upper_bound, lower_bound, color='r', alpha=0.25)
+    # plot events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+    plt.text(TGB_bucket, ymax, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 
 
 
@@ -430,6 +459,7 @@ plot_indiv_animals = False
 plot_pooled_animals = False
 plot_pooled_percentchange = False
 plot_baseline_hist = False
+plot_3sigCI = True
 plot_pooled_std_sterr = False
 ###################################
 # COLLECT DATA FROM DATA_FOLDER
@@ -537,37 +567,17 @@ for freq_band in pool_of_observed_baseline_values:
 # plot 3 standard deviations bounds of the baseline on top of traces of all tentacle shots
 for freq_band in baseline_stats['mean']:
     all_trials_this_freq_band = percentChange_stats_pooledAnimals['pooled trials'][freq_band]
-    plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', freq_band, all_trials_this_freq_band, baseline_stats, baseline_frames, TGB_bucket_raw)
+    if plot_3sigCI:
+        plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', freq_band, all_trials_this_freq_band, baseline_stats, baseline_frames, TGB_bucket_raw)
 
-def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, freq_band, pooled_trials_this_fb, baseline_stats_dict, baseline_len, TGB_bucket):
-    N_TS = len(pooled_trials_this_fb)
-    # set fig path and title
-    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_FreqBand'+str(freq_band)+'_3sigCI_'+today_dateTime+'.png'
-    figure_path = os.path.join(plots_folder, figure_name)
-    figure_title = 'Distribution of percent change from mean baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, timebucket {tb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, fb=str(freq_band), b=str(baseline_frames/60), p=prey_type_str, Nts=str(N_TS))
-    # setup fig
-    plt.figure(figsize=(16,9), dpi=200)
-    plt.suptitle(figure_title, fontsize=12, y=0.99)
-    for trial in pooled_trials_this_fb:
-        plt.plot(trial, color='b', alpha=0.05)
-    mean_baseline = baseline_stats_dict['mean'][freq_band]
-    baseline_3sigCI = baseline_stats_dict['std'][freq_band]*3
-    upper_bound = mean_baseline+baseline_3sigCI
-    lower_bound = mean_baseline-baseline_3sigCI
-    plt.plot(mean_baseline, linewidth=3, color='r')
-    plt.fill_between(range(360), upper_bound, lower_bound, color='r', alpha=0.25)
-    # plot events
-    ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-    plt.text(baseline_len, ymax, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-    plt.text(TGB_bucket, ymax, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-    plt.show()
-    # save fig
-    plt.savefig(figure_path)
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
+
+
+
+# FIN
+
+
+
+
 
 
 # for each timebucket, plot distribution of observed values
@@ -581,7 +591,7 @@ for freq_band in percentChange_pooled_by_timebucket:
         # set fig path and title
         figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_FreqBand'+str(freq_band)+'_TB'+'{:03d}'.format(timebucket)+'_'+today_dateTime+'.png'
         figure_path = os.path.join(plots_folder, figure_name)
-        figure_title = 'Distribution of percent change from mean baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb}, timebucket {tb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, tb=timebucket, fb=str(freq_band), b=str(baseline_frames/60), p=prey_type_str, Nts=str(N_TS))
+        figure_title = 'Distribution of percent change from mean baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, tb=timebucket, fb=str(freq_band), b=str(baseline_frames/60), p=prey_type_str, Nts=str(N_TS))
         # setup fig
         plt.figure(figsize=(16,9), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
