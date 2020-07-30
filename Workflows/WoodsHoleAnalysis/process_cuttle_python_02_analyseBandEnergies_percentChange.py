@@ -365,8 +365,8 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
     baseline_3sigCI = baseline_stats_dict['std'][freq_band]*3
     upper_bound = mean_baseline+baseline_3sigCI
     lower_bound = mean_baseline-baseline_3sigCI
-    plt.plot(mean_baseline, linewidth=3, color='r')
     plt.fill_between(range(360), upper_bound, lower_bound, color='r', alpha=0.25)
+    plt.plot(mean_baseline, linewidth=2, color='r')
     # plot events
     ymin, ymax = plt.ylim()
     plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
@@ -571,7 +571,7 @@ for freq_band in baseline_stats['mean']:
     if plot_3sigCI:
         plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', freq_band, all_trials_this_freq_band, baseline_stats, baseline_frames, TGB_bucket_raw)
     # numerically calculate when each individual trace leaves the 3sigCI
-
+    this_fb_3sigCI_upper = 
 
 
 
