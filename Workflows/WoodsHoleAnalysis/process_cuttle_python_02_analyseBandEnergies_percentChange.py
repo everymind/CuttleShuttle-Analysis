@@ -571,7 +571,20 @@ for freq_band in baseline_stats['mean']:
     if plot_3sigCI:
         plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', freq_band, all_trials_this_freq_band, baseline_stats, baseline_frames, TGB_bucket_raw)
     # numerically calculate when each individual trace leaves the 3sigCI
-    this_fb_3sigCI_upper = 
+    this_fb_mean = baseline_stats['mean'][freq_band]
+    this_fb_3sig = baseline_stats['std'][freq_band]*3
+    this_fb_3sigCI_upper = this_fb_mean + this_fb_3sig
+    this_fb_3sigCI_lower = this_fb_mean - this_fb_3sig
+    this_fb_earliest_exits = []
+    for trial in all_trials_this_freq_band:
+        for i, timebucket in enumerate(trial):
+            if i>10:
+                if timebucket>this_fb_3sigCI_upper or timebucket<this_fb_3sigCI_lower:
+                    this_fb_earliest_exits.append(i)
+                    break
+    plt.boxplot(this_fb_earliest_exits)
+    plt.show()
+
 
 
 
