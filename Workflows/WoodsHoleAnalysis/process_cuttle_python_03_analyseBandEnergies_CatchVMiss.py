@@ -711,7 +711,7 @@ if __name__=='__main__':
     ### ------ TIMING INFO/MOMENTS OF INTEREST ------ ###
     ########################################################
     TGB_bucket_raw = 180 # frame for moment tentacles go ballistic
-    baseline_frames = 90 # length of baseline period in frames
+    baseline_frames = 60 # length of baseline period in frames
     vids_total_length = 360 # length of analysed video clips in frames
     #########################################################################################
     ### ------ DATA NORMALIZATION/STANDARDIZATION: BASELINE SUBTRACTION AND ZSCORE ------ ###
