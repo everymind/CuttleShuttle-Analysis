@@ -107,53 +107,6 @@ def percent_change_from_baseline(TS_dict, prey_type, baseline_len):
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return percentChange_TS
 
-def plot_percentChange_indiv_animals_allFreq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_TS_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
-    # plot individual animals
-    img_type = ['.png', '.pdf']
-    for animal in allA_TS_dict.keys():
-        try:
-            N_TS = len(allA_TS_dict[animal][0]['trials'])
-            # set fig path and title
-            if len(prey_type_str.split(' '))>1:
-                figure_name = analysis_type_str+'_'+preprocess_str+'_'+animal+'_allFreqBand'+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
-            else:
-                figure_name = analysis_type_str+'_'+preprocess_str+'_'+animal+'_allFreqBand'+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
-            figure_path = os.path.join(plots_dir, figure_name)
-            figure_title = 'Mean percent change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of tentacle shots: {Nts}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nts=str(N_TS))
-            # setup fig
-            plt.figure(figsize=(16,9), dpi=200)
-            plt.suptitle(figure_title, fontsize=12, y=0.99)
-            plt.ylabel("Percent change from baseline in power")
-            plot_xticks = np.arange(0, len(allA_TS_dict[animal][0]['trials'][0]), step=60)
-            plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-            #plt.xlim(0,180)
-            plt.ylim(-200, 200)
-            plt.xlabel("Seconds")
-            plt.grid(b=True, which='major', linestyle='-')
-            N_freq_bands = len(allA_TS_dict[animal].keys())
-            colors = pl.cm.jet(np.linspace(0,1,N_freq_bands))
-            for freq_band in allA_TS_dict[animal].keys():
-                TS_mean_frame = allA_TS_dict[animal][freq_band]['mean frame']
-                # plot percent change in power at frequency band
-                for trial in allA_TS_dict[animal][freq_band]['trials']:
-                    plt.plot(trial, linewidth=1, color=colors[freq_band], alpha=0.03)
-                plt.plot(TS_mean_frame.T, linewidth=2, color=colors[freq_band], alpha=0.5, label='Freq Band {fb}'.format(fb=freq_band))
-            # plot events
-            ymin, ymax = plt.ylim()
-            plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-            plt.text(baseline_len, ymax-100, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-            plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-            plt.text(TGB_bucket, ymax-50, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-            plt.legend(loc='upper left')
-            # save fig
-            plt.savefig(figure_path)
-            plt.show(block=False)
-            plt.pause(1)
-            plt.close()
-        except Exception:
-            plt.close()
-            print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
-
 def pooled_mean_var_allAnimals(allA_meanPercentChange_dict):
     # calculate mean and variance across all animals
     pooled_means = {}
@@ -279,13 +232,6 @@ def plot_percentChange_pooled_animals_someFreq(analysis_type_str, preprocess_str
     plt.pause(1)
     plt.close()
 
-def pool_across_animals(percent_change_dict, animal, freq_band, pooled_dict, ts_category_str):
-    pooled_dict[ts_category_str] = {'N': {}, 'Mean': {}, 'trials': {}}
-    this_animal_this_freq_N = len(percent_change_dict[animal][freq_band]['trials'])
-    this_animal_this_freq_mean = percent_change_dict[animal][freq_band]['mean frame']
-    pooled_dict[ts_category_str]['N'].setdefault(freq_band,[]).append(this_animal_this_freq_N)
-    pooled_dict[ts_category_str]['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
-    pooled_dict[ts_category_str]['trials'].setdefault(freq_band,[]).append(percent_change_dict[animal][freq_band]['trials'])
 
 def plot_pooledA_percentChangeFromBase_allFreq_std_sterr(analysis_type_str, preprocess_str, metric_str, prey_type_str, pooledA_stats_dict, list_of_freqs_to_plot, end_of_baseline_frame, TGB_bucket, baseline_len, plots_dir, todays_dt):
     img_type = ['.png', '.pdf']
@@ -548,11 +494,6 @@ dailyMisses_percentChange = {}
 for session_date in all_misses_daily:
     dailyMisses_percentChange[session_date] = percent_change_from_baseline(all_misses_daily[session_date], 'all', baseline_frames)
 allMisses_percentChange = percent_change_from_baseline(all_misses, 'all', baseline_frames)
-#######################################################
-### ------ PLOT PERCENT CHANGE FROM BASELINE ------ ###
-#######################################################
-if plot_indiv_animals:
-    plot_percentChange_indiv_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', allTS_percentChange, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 #########################################
 ### ------ POOL ACROSS ANIMALS ------ ###
 #########################################
@@ -563,17 +504,22 @@ for animal in allTS_percentChange.keys():
         pool_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'all')
         pool_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'catches')
         pool_across_animals(allTS_percentChange, animal, freq_band, percentChange_allAnimals, 'misses')
-# plot
-if plot_pooled_animals:
-    plot_percentChange_pooled_animals_allFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-    # pick out certain frequencies to plot
-    plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [0,1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-    plot_percentChange_pooled_animals_someFreq('ProcessCuttlePython', 'PercentChange_Frame', 'power at frequency band', 'all', percentChange_allAnimals, [1,2], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-####################################################################################
-### ------ POOLED ANIMALS + FREQ BANDS: ONSET OF SIG CHANGE FROM BASELINE ------ ###
-####################################################################################
+#######################################################
+### ------ ONSET OF SIG CHANGE FROM BASELINE ------ ###
+#######################################################
 # create pools of all tentacle shots for each freq band
 percentChange_stats_pooledAnimals = {'pooled mean, all': {}, 'pooled N, all': {}, 'pooled trials, all': {}, 'pooled mean, catches': {}, 'pooled N, catches': {}, 'pooled trials, catches': {}, 'pooled mean, misses': {}, 'pooled N, misses': {}, 'pooled trials, misses': {}}
+
+def pool_across_animals(percent_change_dict, animal, freq_band, pooled_dict, ts_category_str):
+    pooled_dict[ts_category_str] = {'N': {}, 'Mean': {}, 'trials': {}}
+    this_animal_this_freq_N = len(percent_change_dict[animal][freq_band]['trials'])
+    this_animal_this_freq_mean = percent_change_dict[animal][freq_band]['mean frame']
+    pooled_dict[ts_category_str]['N'].setdefault(freq_band,[]).append(this_animal_this_freq_N)
+    pooled_dict[ts_category_str]['Mean'].setdefault(freq_band,[]).append(this_animal_this_freq_mean)
+    pooled_dict[ts_category_str]['trials'].setdefault(freq_band,[]).append(percent_change_dict[animal][freq_band]['trials'])
+
+
+percentChange_stats_pooledAnimals = {'all': {}, 'catches': {}, 'misses': {}}
 percentChange_pooled_by_timebucket = {'all': {}, 'catches': {}, 'misses': {}}
 for freq_band in percentChange_allAnimals['trials']:
     all_trials = []
@@ -584,11 +530,6 @@ for freq_band in percentChange_allAnimals['trials']:
             all_trials.append(trial)
             for timebucket, percent_change in enumerate(trial):
                 percentChange_pooled_by_timebucket.setdefault(freq_band,{}).setdefault(timebucket,[]).append(percent_change)
-        # create pools of all catches for each freq band
-        for trial in percentChange_allAnimals['trials, catches'][freq_band][animal]:
-            all_catches.append(trial)
-            for timebucket, percent_change in enumerate(trial):
-
     pooled_N_this_fb = sum(percentChange_allAnimals['N'][freq_band])
     mean_this_fb = np.nanmean(all_trials, axis=0)
     percentChange_stats_pooledAnimals['pooled mean'][freq_band] = mean_this_fb
