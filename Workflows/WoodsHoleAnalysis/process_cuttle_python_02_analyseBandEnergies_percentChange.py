@@ -311,6 +311,8 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
 def find_onset_TSP(pooled_dict, ts_category_str, plot_3sigCI, first_exits_dict, first_exits_yScatter, baseline_stats_dict, baseline_len, TGB_bucket):
     for freq_band in baseline_stats_dict['mean']:
         all_trials_this_freq_band = pooled_dict[ts_category_str]['pooled trials'][freq_band]
+        #N_trials = len(all_trials_this_freq_band)
+        #print('Number of trials: {n}'.format(n=str(N_trials)))
         # visualize distribution of onset of tentacle shot pattern
         if plot_3sigCI:
             plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket)
@@ -321,14 +323,52 @@ def find_onset_TSP(pooled_dict, ts_category_str, plot_3sigCI, first_exits_dict, 
         this_fb_3sigCI_lower = this_fb_mean - this_fb_3sig
         this_fb_earliest_exits = []
         this_fb_y = []
-        for trial in all_trials_this_freq_band:
+        for t, trial in enumerate(all_trials_this_freq_band):
             for i, timebucket in enumerate(trial):
                 if timebucket>this_fb_3sigCI_upper or timebucket<this_fb_3sigCI_lower:
                     this_fb_earliest_exits.append(i)
                     this_fb_y.append(freq_band+1)
+                    #print('Found first exit for trial {t} at timebucket {i}'.format(t=t, i=i))
                     break
+        #print('Number of first exits found: {N}'.format(N=len(this_fb_earliest_exits)))
         first_exits_dict[ts_category_str].append(this_fb_earliest_exits)
         first_exits_yScatter[ts_category_str].append(this_fb_y)
+
+def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, first_exits_list, y_scatter_list, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir):
+    N_TS = len(first_exits_list[ts_category_str][0])
+    # set fig path and title
+    figure_name = analysis_type_str+'_'+preprocess_str+'_onsetTSP_'+ts_category_str+'TS_FreqBand0-'+str(N_fb_to_plot)+todays_dt+'.png'
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Boxplots showing distribution of when {m} in ROI on cuttlefish mantle first deviates significantly from baseline, as detected by {at}\n Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Pooled across all animals, Number of tentacle shots: {Nts}'.format(m=metric_str, ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), b=str(baseline_len/60), Nts=str(N_TS))
+    # setup fig
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    first_exits_toPlot = first_exits_list[ts_category_str][:N_fb_to_plot]
+    y_scatter_list_toPlot = y_scatter_list[ts_category_str][:N_fb_to_plot]
+    plt.boxplot(first_exits_toPlot, vert=False)
+    for freq_band in range(len(first_exits_toPlot)):
+        jitter_for_plotting = np.random.normal(y_scatter_list_toPlot[freq_band], 0.08, size=len(first_exits_toPlot[freq_band]))
+        plt.plot(first_exits_toPlot[freq_band], jitter_for_plotting, 'g.')
+    # adjust axes labels
+    plt.ylabel("Frequency bands")
+    plt.ylim(0,N_fb_to_plot+1)
+    plot_yticks = np.arange(0, N_fb_to_plot+1, 1)
+    plt.yticks(plot_yticks, ['%d'%(y-1) for y in plot_yticks])
+    plt.xlabel("Seconds")
+    plt.xlim(-10,360)
+    plot_xticks = np.arange(0, 360, step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    # plot events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax-0.25, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'r--', linewidth=1)
+    plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.35'))
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
 
 ###################################
 # SOURCE DATA AND OUTPUT FILE LOCATIONS
@@ -435,24 +475,14 @@ for freq_band in pool_of_observed_baseline_values:
     std_baseline_this_freq = np.nanstd(pool_of_observed_baseline_values[freq_band])
     baseline_stats['mean'][freq_band] = mean_baseline_this_freq
     baseline_stats['std'][freq_band] = std_baseline_this_freq
-# plot 3 standard deviations bounds of the baseline on top of traces of all tentacle shots
+# visually and numerically check when mantle pattern deviates significantly from baseline
 first_exits_3sigCI = {'all': [], 'catches': [], 'misses': []}
 first_exits_y_scatter = {'all': [], 'catches': [], 'misses': []}
 find_onset_TSP(percentChange_pooledAnimals, 'all', plot_3sigCI, first_exits_3sigCI, first_exits_y_scatter, baseline_stats, baseline_frames, TGB_bucket_raw)
 find_onset_TSP(percentChange_pooledAnimals, 'catches', plot_3sigCI, first_exits_3sigCI, first_exits_y_scatter, baseline_stats, baseline_frames, TGB_bucket_raw)
 find_onset_TSP(percentChange_pooledAnimals, 'misses', plot_3sigCI, first_exits_3sigCI, first_exits_y_scatter, baseline_stats, baseline_frames, TGB_bucket_raw)
-
-
-# only show freq bands 0-2
-earliest_exits_3sigCI_toPlot = earliest_exits_3sigCI[:3]
-earliest_exits_y_scatter_toPlot = earliest_exits_y_scatter[:3]
-plt.boxplot(earliest_exits_3sigCI_toPlot, vert=False)
-for freq_band in range(len(earliest_exits_3sigCI_toPlot)):
-    jitter_for_plotting = np.random.normal(earliest_exits_y_scatter_toPlot[freq_band], 0.1, size=len(earliest_exits_3sigCI_toPlot[freq_band]))
-    plt.plot(earliest_exits_3sigCI_toPlot[freq_band], jitter_for_plotting, 'r.')
-plt.show()
-
-
-
-
+# make boxplots to show distribution of "onset of tentacle shot pattern"
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', first_exits_3sigCI, first_exits_y_scatter, 3, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', first_exits_3sigCI, first_exits_y_scatter, 3, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', first_exits_3sigCI, first_exits_y_scatter, 3, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
 # FIN
