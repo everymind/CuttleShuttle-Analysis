@@ -651,6 +651,7 @@ if __name__=='__main__':
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
     parser.add_argument("--run_type", nargs='?', default='prototype')
     parser.add_argument("--units", nargs='?', default='percent_change')
+    parser.add_argument("--baseline", nargs='?', default='60')
     parser.add_argument("--plotZScore", nargs='?', default=False)
     parser.add_argument("--plotRandomTraces", nargs='?', default=False)
     parser.add_argument("--plotShuffles", nargs='?', default=False)
@@ -711,7 +712,7 @@ if __name__=='__main__':
     ### ------ TIMING INFO/MOMENTS OF INTEREST ------ ###
     ########################################################
     TGB_bucket_raw = 180 # frame for moment tentacles go ballistic
-    baseline_frames = 60 # length of baseline period in frames
+    baseline_frames = args.baseline # length of baseline period in frames
     vids_total_length = 360 # length of analysed video clips in frames
     #########################################################################################
     ### ------ DATA NORMALIZATION/STANDARDIZATION: BASELINE SUBTRACTION AND ZSCORE ------ ###
