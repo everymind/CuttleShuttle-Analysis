@@ -651,7 +651,7 @@ if __name__=='__main__':
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
     parser.add_argument("--run_type", nargs='?', default='prototype')
     parser.add_argument("--units", nargs='?', default='percent_change')
-    parser.add_argument("--baseline", nargs='?', default=30)
+    parser.add_argument("--baseline", nargs='?', default=60)
     parser.add_argument("--plotZScore", nargs='?', default=False)
     parser.add_argument("--plotRandomTraces", nargs='?', default=False)
     parser.add_argument("--plotShuffles", nargs='?', default=False)
