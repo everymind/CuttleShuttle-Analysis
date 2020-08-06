@@ -390,7 +390,7 @@ def check_violations_sigBounds(shuffDiffMeansTraces, sig_upperBound, sig_lowerBo
             outOfBounds_lower += 1
     return outOfBounds_upper, outOfBounds_lower
 
-def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, baseline_stats_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
     img_type = ['.png', '.pdf']
     ### POOL ACROSS ANIMALS ### 
     allA_C_allFreq = {}
@@ -424,10 +424,36 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         ObservedDiff_allF[freq_band] = allA_C_allF_mean[freq_band] - allA_M_allF_mean[freq_band]
     # plot each frequency band separately
     for freq_band in allA_C_allF_mean.keys():
+        x_range = len(allA_C_allF_mean[freq_band])
+        # calculate baseline 3 sigma bounds
+        this_freq_baseline_mean = baseline_stats_dict['mean'][freq_band]
+        baseline_mean_plot = np.full((1,x_range), this_freq_baseline_mean)
+        this_freq_baseline_std = baseline_stats_dict['std'][freq_band]
+        this_freq_baseline_3sigma_upper = this_freq_baseline_mean + this_freq_baseline_std*3
+        this_freq_baseline_3sigma_lower = this_freq_baseline_mean - this_freq_baseline_std*3
+        # calculate when mean catch and mean miss exit/re-enter 3 sigma from baseline mean
+        for tb, value in enumerate(allA_M_allF_mean[freq_band]):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_M_firstExit = tb
+                break
+        this_freq_M_reEntry = len(allA_M_allF_mean[freq_band])
+        for tb, value in enumerate(reversed(allA_M_allF_mean[freq_band][this_freq_M_firstExit:])):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_M_reEntry = this_freq_M_reEntry-tb
+                break
+        for tb, value in enumerate(allA_C_allF_mean[freq_band]):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_C_firstExit = tb
+                break
+        this_freq_C_reEntry = len(allA_C_allF_mean[freq_band])
+        for tb, value in enumerate(reversed(allA_C_allF_mean[freq_band][this_freq_C_firstExit:])):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_C_reEntry = this_freq_C_reEntry-tb
+                break
         # set fig path and title
         figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
         figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = preprocess_str+', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        figure_title = preprocess_str + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
         # draw fig
         plt.figure(figsize=(16,16), dpi=200)
         plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -435,7 +461,7 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.subplot(2,1,1)
         plt.title('Observed data', fontsize=10, color='grey', style='italic')
         plt.ylabel(preprocess_str+" change from baseline in power")
-        plot_xticks = np.arange(0, len(allA_C_allF_mean[freq_band]), step=60)
+        plot_xticks = np.arange(0, x_range, step=60)
         plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
         if preprocess_str.split('_')[0] == 'ZScored':
             plt.ylim(-2.5,3.0)
@@ -454,30 +480,48 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.xlabel("Seconds")
         plt.grid(b=True, which='major', linestyle='-')
         # set colors
-        color_meanM = [1.0, 0.0, 0.0, 0.8]
-        color_stdM = [0.9, 0.0, 0.0, 0.1]
-        color_meanC = [0.0, 0.0, 1.0, 0.8]
-        color_stdC = [0.0, 0.0, 0.9, 0.1]
-        color_pointwiseP005 = [0.0, 0.5, 0.0, 1.0]
-        color_globalP005 = [1.0, 0.65, 0.0, 1.0]
+        color_meanM = [0.9137, 0.470588, 0.1529, 0.8]
+        color_stdM = [0.9137, 0.470588, 0.1529, 0.1]
+        color_meanC = [0.58039, 0.4941, 0.7294, 0.8]
+        color_stdC = [0.58039, 0.4941, 0.7294, 0.1]
+        color_baseline = [0.0, 0.53333, 0.215686, 1.0]
+        color_baseline_3sigma = [0.0, 0.53333, 0.215686, 0.1]
+        color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
+        color_pointwiseP005 = [0.2706, 0.4588, 0.70588, 1.0]
+        color_globalP005 = [0.8431, 0.1882, 0.1529, 1.0]
         color_obsDiffMeans = [0.0, 0.0, 0.0, 1.0]
-        color_shuffDiffMeans = [0.467, 0.537, 0.6, 1.0]
+        color_shuffDiffMeans = [0.5686, 0.53725, 0.6, 1.0]
+        color_firstSigFrame = [0.996, 0.8784, 0.5647, 1.0]
+        color_firstSigFrame_fill = [0.996, 0.8784, 0.5647, 0.3]
         # plot mean of catches and misses for each frequency band
         x_frames = range(360)
         UpperBound_M = allA_M_allF_mean[freq_band] + allA_M_allF_std[freq_band]
         LowerBound_M = allA_M_allF_mean[freq_band] - allA_M_allF_std[freq_band]
         UpperBound_C = allA_C_allF_mean[freq_band] + allA_C_allF_std[freq_band]
         LowerBound_C = allA_C_allF_mean[freq_band] - allA_C_allF_std[freq_band]
-        plt.plot(allA_M_allF_mean[freq_band], linewidth=2, color=color_meanM, label='Miss, Freq Band '+str(freq_band))
+        plt.plot(allA_M_allF_mean[freq_band], linewidth=2, color=color_meanM, label='Miss, Freq Band {fb}'.format(fb=freq_band))
         plt.fill_between(x_frames, UpperBound_M, LowerBound_M, color=color_stdM)
-        plt.plot(allA_C_allF_mean[freq_band], linewidth=2, color=color_meanC, label='Catch, Freq Band'+str(freq_band))
+        plt.plot(allA_C_allF_mean[freq_band], linewidth=2, color=color_meanC, label='Catch, Freq Band {fb}'.format(fb=freq_band))
         plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
+        # plot baseline 3 sigma range
+        plt.plot(baseline_mean_plot, linewidth=1, color=color_baseline)
+        plt.fill_between(x_frames, this_freq_baseline_3sigma_upper, this_freq_baseline_3sigma_lower, color=color_baseline_3sigma)
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), 'm--', linewidth=1)
-        #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+        plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
+        plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
+        plt.plot((this_freq_M_firstExit, this_freq_M_firstExit), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
+        plt.text(this_freq_M_firstExit, ymin+0.1*label_pos_mult, "Miss trials \nsignificantly deviate from \nbaseline at {s:.2f} seconds after TGB".format(s=(this_freq_M_firstExit/60)-3), fontsize='small', ha='right', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
+        plt.plot((this_freq_C_firstExit, this_freq_C_firstExit), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanC)
+        plt.text(this_freq_C_firstExit, ymin+0.5*label_pos_mult, "Catch trials \nsignificantly deviate from \nbaseline at {s:.2f} seconds after TGB".format(s=(this_freq_C_firstExit/60)-3), fontsize='small', ha='right', bbox=dict(facecolor='white', edgecolor=color_meanC, boxstyle='round,pad=0.35'))
+        if this_freq_M_reEntry != 360:
+            plt.plot((this_freq_M_reEntry, this_freq_M_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
+            plt.text(this_freq_M_reEntry, ymin+0.1*label_pos_mult, "Miss trials \nreturn to baseline \nat {s:.2f} seconds after TGB".format(s=(this_freq_M_reEntry/60)-3), fontsize='small', ha='left', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
+        if this_freq_C_reEntry != 360:
+            plt.plot((this_freq_C_reEntry, this_freq_C_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanC)
+            plt.text(this_freq_C_reEntry, ymin+0.5*label_pos_mult, "Catch trials \nreturn to baseline \nat {s:.2f} seconds after TGB".format(s=(this_freq_C_reEntry/60)-3), fontsize='small', ha='left', bbox=dict(facecolor='white', edgecolor=color_meanC, boxstyle='round,pad=0.35'))
         plt.legend()
         #subplot: difference of observed means vs shuffled diff of means
         plt.subplot(2,1,2)
@@ -492,7 +536,7 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
                 plt.ylim(-40,30)
                 label_pos_mult = 20
             elif freq_band == 1 or freq_band == 2:
-                plt.ylim(-80,180)
+                plt.ylim(-80,190)
                 label_pos_mult = 90
             else: 
                 plt.ylim(-150, 150)
@@ -513,16 +557,199 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         # plot significant frames as shaded region
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
-            plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color='cyan', alpha=0.3)
-            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8), 'c--', linewidth=1)
-        #plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+            plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color=color_firstSigFrame_fill)
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+            plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), 'm--', linewidth=1)
-        #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-        #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+        plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
+        plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
         plt.legend(loc='upper left')
+        # save and show fig
+        plt.savefig(figure_path)
+        plt.show(block=False)
+        plt.pause(1)
+        plt.close()
+
+def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, baseline_stats_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+    img_type = ['.png', '.pdf']
+    ### POOL ACROSS ANIMALS ### 
+    allA_C_allFreq = {}
+    allA_C_N = {}
+    allA_M_allFreq = {}
+    allA_M_N = {}
+    for animal in catches_dict.keys():
+        for freq_band in catches_dict[animal].keys():
+            thisA_C_N = len(catches_dict[animal][freq_band])
+            if thisA_C_N != 0:
+                allA_C_N[freq_band] = allA_C_N.setdefault(freq_band,0) + thisA_C_N
+                for trial in catches_dict[animal][freq_band]:
+                    allA_C_allFreq.setdefault(freq_band,[]).append(trial)
+    for animal in misses_dict.keys():
+        for freq_band in misses_dict[animal].keys():
+            thisA_M_N = len(misses_dict[animal][freq_band])
+            if thisA_M_N != 0:
+                allA_M_N[freq_band] = allA_M_N.setdefault(freq_band,0) + thisA_M_N
+                for trial in misses_dict[animal][freq_band]:
+                    allA_M_allFreq.setdefault(freq_band,[]).append(trial)
+    allA_C_allF_mean = {}
+    allA_C_allF_std = {}
+    allA_M_allF_mean = {}
+    allA_M_allF_std = {}
+    ObservedDiff_allF = {}
+    for freq_band in allA_C_allFreq.keys():
+        allA_C_allF_mean[freq_band] = np.nanmean(allA_C_allFreq[freq_band], axis=0)
+        allA_C_allF_std[freq_band] = np.nanstd(allA_C_allFreq[freq_band], axis=0, ddof=1)
+        allA_M_allF_mean[freq_band] = np.nanmean(allA_M_allFreq[freq_band], axis=0)
+        allA_M_allF_std[freq_band] = np.nanstd(allA_M_allFreq[freq_band], axis=0, ddof=1)
+        ObservedDiff_allF[freq_band] = allA_C_allF_mean[freq_band] - allA_M_allF_mean[freq_band]
+    # plot each frequency band separately
+    for freq_band in allA_C_allF_mean.keys():
+        x_range = len(allA_C_allF_mean[freq_band])
+        # calculate baseline 3 sigma bounds
+        this_freq_baseline_mean = baseline_stats_dict['mean'][freq_band]
+        baseline_mean_plot = np.full((1,x_range), this_freq_baseline_mean)
+        this_freq_baseline_std = baseline_stats_dict['std'][freq_band]
+        this_freq_baseline_3sigma_upper = this_freq_baseline_mean + this_freq_baseline_std*3
+        this_freq_baseline_3sigma_lower = this_freq_baseline_mean - this_freq_baseline_std*3
+        # calculate when mean catch and mean miss exit/re-enter 3 sigma from baseline mean
+        for tb, value in enumerate(allA_M_allF_mean[freq_band]):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_M_firstExit = tb
+                break
+        this_freq_M_reEntry = len(allA_M_allF_mean[freq_band])
+        for tb, value in enumerate(reversed(allA_M_allF_mean[freq_band][this_freq_M_firstExit:])):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_M_reEntry = this_freq_M_reEntry-tb
+                break
+        for tb, value in enumerate(allA_C_allF_mean[freq_band]):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_C_firstExit = tb
+                break
+        this_freq_C_reEntry = len(allA_C_allF_mean[freq_band])
+        for tb, value in enumerate(reversed(allA_C_allF_mean[freq_band][this_freq_C_firstExit:])):
+            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
+                this_freq_C_reEntry = this_freq_C_reEntry-tb
+                break
+        # set fig path and title
+        figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
+        figure_path = os.path.join(plots_dir, figure_name)
+        figure_title = preprocess_str + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
+        # draw fig
+        plt.figure(figsize=(16,16), dpi=200)
+        plt.suptitle(figure_title, fontsize=12, y=0.99)
+        # subplot: real data and std 
+        plt.subplot(2,1,1)
+        plt.title('Observed data', fontsize=10, color='grey', style='italic')
+        plt.ylabel(preprocess_str+" change from baseline in power")
+        plot_xticks = np.arange(0, x_range, step=60)
+        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+        if preprocess_str.split('_')[0] == 'ZScored':
+            plt.ylim(-2.5,3.0)
+            label_pos_mult = 1
+        elif preprocess_str.split('_')[0] == 'Percent':
+            if freq_band == 0:
+                plt.ylim(-40,30)
+                label_pos_mult = 20
+            elif freq_band == 1 or freq_band == 2:
+                plt.ylim(-80,180)
+                label_pos_mult = 90
+            else: 
+                plt.ylim(-150, 150)
+                label_pos_mult = 85
+        #plt.xlim(0,180)
+        plt.xlabel("Seconds")
+        plt.grid(b=True, which='major', linestyle='-')
+        # set colors
+        color_meanM = [0.9137, 0.470588, 0.1529, 0.8]
+        color_stdM = [0.9137, 0.470588, 0.1529, 0.1]
+        color_meanC = [0.58039, 0.4941, 0.7294, 0.8]
+        color_stdC = [0.58039, 0.4941, 0.7294, 0.1]
+        color_baseline = [0.0, 0.53333, 0.215686, 1.0]
+        color_baseline_3sigma = [0.0, 0.53333, 0.215686, 0.1]
+        color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
+        color_pointwiseP005 = [0.2706, 0.4588, 0.70588, 1.0]
+        color_globalP005 = [0.8431, 0.1882, 0.1529, 1.0]
+        color_obsDiffMeans = [0.0, 0.0, 0.0, 1.0]
+        color_shuffDiffMeans = [0.5686, 0.53725, 0.6, 1.0]
+        color_firstSigFrame = [0.996, 0.8784, 0.5647, 1.0]
+        color_firstSigFrame_fill = [0.996, 0.8784, 0.5647, 0.3]
+        # plot mean of catches and misses for each frequency band
+        x_frames = range(360)
+        UpperBound_M = allA_M_allF_mean[freq_band] + allA_M_allF_std[freq_band]
+        LowerBound_M = allA_M_allF_mean[freq_band] - allA_M_allF_std[freq_band]
+        UpperBound_C = allA_C_allF_mean[freq_band] + allA_C_allF_std[freq_band]
+        LowerBound_C = allA_C_allF_mean[freq_band] - allA_C_allF_std[freq_band]
+        plt.plot(allA_M_allF_mean[freq_band], linewidth=2, color=color_meanM, label='Miss, Freq Band {fb}'.format(fb=freq_band))
+        plt.fill_between(x_frames, UpperBound_M, LowerBound_M, color=color_stdM)
+        plt.plot(allA_C_allF_mean[freq_band], linewidth=2, color=color_meanC, label='Catch, Freq Band {fb}'.format(fb=freq_band))
+        plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
+        # plot baseline 3 sigma range
+        plt.plot(baseline_mean_plot, linewidth=1, color=color_baseline)
+        plt.fill_between(x_frames, this_freq_baseline_3sigma_upper, this_freq_baseline_3sigma_lower, color=color_baseline_3sigma)
+        # label events
+        ymin, ymax = plt.ylim()
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+        #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
+        #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
+        plt.plot((this_freq_M_firstExit, this_freq_M_firstExit), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
+        #plt.text(this_freq_M_firstExit, ymin+0.1*label_pos_mult, "Miss trials \nsignificantly deviate from \nbaseline at {s:.2f} seconds after TGB".format(s=(this_freq_M_firstExit/60)-3), fontsize='small', ha='right', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
+        plt.plot((this_freq_C_firstExit, this_freq_C_firstExit), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanC)
+        #plt.text(this_freq_C_firstExit, ymin+0.5*label_pos_mult, "Catch trials \nsignificantly deviate from \nbaseline at {s:.2f} seconds after TGB".format(s=(this_freq_C_firstExit/60)-3), fontsize='small', ha='right', bbox=dict(facecolor='white', edgecolor=color_meanC, boxstyle='round,pad=0.35'))
+        if this_freq_M_reEntry != 360:
+            plt.plot((this_freq_M_reEntry, this_freq_M_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
+            #plt.text(this_freq_M_reEntry, ymin+0.1*label_pos_mult, "Miss trials \nreturn to baseline \nat {s:.2f} seconds after TGB".format(s=(this_freq_M_reEntry/60)-3), fontsize='small', ha='left', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
+        if this_freq_C_reEntry != 360:
+            plt.plot((this_freq_C_reEntry, this_freq_C_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanC)
+            #plt.text(this_freq_C_reEntry, ymin+0.5*label_pos_mult, "Catch trials \nreturn to baseline \nat {s:.2f} seconds after TGB".format(s=(this_freq_C_reEntry/60)-3), fontsize='small', ha='left', bbox=dict(facecolor='white', edgecolor=color_meanC, boxstyle='round,pad=0.35'))
+        #plt.legend()
+        #subplot: difference of observed means vs shuffled diff of means
+        plt.subplot(2,1,2)
+        plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
+        plt.ylabel("Difference of "+preprocess_str+" means in "+metric_str)
+        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+        if preprocess_str.split('_')[0] == 'ZScored':
+            plt.ylim(-2.5,3.0)
+            label_pos_mult = 1
+        elif preprocess_str.split('_')[0] == 'Percent':
+            if freq_band == 0:
+                plt.ylim(-40,30)
+                label_pos_mult = 20
+            elif freq_band == 1 or freq_band == 2:
+                plt.ylim(-80,190)
+                label_pos_mult = 90
+            else: 
+                plt.ylim(-150, 150)
+                label_pos_mult = 85
+        #plt.xlim(0,180)
+        plt.xlabel("Seconds")
+        plt.grid(b=True, which='major', linestyle='-')
+        # plot pointwise p<0.05
+        plt.plot(sigUB[freq_band], linestyle='--', color=color_pointwiseP005, label='Pointwise p<0.05 for Freq Band '+str(freq_band))
+        plt.plot(sigLB[freq_band], linestyle='--', color=color_pointwiseP005)
+        # plot corrected (global) p<0.05
+        plt.plot(sigUB_corrected[freq_band], linestyle='--', color=color_globalP005, label='Global p<0.05 for Freq Band '+str(freq_band))
+        plt.plot(sigLB_corrected[freq_band], linestyle='--', color=color_globalP005)
+        # plot shuffled diff of means
+        plt.plot(shuffDiff[freq_band], linewidth=1.5, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means for Freq Band '+str(freq_band))
+        # plot real diff of means
+        plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
+        # plot significant frames as shaded region
+        if firstSigFrame[freq_band] is not None:
+            sig_x = range(firstSigFrame[freq_band], 360)
+            plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color=color_firstSigFrame_fill)
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+            #plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
+        # label events
+        ymin, ymax = plt.ylim()
+        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+        #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
+        #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
+        #plt.legend(loc='upper left')
         # save and show fig
         plt.savefig(figure_path)
         plt.show(block=False)
@@ -850,179 +1077,3 @@ TGB_bucket = TGB_bucket_raw
 baseline_len = baseline_frames
 plots_dir = plots_folder
 todays_dt = today_dateTime
-
-def plot_allA_allFreq_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, baseline_stats_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigFrame, TGB_bucket, baseline_len, plots_dir, todays_dt): 
-    img_type = ['.png', '.pdf']
-    ### POOL ACROSS ANIMALS ### 
-    allA_C_allFreq = {}
-    allA_C_N = {}
-    allA_M_allFreq = {}
-    allA_M_N = {}
-    for animal in catches_dict.keys():
-        for freq_band in catches_dict[animal].keys():
-            thisA_C_N = len(catches_dict[animal][freq_band])
-            if thisA_C_N != 0:
-                allA_C_N[freq_band] = allA_C_N.setdefault(freq_band,0) + thisA_C_N
-                for trial in catches_dict[animal][freq_band]:
-                    allA_C_allFreq.setdefault(freq_band,[]).append(trial)
-    for animal in misses_dict.keys():
-        for freq_band in misses_dict[animal].keys():
-            thisA_M_N = len(misses_dict[animal][freq_band])
-            if thisA_M_N != 0:
-                allA_M_N[freq_band] = allA_M_N.setdefault(freq_band,0) + thisA_M_N
-                for trial in misses_dict[animal][freq_band]:
-                    allA_M_allFreq.setdefault(freq_band,[]).append(trial)
-    allA_C_allF_mean = {}
-    allA_C_allF_std = {}
-    allA_M_allF_mean = {}
-    allA_M_allF_std = {}
-    ObservedDiff_allF = {}
-    for freq_band in allA_C_allFreq.keys():
-        allA_C_allF_mean[freq_band] = np.nanmean(allA_C_allFreq[freq_band], axis=0)
-        allA_C_allF_std[freq_band] = np.nanstd(allA_C_allFreq[freq_band], axis=0, ddof=1)
-        allA_M_allF_mean[freq_band] = np.nanmean(allA_M_allFreq[freq_band], axis=0)
-        allA_M_allF_std[freq_band] = np.nanstd(allA_M_allFreq[freq_band], axis=0, ddof=1)
-        ObservedDiff_allF[freq_band] = allA_C_allF_mean[freq_band] - allA_M_allF_mean[freq_band]
-    # plot each frequency band separately
-    for freq_band in allA_C_allF_mean.keys():
-        x_range = len(allA_C_allF_mean[freq_band])
-        # calculate baseline 3 sigma bounds
-        this_freq_baseline_mean = baseline_stats_dict['mean'][freq_band]
-        baseline_mean_plot = np.full((1,x_range), this_freq_baseline_mean)
-        this_freq_baseline_std = baseline_stats_dict['std'][freq_band]
-        this_freq_baseline_3sigma_upper = this_freq_baseline_mean + this_freq_baseline_std*3
-        this_freq_baseline_3sigma_lower = this_freq_baseline_mean - this_freq_baseline_std*3
-        # calculate when mean catch and mean miss exit/re-enter 3 sigma from baseline mean
-        for tb, value in enumerate(allA_M_allF_mean[freq_band]):
-            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
-                this_freq_M_firstExit = tb
-        for tb, value in enumerate(allA_M_allF_mean[freq_band][this_freq_M_firstExit:]):
-            if value<this_freq_baseline_3sigma_upper or value>this_freq_baseline_3sigma_lower:
-                this_freq_M_reEntry = tb
-        for tb, value in enumerate(allA_C_allF_mean[freq_band]):
-            if value>this_freq_baseline_3sigma_upper or value<this_freq_baseline_3sigma_lower:
-                this_freq_C_firstExit = tb
-        for tb, value in enumerate(allA_C_allF_mean[freq_band][this_freq_C_firstExit:]):
-            if value<this_freq_baseline_3sigma_upper or value>this_freq_baseline_3sigma_lower:
-                this_freq_C_reEntry = tb
-        # set fig path and title
-        figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_Freq'+str(freq_band)+'_' + todays_dt + img_type[0]
-        figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = preprocess_str + ', mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}, Frequency Band {fb}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, fb=freq_band, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N[0]), Nm=str(allA_M_N[0]))
-        # draw fig
-        plt.figure(figsize=(16,16), dpi=200)
-        plt.suptitle(figure_title, fontsize=12, y=0.99)
-        # subplot: real data and std 
-        plt.subplot(2,1,1)
-        plt.title('Observed data', fontsize=10, color='grey', style='italic')
-        plt.ylabel(preprocess_str+" change from baseline in power")
-        plot_xticks = np.arange(0, x_range, step=60)
-        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-        if preprocess_str.split('_')[0] == 'ZScored':
-            plt.ylim(-2.5,3.0)
-            label_pos_mult = 1
-        elif preprocess_str.split('_')[0] == 'Percent':
-            if freq_band == 0:
-                plt.ylim(-40,30)
-                label_pos_mult = 20
-            elif freq_band == 1 or freq_band == 2:
-                plt.ylim(-80,180)
-                label_pos_mult = 90
-            else: 
-                plt.ylim(-150, 150)
-                label_pos_mult = 85
-        #plt.xlim(0,180)
-        plt.xlabel("Seconds")
-        plt.grid(b=True, which='major', linestyle='-')
-        # set colors
-        color_meanM = [0.9137, 0.470588, 0.1529, 0.8]
-        color_stdM = [0.9137, 0.470588, 0.1529, 0.1]
-        color_meanC = [0.58039, 0.4941, 0.7294, 0.8]
-        color_stdC = [0.58039, 0.4941, 0.7294, 0.1]
-        color_baseline = [0.0, 0.53333, 0.215686, 1.0]
-        color_baseline_3sigma = [0.0, 0.53333, 0.215686, 0.1]
-        color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
-        color_pointwiseP005 = [0.2706, 0.4588, 0.70588, 1.0]
-        color_globalP005 = [0.8431, 0.1882, 0.1529, 1.0]
-        color_obsDiffMeans = [0.0, 0.0, 0.0, 1.0]
-        color_shuffDiffMeans = [0.5686, 0.53725, 0.6, 1.0]
-        color_firstSigFrame = [0.996, 0.8784, 0.5647, 1.0]
-        color_firstSigFrame_fill = [0.996, 0.8784, 0.5647, 0.3]
-        # plot mean of catches and misses for each frequency band
-        x_frames = range(360)
-        UpperBound_M = allA_M_allF_mean[freq_band] + allA_M_allF_std[freq_band]
-        LowerBound_M = allA_M_allF_mean[freq_band] - allA_M_allF_std[freq_band]
-        UpperBound_C = allA_C_allF_mean[freq_band] + allA_C_allF_std[freq_band]
-        LowerBound_C = allA_C_allF_mean[freq_band] - allA_C_allF_std[freq_band]
-        plt.plot(allA_M_allF_mean[freq_band], linewidth=2, color=color_meanM, label='Miss, Freq Band {fb}'.format(fb=freq_band))
-        plt.fill_between(x_frames, UpperBound_M, LowerBound_M, color=color_stdM)
-        plt.plot(allA_C_allF_mean[freq_band], linewidth=2, color=color_meanC, label='Catch, Freq Band {fb}'.format(fb=freq_band))
-        plt.fill_between(x_frames, UpperBound_C, LowerBound_C, color=color_stdC)
-        # plot baseline 3 sigma range
-        plt.plot(baseline_mean_plot, linewidth=1, color=color_baseline)
-        plt.fill_between(x_frames, this_freq_baseline_3sigma_upper, this_freq_baseline_3sigma_lower, color=color_baseline_3sigma)
-        # label events
-        ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
-        plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
-        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
-        plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-        plt.plot((this_freq_M_firstExit, this_freq_M_firstExit), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
-        plt.text(this_freq_M_firstExit, ymin+0.3*label_pos_mult, "Miss trials \nsignificantly deviate from \nbaseline at {s:.2f} seconds after TGB".format(s=(this_freq_M_firstExit/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
-        plt.plot((this_freq_C_firstExit, this_freq_C_firstExit), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
-        plt.text(this_freq_C_firstExit, ymin+0.8*label_pos_mult, "Catch trials \nsignificantly deviate from \nbaseline at {s:.2f} seconds after TGB".format(s=(this_freq_C_firstExit/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
-        plt.plot((this_freq_M_reEntry, this_freq_M_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
-        plt.text(this_freq_M_reEntry, ymin+0.3*label_pos_mult, "Miss trials \nreturn to baseline \nat {s:.2f} seconds after TGB".format(s=(this_freq_M_reEntry/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
-        plt.plot((this_freq_C_reEntry, this_freq_C_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanM)
-        plt.text(this_freq_C_reEntry, ymin+0.8*label_pos_mult, "Catch trials \nreturn to baseline \nat {s:.2f} seconds after TGB".format(s=(this_freq_C_reEntry/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_meanM, boxstyle='round,pad=0.35'))
-        plt.legend()
-        #subplot: difference of observed means vs shuffled diff of means
-        plt.subplot(2,1,2)
-        plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
-        plt.ylabel("Difference of "+preprocess_str+" means in "+metric_str)
-        plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-        if preprocess_str.split('_')[0] == 'ZScored':
-            plt.ylim(-2.5,3.0)
-            label_pos_mult = 1
-        elif preprocess_str.split('_')[0] == 'Percent':
-            if freq_band == 0:
-                plt.ylim(-40,30)
-                label_pos_mult = 20
-            elif freq_band == 1 or freq_band == 2:
-                plt.ylim(-80,190)
-                label_pos_mult = 90
-            else: 
-                plt.ylim(-150, 150)
-                label_pos_mult = 85
-        #plt.xlim(0,180)
-        plt.xlabel("Seconds")
-        plt.grid(b=True, which='major', linestyle='-')
-        # plot pointwise p<0.05
-        plt.plot(sigUB[freq_band], linestyle='--', color=color_pointwiseP005, label='Pointwise p<0.05 for Freq Band '+str(freq_band))
-        plt.plot(sigLB[freq_band], linestyle='--', color=color_pointwiseP005)
-        # plot corrected (global) p<0.05
-        plt.plot(sigUB_corrected[freq_band], linestyle='--', color=color_globalP005, label='Global p<0.05 for Freq Band '+str(freq_band))
-        plt.plot(sigLB_corrected[freq_band], linestyle='--', color=color_globalP005)
-        # plot shuffled diff of means
-        plt.plot(shuffDiff[freq_band], linewidth=1.5, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means for Freq Band '+str(freq_band))
-        # plot real diff of means
-        plt.plot(ObservedDiff_allF[freq_band], linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means for Freq Band '+str(freq_band))
-        # plot significant frames as shaded region
-        if firstSigFrame[freq_band] is not None:
-            sig_x = range(firstSigFrame[freq_band], 360)
-            plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color=color_firstSigFrame_fill)
-            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=1, color=color_firstSigFrame)
-            plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
-        # label events
-        ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=1, color=color_baseline)
-        plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
-        plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=1, color=color_TGB)
-        plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-        plt.legend(loc='upper left')
-        # save and show fig
-        plt.savefig(figure_path)
-        plt.show(block=False)
-        plt.pause(1)
-        plt.close()
-
