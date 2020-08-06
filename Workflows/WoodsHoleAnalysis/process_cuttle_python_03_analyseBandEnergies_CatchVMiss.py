@@ -8,9 +8,12 @@ Make a shuffle test of the data and plot
 
 Optional flags:
 "--run_type": 'prototype' (default) or 'collab'
+"--units": 'percent_change' (default) or 'zscore'
+"--baseline": 60 (default) or any integer value from 1-179
 "--plotZScore": False (default) or True
 "--plotRandomTraces": False (default) or True
 "--plotShuffles": False (default) or True
+"--plotBaselineHist": False (default) or True
 
 @author: Danbee Kim and Adam R Kampff
 """
@@ -538,7 +541,7 @@ if __name__=='__main__':
     parser.add_argument("--plotZScore", nargs='?', default=False)
     parser.add_argument("--plotRandomTraces", nargs='?', default=False)
     parser.add_argument("--plotShuffles", nargs='?', default=False)
-    parser.add_argument("--plotBaseline", nargs='?', default=False)
+    parser.add_argument("--plotBaselineHist", nargs='?', default=False)
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
@@ -552,7 +555,7 @@ if __name__=='__main__':
     plot_zscored_data = args.plotZScore
     visualize_random_traces = args.plotRandomTraces
     plot_shuffle_tests = args.plotShuffles
-    plot_baseline_hist = args.plotBaseline
+    plot_baseline_hist = args.plotBaselineHist
     ###################################
     # ANALYSIS METRIC TOGGLES
     ###################################
