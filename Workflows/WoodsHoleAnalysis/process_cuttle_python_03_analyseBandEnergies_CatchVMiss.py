@@ -1059,21 +1059,3 @@ if __name__=='__main__':
         plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstFrame_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
 
 # FIN
-
-analysis_type_str = 'ProcessCuttlePython'
-preprocess_str = preprocess_type
-metric_str = 'power at frequency'
-prey_type_str = 'all'
-catches_dict = preprocessed_data_to_shuffleTest[preprocess_type][0]
-misses_dict = preprocessed_data_to_shuffleTest[preprocess_type][1] 
-baseline_stats_dict = baseline_stats
-sigUB = pw005sig_UB
-sigLB = pw005sig_LB
-sigUB_corrected = global005sig_UB
-sigLB_corrected = global005sig_LB
-shuffDiff = shuff_DiffMeans
-firstSigFrame = firstFrame_P005sig
-TGB_bucket = TGB_bucket_raw
-baseline_len = baseline_frames
-plots_dir = plots_folder
-todays_dt = today_dateTime
