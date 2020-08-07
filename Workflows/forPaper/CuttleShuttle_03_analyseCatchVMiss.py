@@ -1054,21 +1054,31 @@ if __name__=='__main__':
         #######################################################
         logging.info('Calculating observed difference of means of {p} data...'.format(p=preprocess_type))
         print('Calculating observed difference of means of {p} data...'.format(p=preprocess_type))
-        allA_allC_allFreq = {}
-        allA_allM_allFreq = {}
-        for animal in preprocessed_data_to_shuffleTest[preprocess_type][0].keys():
-            for freq_band in preprocessed_data_to_shuffleTest[preprocess_type][0][animal].keys():
-                for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal][freq_band]:
-                    allA_allC_allFreq.setdefault(freq_band,[]).append(trial)
-                for trial in preprocessed_data_to_shuffleTest[preprocess_type][1][animal][freq_band]:
-                    allA_allM_allFreq.setdefault(freq_band,[]).append(trial)
-        allA_allC_allFreq_mean = {}
-        allA_allM_allFreq_mean = {}
-        Observed_DiffMeans_allFreq = {}
-        for freq_band in allA_allC_allFreq.keys():
-            allA_allC_allFreq_mean[freq_band] = np.nanmean(allA_allC_allFreq[freq_band], axis=0)
-            allA_allM_allFreq_mean[freq_band] = np.nanmean(allA_allM_allFreq[freq_band], axis=0)
-            Observed_DiffMeans_allFreq[freq_band] = allA_allC_allFreq_mean[freq_band] - allA_allM_allFreq_mean[freq_band]
+        allA_allC = {}
+        allA_allM = {}
+        allA_allC_mean = {}
+        allA_allM_mean = {}
+        Observed_DiffMeans = {}
+        for preprocess_type in preprocessed_data_to_shuffleTest.keys():
+            for animal in preprocessed_data_to_shuffleTest[preprocess_type][0].keys():
+                if preprocess_type == 'Percent_Change':
+                    for freq_band in preprocessed_data_to_shuffleTest[preprocess_type][0][animal].keys():
+                        for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal][freq_band]:
+                            allA_allC.setdefault(freq_band,[]).append(trial)
+                        for trial in preprocessed_data_to_shuffleTest[preprocess_type][1][animal][freq_band]:
+                            allA_allM.setdefault(freq_band,[]).append(trial)
+                    for freq_band in allA_allC.keys():
+                        allA_allC_mean[freq_band] = np.nanmean(allA_allC[freq_band], axis=0)
+                        allA_allM_mean[freq_band] = np.nanmean(allA_allM[freq_band], axis=0)
+                        Observed_DiffMeans[freq_band] = allA_allC_mean[freq_band] - allA_allM_mean[freq_band]
+                if 'ZScored' in preprocess_type:
+                    for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal].keys():
+                        allA_allC.setdefault(preprocess_type,[]).append(trial)
+                    for trial in preprocessed_data_to_shuffleTest[preprocess_type][1][animal][freq_band]:
+                        allA_allM.setdefault(preprocess_type,[]).append(trial)
+                    allA_allC_mean[preprocess_type] = np.nanmean(allA_allC[preprocess_type], axis=0)
+                    allA_allM_mean[preprocess_type] = np.nanmean(allA_allM[preprocess_type], axis=0)
+                    Observed_DiffMeans[preprocess_type] = allA_allC_mean[preprocess_type] - allA_allM_mean[preprocess_type]        
         ####################################################################
         ### -- GENERATE RANDOM TRACES TO CORRECT THRESHOLD FOR P<0.05 -- ###
         ####################################################################
