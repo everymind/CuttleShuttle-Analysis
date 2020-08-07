@@ -166,6 +166,102 @@ def zScored_count(Zscore_type, dict_to_Zscore, dict_for_mean_std):
             zScored_dict[animal].append(trial_zscored)
     return zScored_dict
 
+def plot_indiv_animals(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
+    # plot individual animals
+    img_type = ['.png', '.pdf']
+    for animal in allA_C_dict.keys(): 
+        try:
+            if 'Zscored' in preprocess_str:
+                N_catch = len(allA_C_dict[animal])
+                N_miss = len(allA_M_dict[animal])
+                catches_mean = np.nanmean(allA_C_dict[animal], axis=0)
+                misses_mean = np.nanmean(allA_M_dict[animal], axis=0)
+                # set fig path and title
+                if len(prey_type_str.split(' '))>1:
+                    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str.split(' ')[1] + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+                else:
+                    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+                figure_path = os.path.join(plots_dir, figure_name)
+                figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
+                # setup fig
+                plt.figure(figsize=(16,9), dpi=200)
+                plt.suptitle(figure_title, fontsize=12, y=0.99)
+                plt.ylabel("Change from baseline in number of edges")
+                plot_xticks = np.arange(0, len(allA_C_dict[animal][0]), step=60)
+                plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+                #plt.xlim(0,180)
+                plt.ylim(-6, 6)
+                plt.xlabel("Seconds")
+                plt.grid(b=True, which='major', linestyle='-')
+                # plot z-scored edge counts
+                for trial in allA_M_dict[animal]:
+                    plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
+                for trial in allA_C_dict[animal]:
+                    plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
+                plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+                #plt.fill_between(range(len(allA_M_dict_mean[animal])), misses_mean-canny_std_miss, misses_mean+canny_std_miss, color=[1.0, 0.0, 0.0, 0.1])
+                plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+                #plt.fill_between(range(len(allA_C_dict_mean[animal])), catches_mean-canny_std_catch, catches_mean+canny_std_catch, color=[0.0, 0.0, 1.0, 0.1])
+                # plot events
+                ymin, ymax = plt.ylim()
+                plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+                plt.text(baseline_len, ymax-0.8, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+                plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+                plt.text(TGB_bucket, ymax-0.5, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+                plt.legend(loc='upper left')
+                # save fig
+                plt.savefig(figure_path)
+                plt.show(block=False)
+                plt.pause(1)
+                plt.close()
+            else:
+                if animal in allA_C_dict:
+                    N_catch = len(allA_C_dict[animal]['trials'])
+                    catches_mean = np.nanmean(allA_C_dict[animal]['trials'], axis=0)
+                if animal in allA_M_dict:
+                    N_miss = len(allA_M_dict[animal]['trials'])
+                    misses_mean = np.nanmean(allA_M_dict[animal]['trials'], axis=0)
+                # set fig path and title
+                figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str.split(' ')[1] + 'Trials_' + animal + "_" + todays_dt + img_type[0]
+                figure_path = os.path.join(plots_dir, figure_name)
+                figure_title = 'SavGol filtered and baseline subtracted mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
+                # setup fig
+                plt.figure(figsize=(16,9), dpi=200)
+                plt.suptitle(figure_title, fontsize=12, y=0.99)
+                plt.ylabel("Change from baseline in number of edges")
+                plot_xticks = np.arange(0, len(allA_C_dict[animal]['trials'][0]), step=60)
+                plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+                #plt.xlim(0,180)
+                #plt.ylim(-6, 6)
+                plt.xlabel("Seconds")
+                plt.grid(b=True, which='major', linestyle='-')
+                # plot z-scored edge counts
+                if animal in allA_M_dict:
+                    for trial in allA_M_dict[animal]['trials']:
+                        plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
+                if animal in allA_C_dict:
+                    for trial in allA_C_dict[animal]['trials']:
+                        plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
+                if animal in allA_M_dict:
+                    plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
+                if animal in allA_C_dict:
+                    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
+                # plot events
+                ymin, ymax = plt.ylim()
+                plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
+                plt.text(baseline_len, ymax-ymax/10, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+                plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+                plt.text(TGB_bucket, ymax-ymax/20, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+                plt.legend(loc='upper left')
+                # save fig
+                plt.savefig(figure_path)
+                plt.show(block=False)
+                plt.pause(1)
+                plt.close()
+        except Exception:
+            plt.close()
+            print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
+
 
 
 def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
@@ -959,12 +1055,12 @@ if __name__=='__main__':
         #######################################################
         if plot_zscored_data:
             ## individual animals
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Frame_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Frame, allMisses_baseSub_Zscored_Frame, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-            plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_BaseSub', 'power at frequency band', 'all', allCatches_baseSub_Zscored_Trial, allMisses_baseSub_Zscored_Trial, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            plot_indiv_animals('CannyEdgeDetector', 'Zscored_TB_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored_TB, allMisses_filtBaseSub_Zscored_TB, TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
+            plot_indiv_animals('CannyEdgeDetector', 'Zscored_trial_SavGol_BaseSub', 'edge counts', 'all', allCatches_filtBaseSub_Zscored_trial, allMisses_filtBaseSub_Zscored_trial, TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
             # sanity check
-            for session_date in dailyTS_baseSub:
-                plot_indiv_animals_each_freq('ProcessCuttlePython', 'BaseSub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub[session_date], dailyMisses_baseSub[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-                plot_indiv_animals_each_freq('ProcessCuttlePython', 'Zscored_Trial_Basesub', 'power at frequency band', 'all '+session_date, dailyCatches_baseSub_Zscored_Trial[session_date], dailyMisses_baseSub_Zscored_Trial[session_date], TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            for session_date in dailyTS_filtBaseSub:
+                plot_indiv_animals('CannyEdgeDetector', 'SavGol_BaseSub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub[session_date], dailyMisses_filtBaseSub[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
+                plot_indiv_animals('CannyEdgeDetector', 'Zscored_trial_SavGol_Basesub', 'edge counts', 'all '+session_date, dailyCatches_filtBaseSub_Zscored_trial[session_date], dailyMisses_filtBaseSub_Zscored_trial[session_date], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
     ######################################################################################
     ### ------ DATA NORMALIZATION/STANDARDIZATION: PERCENT CHANGE FROM BASELINE ------ ###
     ######################################################################################
