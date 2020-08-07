@@ -806,6 +806,217 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.pause(1)
         plt.close()
 
+def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigTB, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+    img_type = ['.png', '.pdf']
+    ### POOL ACROSS ANIMALS ### 
+    allA_C = []
+    allA_C_N = 0
+    allA_M = []
+    allA_M_N = 0
+    for animal in catches_dict:
+        thisA_C_N = len(catches_dict[animal])
+        if thisA_C_N != 0:
+            allA_C_N = allA_C_N + thisA_C_N
+            for trial in catches_dict[animal]:
+                allA_C.append(trial)
+    for animal in misses_dict:
+        thisA_M_N = len(misses_dict[animal])
+        if thisA_M_N != 0:
+            allA_M_N = allA_M_N + thisA_M_N
+            for trial in misses_dict[animal]:
+                allA_M.append(trial)
+    allA_C_mean = np.nanmean(allA_C, axis=0)
+    allA_C_std = np.nanstd(allA_C, axis=0, ddof=1)
+    allA_M_mean = np.nanmean(allA_M, axis=0)
+    allA_M_std = np.nanstd(allA_M, axis=0, ddof=1)
+    ObservedDiff = allA_C_mean - allA_M_mean
+    # set fig path and title
+    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_' + todays_dt + img_type[0]
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N), Nm=str(allA_M_N))
+    # draw fig
+    plt.figure(figsize=(16,16), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    # subplot: real data and std 
+    plt.subplot(2,1,1)
+    plt.title('Observed data', fontsize=10, color='grey', style='italic')
+    plt.ylabel("Z-scored change from baseline in number of edges")
+    plot_xticks = np.arange(0, len(allA_C_mean), step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.ylim(-1.5,3.0)
+    #plt.xlim(0,180)
+    plt.xlabel("Seconds")
+    plt.grid(b=True, which='major', linestyle='-')
+    # set colors
+    color_meanM = [1.0, 0.0, 0.0, 0.8]
+    color_stdM = [0.9, 0.0, 0.0, 0.1]
+    color_meanC = [0.0, 0.0, 1.0, 0.8]
+    color_stdC = [0.0, 0.0, 0.9, 0.1]
+    color_pointwiseP005 = [0.0, 0.5, 0.0, 1.0]
+    color_globalP005 = [1.0, 0.65, 0.0, 1.0]
+    color_obsDiffMeans = [0.0, 0.0, 0.0, 1.0]
+    color_shuffDiffMeans = [0.467, 0.537, 0.6, 1.0]
+    # plot mean of catches and misses
+    x_tbs = range(360)
+    UpperBound_M = allA_M_mean + allA_M_std
+    LowerBound_M = allA_M_mean - allA_M_std
+    UpperBound_C = allA_C_mean + allA_C_std
+    LowerBound_C = allA_C_mean - allA_C_std
+    plt.plot(allA_M_mean, linewidth=2, color=color_meanM, label='Miss')
+    plt.fill_between(x_tbs, UpperBound_M, LowerBound_M, color=color_stdM)
+    plt.plot(allA_C_mean, linewidth=2, color=color_meanC, label='Catch')
+    plt.fill_between(x_tbs, UpperBound_C, LowerBound_C, color=color_stdC)
+    # label events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+    plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
+    #subplot: difference of observed means vs shuffled diff of means
+    plt.subplot(2,1,2)
+    plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
+    plt.ylabel("Difference of z-scored means in number of edges")
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.ylim(-1.5,3.0)
+    #plt.xlim(0,180)
+    plt.xlabel("Seconds")
+    plt.grid(b=True, which='major', linestyle='-')
+    # plot pointwise p<0.05
+    plt.plot(sigUB, linestyle='--', color=color_pointwiseP005, label='Pointwise p<0.05')
+    plt.plot(sigLB, linestyle='--', color=color_pointwiseP005)
+    # plot corrected (global) p<0.05
+    plt.plot(sigUB_corrected, linestyle='--', color=color_globalP005, label='Global p<0.05')
+    plt.plot(sigLB_corrected, linestyle='--', color=color_globalP005)
+    # plot shuffled diff of means
+    plt.plot(shuffDiff, linewidth=1.5, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means')
+    # plot real diff of means
+    plt.plot(ObservedDiff, linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means')
+    # plot significant time bins as shaded region
+    sig_x = range(firstSigTB, 360)
+    plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color='cyan', alpha=0.3)
+    # label events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.75), 'm--', linewidth=1)
+    plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
+    plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax-0.75), 'c--', linewidth=1)
+    plt.text(firstSigTB, ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
+    # save and show fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
+def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str, metric_str, prey_type_str, catches_dict, misses_dict, sigUB, sigLB, sigUB_corrected, sigLB_corrected, shuffDiff, firstSigTB, TGB_bucket, baseline_len, plots_dir, todays_dt): 
+    img_type = ['.png', '.pdf']
+    ### POOL ACROSS ANIMALS ### 
+    allA_C = []
+    allA_C_N = 0
+    allA_M = []
+    allA_M_N = 0
+    for animal in catches_dict:
+        thisA_C_N = len(catches_dict[animal])
+        if thisA_C_N != 0:
+            allA_C_N = allA_C_N + thisA_C_N
+            for trial in catches_dict[animal]:
+                allA_C.append(trial)
+    for animal in misses_dict:
+        thisA_M_N = len(misses_dict[animal])
+        if thisA_M_N != 0:
+            allA_M_N = allA_M_N + thisA_M_N
+            for trial in misses_dict[animal]:
+                allA_M.append(trial)
+    allA_C_mean = np.nanmean(allA_C, axis=0)
+    allA_C_std = np.nanstd(allA_C, axis=0, ddof=1)
+    allA_M_mean = np.nanmean(allA_M, axis=0)
+    allA_M_std = np.nanstd(allA_M, axis=0, ddof=1)
+    ObservedDiff = allA_C_mean - allA_M_mean
+    # set fig path and title
+    figure_name = analysis_type_str +'_'+ preprocess_str +'_'+ prey_type_str + 'Trials_AllAnimals_' + todays_dt + img_type[0]
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Z-scored mean change from baseline of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Pooled across all animals\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(allA_C_N), Nm=str(allA_M_N))
+    # draw fig
+    plt.figure(figsize=(16,16), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    # subplot: real data and std 
+    plt.subplot(2,1,1)
+    plt.title('Observed data', fontsize=10, color='grey', style='italic')
+    plt.ylabel("Z-scored change from baseline in number of edges")
+    plot_xticks = np.arange(0, len(allA_C_mean), step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.ylim(-1.5,3.0)
+    #plt.xlim(0,180)
+    plt.xlabel("Seconds")
+    plt.grid(b=True, which='major', linestyle='-')
+    # set colors
+    color_meanM = [0.90196, 0.3803, 0.00392, 0.85]
+    color_stdM = [0.90196, 0.3803, 0.00392, 0.1]
+    color_meanC = [0.3686, 0.2353, 0.596, 0.85]
+    color_stdC = [0.3686, 0.2353, 0.596, 0.1]
+    color_baseline = [0.0, 0.5333, 0.21569, 1.0]
+    color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
+    color_sigDiff = [0.996, 0.8784, 0.5647, 1.0]
+    color_pointwiseP005 = [0.270588, 0.45882, 0.705882, 1.0]
+    color_globalP005 = [0.84313, 0.1882, 0.15294, 1.0]
+    color_obsDiffMeans = [0.0, 0.0, 0.0, 1.0]
+    color_shuffDiffMeans = [0.567, 0.537, 0.6, 1.0]
+    # plot mean of catches and misses
+    x_tbs = range(360)
+    UpperBound_M = allA_M_mean + allA_M_std
+    LowerBound_M = allA_M_mean - allA_M_std
+    UpperBound_C = allA_C_mean + allA_C_std
+    LowerBound_C = allA_C_mean - allA_C_std
+    plt.plot(allA_M_mean, linewidth=2, color=color_meanM, label='Miss')
+    plt.fill_between(x_tbs, UpperBound_M, LowerBound_M, color=color_stdM)
+    plt.plot(allA_C_mean, linewidth=2, color=color_meanC, label='Catch')
+    plt.fill_between(x_tbs, UpperBound_C, LowerBound_C, color=color_stdC)
+    # label events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', color=color_baseline, linewidth=2)
+    #plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', color=color_TGB, linewidth=2)
+    #plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
+    #subplot: difference of observed means vs shuffled diff of means
+    plt.subplot(2,1,2)
+    plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
+    plt.ylabel("Difference of z-scored means in number of edges")
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.ylim(-1.5,3.0)
+    #plt.xlim(0,180)
+    plt.xlabel("Seconds")
+    plt.grid(b=True, which='major', linestyle='-')
+    # plot pointwise p<0.05
+    plt.plot(sigUB, linestyle='--', color=color_pointwiseP005, label='Pointwise p<0.05')
+    plt.plot(sigLB, linestyle='--', color=color_pointwiseP005)
+    # plot corrected (global) p<0.05
+    plt.plot(sigUB_corrected, linestyle='--', color=color_globalP005, label='Global p<0.05')
+    plt.plot(sigLB_corrected, linestyle='--', color=color_globalP005)
+    # plot shuffled diff of means
+    plt.plot(shuffDiff, linewidth=2, linestyle='-', color=color_shuffDiffMeans, label='Shuffled diff of means')
+    # plot real diff of means
+    plt.plot(ObservedDiff, linewidth=2, linestyle='-', color=color_obsDiffMeans, label='Observed diff of means')
+    # plot significant time bins as shaded region
+    sig_x = range(firstSigTB, 360)
+    plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color=color_sigDiff, alpha=0.3)
+    # label events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', color=color_baseline, linewidth=2)
+    #plt.text(baseline_len, ymax-0.75, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', color=color_TGB, linewidth=2)
+    #plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax), linestyle='--', color=color_sigDiff, linewidth=2)
+    #plt.text(firstSigTB, ymax-0.75, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='cyan', boxstyle='round,pad=0.35'))
+    plt.legend(loc='upper left')
+    # save and show fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 ##########################################################
 # BEGIN SCRIPT
 ##########################################################
@@ -1216,11 +1427,15 @@ if __name__=='__main__':
         #######################################################
         ### ------------ PLOT THE SHUFFLE DATA ------------ ###
         #######################################################
-        logging.info('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
-        print('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
-        ### POOL ACROSS ANIMALS
-        plot_allA_allFreq_ShuffledDiffMeans('ProcessCuttlePython', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB, pw005sig_LB, global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans, firstCrossing_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-        # without labels
-        plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB, pw005sig_LB, global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans, firstCrossing_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
-
+        for preprocess_type in Shuffle_Tests:
+            logging.info('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
+            print('Plotting shuffle tests of {p} data...'.format(p=preprocess_type))
+            if preprocess_type == 'Percent_Change':
+                plot_allA_allFreq_ShuffledDiffMeans('ProcessCuttlePython', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstCrossing_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+                # without labels
+                plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstCrossing_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
+            if 'ZScored' in preprocess_type:
+                plot_allA_Canny_ShuffledDiffMeans('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+                # without labels
+                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', allCatchespreprocessed_data_to_shuffleTest[preprocess_type][0]_filtBaseSub_Zscored_Sess, preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 # FIN
