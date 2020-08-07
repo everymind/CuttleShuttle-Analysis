@@ -262,54 +262,6 @@ def plot_indiv_animals(analysis_type_str, preprocess_str, metric_str, prey_type_
             plt.close()
             print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
-
-
-def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
-    baseSub_TS = {}
-    # make baseline for each animal, catch vs miss
-    for animal in TS_dict: 
-        baseSub_TS[animal] = {}
-        try:
-            # baseline subtract each frequency during each trial
-            allFreq_allTrials_baseSub = {}
-            for i,trial in enumerate(TS_dict[animal]):
-                for freq_band in trial:
-                    baseSub_TS[animal][freq_band] = {}
-                    this_freq_baseline = np.nanmean(TS_dict[animal][i][freq_band][0:baseline_len])
-                    this_freq_basesubbed = [float(x-this_freq_baseline) for x in TS_dict[animal][i][freq_band]]
-                    allFreq_allTrials_baseSub.setdefault(freq_band,[]).append(this_freq_basesubbed)
-            for freq_band in allFreq_allTrials_baseSub:
-                thisFreq_baseSub_mean_byFrame = np.nanmean(allFreq_allTrials_baseSub[freq_band], axis=0)
-                thisFreq_baseSub_mean_byTrial = np.nanmean(allFreq_allTrials_baseSub[freq_band])
-                thisFreq_baseSub_std_byFrame = np.nanstd(allFreq_allTrials_baseSub[freq_band], axis=0, ddof=1)
-                thisFreq_baseSub_std_byTrial = np.nanstd(allFreq_allTrials_baseSub[freq_band], ddof=1)
-                baseSub_TS[animal][freq_band]['trials'] = allFreq_allTrials_baseSub[freq_band]
-                baseSub_TS[animal][freq_band]['mean frame'] = thisFreq_baseSub_mean_byFrame
-                baseSub_TS[animal][freq_band]['mean trial'] = thisFreq_baseSub_mean_byTrial
-                baseSub_TS[animal][freq_band]['std frame'] = thisFreq_baseSub_std_byFrame
-                baseSub_TS[animal][freq_band]['std trial'] = thisFreq_baseSub_std_byTrial
-        except Exception:
-            print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
-    return baseSub_TS
-
-def zScored_powerAtFreq(Zscore_type, dict_to_Zscore, dict_for_mean_std):
-    zScored_dict = {}
-    for animal in dict_to_Zscore:
-        zScored_dict[animal] = {}
-        for freq_band in dict_to_Zscore[animal]:
-            zScored_dict[animal][freq_band] = []
-            for trial in dict_to_Zscore[animal][freq_band]['trials']:
-                trial_array = np.array(trial)
-                if Zscore_type=='frame':
-                    trial_zscored = (trial_array - dict_for_mean_std[animal][freq_band]['mean frame'])/dict_for_mean_std[animal][freq_band]['std frame']
-                if Zscore_type=='trial':
-                    trial_zscored = []
-                    for frame in trial:
-                        frame_zscored = (frame - dict_for_mean_std[animal][freq_band]['mean trial'])/dict_for_mean_std[animal][freq_band]['std trial']
-                        trial_zscored.append(frame_zscored)
-                zScored_dict[animal][freq_band].append(trial_zscored)
-    return zScored_dict
-
 def percent_change_from_baseline(TS_dict, prey_type, baseline_len):
     percentChange_TS = {}
     # make baseline for each animal, catch vs miss
@@ -329,103 +281,6 @@ def percent_change_from_baseline(TS_dict, prey_type, baseline_len):
         except Exception:
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return percentChange_TS
-
-def plot_indiv_animals_each_freq(analysis_type_str, preprocess_str, metric_str, prey_type_str, allA_C_dict, allA_M_dict, TGB_bucket, baseline_len, plots_dir, todays_dt):
-    # plot individual animals
-    img_type = ['.png', '.pdf']
-    for animal in allA_C_dict.keys(): 
-        for freq_band in allA_C_dict[animal].keys():
-            try:
-                if 'Zscored' in preprocess_str:
-                    N_catch = len(allA_C_dict[animal][freq_band])
-                    N_miss = len(allA_M_dict[animal][freq_band])
-                    catches_mean = np.nanmean(allA_C_dict[animal][freq_band], axis=0)
-                    misses_mean = np.nanmean(allA_M_dict[animal][freq_band], axis=0)
-                    # set fig path and title
-                    if len(prey_type_str.split(' '))>1:
-                        figure_name = analysis_type_str+'_'+preprocess_str+'_'+animal+'_FreqBand'+ str(freq_band)+'_'+prey_type_str.split(' ')[1]+'Trials_'+todays_dt+img_type[0]
-                    else:
-                        figure_name = analysis_type_str+'_'+preprocess_str+'_'+animal+'_FreqBand'+ str(freq_band)+'_'+prey_type_str+'Trials_'+todays_dt+img_type[0]
-                    figure_path = os.path.join(plots_dir, figure_name)
-                    figure_title = 'Z-scored mean change from baseline of {m} {fb} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, fb=freq_band, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
-                    # setup fig
-                    plt.figure(figsize=(16,9), dpi=200)
-                    plt.suptitle(figure_title, fontsize=12, y=0.99)
-                    plt.ylabel("Change from baseline in power")
-                    plot_xticks = np.arange(0, len(allA_C_dict[animal][freq_band][0]), step=60)
-                    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-                    #plt.xlim(0,180)
-                    plt.ylim(-6, 6)
-                    plt.xlabel("Seconds")
-                    plt.grid(b=True, which='major', linestyle='-')
-                    # plot z-scored power at frequency band
-                    for trial in allA_M_dict[animal][freq_band]:
-                        plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
-                    for trial in allA_C_dict[animal][freq_band]:
-                        plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
-                    plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-                    #plt.fill_between(range(len(allA_M_dict_mean[animal])), misses_mean-canny_std_miss, misses_mean+canny_std_miss, color=[1.0, 0.0, 0.0, 0.1])
-                    plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-                    #plt.fill_between(range(len(allA_C_dict_mean[animal])), catches_mean-canny_std_catch, catches_mean+canny_std_catch, color=[0.0, 0.0, 1.0, 0.1])
-                    # plot events
-                    ymin, ymax = plt.ylim()
-                    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-                    plt.text(baseline_len, ymax-0.8, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-                    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-                    plt.text(TGB_bucket, ymax-0.5, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-                    plt.legend(loc='upper left')
-                    # save fig
-                    plt.savefig(figure_path)
-                    plt.show(block=False)
-                    plt.pause(1)
-                    plt.close()
-                else:
-                    if animal in allA_C_dict:
-                        N_catch = len(allA_C_dict[animal][freq_band]['trials'])
-                        catches_mean = np.nanmean(allA_C_dict[animal][freq_band]['trials'], axis=0)
-                    if animal in allA_M_dict:
-                        N_miss = len(allA_M_dict[animal][freq_band]['trials'])
-                        misses_mean = np.nanmean(allA_M_dict[animal][freq_band]['trials'], axis=0)
-                    # set fig path and title
-                    figure_name = analysis_type_str+'_'+preprocess_str+'_FreqBand'+ str(freq_band)+'_'+ prey_type_str.split(' ')[1]+'Trials_'+animal+"_"+todays_dt+img_type[0]
-                    figure_path = os.path.join(plots_dir, figure_name)
-                    figure_title = 'Baseline subtracted mean change from baseline of {m} {fb} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Individual trials plotted with more transparent traces \n Baseline: mean of {m} from t=0 to t={b} seconds \n Prey Movement type: {p}, Animal: {a}\n Number of catches: {Nc}, Number of misses: {Nm}'.format(m=metric_str, fb=freq_band, at=analysis_type_str, b=str(baseline_len/60), p=prey_type_str, a=animal, Nc=str(N_catch), Nm=str(N_miss))
-                    # setup fig
-                    plt.figure(figsize=(16,9), dpi=200)
-                    plt.suptitle(figure_title, fontsize=12, y=0.99)
-                    plt.ylabel("Change from baseline in power")
-                    plot_xticks = np.arange(0, len(allA_C_dict[animal][freq_band]['trials'][0]), step=60)
-                    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-                    #plt.xlim(0,180)
-                    #plt.ylim(-6, 6)
-                    plt.xlabel("Seconds")
-                    plt.grid(b=True, which='major', linestyle='-')
-                    # plot z-scored power at frequency band
-                    if animal in allA_M_dict:
-                        for trial in allA_M_dict[animal][freq_band]['trials']:
-                            plt.plot(trial, linewidth=1, color=[1.0, 0.0, 0.0, 0.1])
-                    if animal in allA_C_dict:
-                        for trial in allA_C_dict[animal][freq_band]['trials']:
-                            plt.plot(trial, linewidth=1, color=[0.0, 0.0, 1.0, 0.1])
-                    if animal in allA_M_dict:
-                        plt.plot(misses_mean.T, linewidth=2, color=[1.0, 0.0, 0.0, 0.8], label='Miss')
-                    if animal in allA_C_dict:
-                        plt.plot(catches_mean.T, linewidth=2, color=[0.0, 0.0, 1.0, 0.8], label='Catch')
-                    # plot events
-                    ymin, ymax = plt.ylim()
-                    plt.plot((baseline_len, baseline_len), (ymin, ymax), 'm--', linewidth=1)
-                    plt.text(baseline_len, ymax-ymax/10, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='magenta', boxstyle='round,pad=0.35'))
-                    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), 'g--', linewidth=1)
-                    plt.text(TGB_bucket, ymax-ymax/20, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor='green', boxstyle='round,pad=0.35'))
-                    plt.legend(loc='upper left')
-                    # save fig
-                    plt.savefig(figure_path)
-                    plt.show(block=False)
-                    plt.pause(1)
-                    plt.close()
-            except Exception:
-                plt.close()
-                print("{a} did not make any catches and/or misses during {p} prey movement".format(a=animal,p=prey_type_str))
 
 def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, observed_baseline_dict, freq_band, baseline_len, todays_dt, plots_dir):
     # set fig path and title
@@ -477,6 +332,36 @@ def pool_acrossA_keepTemporalStructure_eachFreq(catches_dict, misses_dict, frame
             else:
                 print('{a} made no miss tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
     return pooled_catches, pooled_catches_Ntrials, pooled_misses, pooled_misses_Ntrials
+
+def pool_acrossA_keepTemporalStructure(catches_dict, misses_dict, timebin_start, timebin_end, prey_type_str):
+    pooled_catches = []
+    pooled_catches_Ntrials = 0
+    pooled_misses = []
+    pooled_misses_Ntrials = 0
+    for animal in catches_dict:
+        thisA_catchesN = len(catches_dict[animal])
+        pooled_catches_Ntrials = pooled_catches_Ntrials + thisA_catchesN
+        if thisA_catchesN != 0:
+            for trial in catches_dict[animal]:
+                if timebin_end == -1:
+                    pooled_catches.append(trial[timebin_start:])
+                else:     
+                    pooled_catches.append(trial[timebin_start:timebin_end])
+        else:
+            print('{a} made no catch tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
+        thisA_missesN = len(misses_dict[animal])
+        pooled_misses_Ntrials = pooled_misses_Ntrials + thisA_missesN
+        if thisA_missesN != 0:
+            for trial in misses_dict[animal]:
+                if timebin_end == -1:
+                    pooled_misses.append(trial[timebin_start:])
+                else:     
+                    pooled_misses.append(trial[timebin_start:timebin_end])
+        else:
+            print('{a} made no miss tentacle shots during {p} prey movement'.format(a=animal, p=prey_type_str))
+    pooled_catches_array = np.array(pooled_catches)
+    pooled_misses_array = np.array(pooled_misses)
+    return pooled_catches_array, pooled_catches_Ntrials, pooled_misses_array, pooled_misses_Ntrials
 
 def shuffle_test(Group1, Group2, N_Shuffles, Group1_str, Group2_str, Group1_N, Group2_N, plot_on, plots_dir, todays_dt):
     # Observed performance
@@ -1108,20 +993,34 @@ if __name__=='__main__':
     for preprocess_type in preprocessed_data_to_shuffleTest.keys():
         logging.info('Shuffle Tests of {p} data...'.format(p=preprocess_type))
         print('Shuffle Tests of {p} data...'.format(p=preprocess_type))
-        allA_allFreq_catches, allA_allFreq_catches_N, allA_allFreq_misses, allA_allFreq_misses_N = pool_acrossA_keepTemporalStructure_eachFreq(preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], 0, -1 , "all")
-        allFreq_shuffleTest = {}
-        for freq_band in allA_allFreq_catches.keys():
-            allFreq_shuffleTest[freq_band] = {}
-            for frame in range(vids_total_length):
-                allFreq_shuffleTest[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
-                for trial in allA_allFreq_catches[freq_band]:
-                    allFreq_shuffleTest[freq_band][frame]['catch'].append(trial[frame])
-                for trial in allA_allFreq_misses[freq_band]:
-                    allFreq_shuffleTest[freq_band][frame]['miss'].append(trial[frame])
-                # shuffle test each frame
-                Group1String = 'AllCatches-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
-                Group2String = 'AllMisses-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
-                allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, Group1String, Group2String, allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
+        if preprocess_type == 'Percent_Change':
+            allA_allFreq_catches, allA_allFreq_catches_N, allA_allFreq_misses, allA_allFreq_misses_N = pool_acrossA_keepTemporalStructure_eachFreq(preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], 0, -1 , "all")
+            allFreq_shuffleTest = {}
+            for freq_band in allA_allFreq_catches.keys():
+                allFreq_shuffleTest[freq_band] = {}
+                for frame in range(vids_total_length):
+                    allFreq_shuffleTest[freq_band][frame] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+                    for trial in allA_allFreq_catches[freq_band]:
+                        allFreq_shuffleTest[freq_band][frame]['catch'].append(trial[frame])
+                    for trial in allA_allFreq_misses[freq_band]:
+                        allFreq_shuffleTest[freq_band][frame]['miss'].append(trial[frame])
+                    # shuffle test each frame
+                    Group1String = 'AllCatches-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
+                    Group2String = 'AllMisses-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
+                    allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, Group1String, Group2String, allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
+        if 'ZScored' in preprocess_type:
+            allA_Zscored_C, allA_Zscored_C_N, allA_Zscored_M, allA_Zscored_M_N = pool_acrossA_keepTemporalStructure(preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], 0, -1 , "all")
+            Zscores_shuffleTest = {}
+            for timebin in range(vids_total_length):
+                Zscores_shuffleTest[timebin] = {'catch':[], 'miss':[], 'SPerf': None, 'pval': None, 'mean': None}
+                for trial in allA_Zscored_C:
+                    Zscores_shuffleTest[timebin]['catch'].append(trial[timebin])
+                for trial in allA_Zscored_M:
+                    Zscores_shuffleTest[timebin]['miss'].append(trial[timebin])
+                # shuffle test each time bin
+                Group1String = 'AllCatches-{p}-Frame{tb}'.format(p=preprocess_type, tb=timebin)
+                Group2String = 'AllMisses-{p}-Frame{tb}'.format(p=preprocess_type, tb=timebin)
+                Zscores_shuffleTest[timebin]['SPerf'], Zscores_shuffleTest[timebin]['pval'], Zscores_shuffleTest[timebin]['mean'] = shuffle_test(Zscores_shuffleTest[timebin]['catch'], Zscores_shuffleTest[timebin]['miss'], No_of_Shuffles, Group1String, Group2String, allA_Zscored_C_N, allA_Zscored_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
         #######################################################
         ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
         #######################################################
