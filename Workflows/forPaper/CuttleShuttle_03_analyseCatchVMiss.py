@@ -282,6 +282,28 @@ def percent_change_from_baseline(TS_dict, prey_type, baseline_len):
             print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
     return percentChange_TS
 
+def plot_BaselineHistograms_perZScore(analysis_type_str, preprocess_str, metric_str, prey_type_str, observed_baseline_dict, zscore, baseline_len, todays_dt, plots_dir):
+    # set fig path and title
+    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+str(zscore)+'_baselineHistSanityCheck_'+todays_dt+'.png'
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Histogram of baseline period of {m} in ROI on cuttlefish mantle during tentacle shots, as detected by {at}\n Zscore type: {zs} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Prey Movement type: {p}, pooled across all animals'.format(m=metric_str, at=analysis_type_str, zs=zscore, b=str(baseline_len/60), p=prey_type_str)
+    # setup fig
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    plt.hist(observed_baseline_dict[zscore], bins=140, normed=True)
+    # visual check to see if the distribution is gaussian
+    mean_baseline = np.nanmean(observed_baseline_dict[zscore])
+    std_baseline = np.nanstd(observed_baseline_dict[zscore])
+    x = np.linspace(min(observed_baseline_dict[zscore]), max(observed_baseline_dict[zscore]), 100)
+    f = np.exp(-(1/2)*np.power((x - mean_baseline)/std_baseline,2)) / (std_baseline*np.sqrt(2*np.pi))
+    plt.plot(x,f, label='gaussian distribution')
+    plt.legend()
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, observed_baseline_dict, freq_band, baseline_len, todays_dt, plots_dir):
     # set fig path and title
     figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_FreqBand'+str(freq_band)+'_baselineHistSanityCheck_'+todays_dt+'.png'
@@ -824,9 +846,9 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
     ObservedDiff = allA_C_mean - allA_M_mean
     # calculate baseline 3 sigma bounds
     x_range = len(allA_C_mean)
-    this_baseline_mean = baseline_stats_dict['mean']
+    this_baseline_mean = baseline_stats_dict['mean'][preprocess_str]
     baseline_mean_plot = np.full((1,x_range), this_baseline_mean)
-    this_baseline_std = baseline_stats_dict['std']
+    this_baseline_std = baseline_stats_dict['std'][preprocess_str]
     this_baseline_3sigma_upper = this_baseline_mean + this_baseline_std*3
     this_baseline_3sigma_lower = this_baseline_mean - this_baseline_std*3
     # calculate when mean catch and mean miss exit/re-enter 3 sigma from baseline mean
@@ -973,9 +995,9 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     ObservedDiff = allA_C_mean - allA_M_mean
     # calculate baseline 3 sigma bounds
     x_range = len(allA_C_mean)
-    this_baseline_mean = baseline_stats_dict['mean']
+    this_baseline_mean = baseline_stats_dict['mean'][preprocess_str]
     baseline_mean_plot = np.full((1,x_range), this_baseline_mean)
-    this_baseline_std = baseline_stats_dict['std']
+    this_baseline_std = baseline_stats_dict['std'][preprocess_str]
     this_baseline_3sigma_upper = this_baseline_mean + this_baseline_std*3
     this_baseline_3sigma_lower = this_baseline_mean - this_baseline_std*3
     # calculate when mean catch and mean miss exit/re-enter 3 sigma from baseline mean
@@ -1214,6 +1236,7 @@ if __name__=='__main__':
         allTS_filtBaseSub_Zscored_trial = zScored_count('trial', allTS_filtBaseSub, allTS_filtBaseSub)
         allCatches_filtBaseSub_Zscored_trial = zScored_count('trial', allCatches_filtBaseSub, allTS_filtBaseSub)
         allMisses_filtBaseSub_Zscored_trial = zScored_count('trial', allMisses_filtBaseSub, allTS_filtBaseSub)
+        allTS_ZScored = {'ZScored_TB':allTS_filtBaseSub_Zscored, 'ZScored_trial':allTS_filtBaseSub_Zscored_trial}
         # zscore daily sessions for each animal to characterize session dynamics
         dailyTS_filtBaseSub_Zscored_trial = {}
         for session_date in dailyTS_filtBaseSub:
@@ -1225,6 +1248,24 @@ if __name__=='__main__':
         for session_date in dailyMisses_filtBaseSub:
             dailyMisses_filtBaseSub_Zscored_trial[session_date] = zScored_count('trial', dailyMisses_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
         preprocessed_data_to_shuffleTest = {'ZScored_TB':[allCatches_filtBaseSub_Zscored_TB,allMisses_filtBaseSub_Zscored_TB], 'ZScored_trial':[allCatches_filtBaseSub_Zscored_trial,allMisses_filtBaseSub_Zscored_trial]}
+        # calculate distribution of values during baseline from all tentacle shots
+        pool_of_observed_baseline_values = {}
+        for zscored in allTS_ZScored:
+            for animal in allTS_ZScored[zscored]:
+                for trial in allTS_ZScored[zscored][animal]: 
+                    this_trial_baseline = trial[:baseline_frames]
+                    for value in this_trial_baseline:
+                        pool_of_observed_baseline_values.setdefault(zscored,[]).append(value)
+        # establish stats for baseline
+        baseline_stats = {'mean': {}, 'std': {}}
+        for zscored in pool_of_observed_baseline_values:
+            if plot_baseline_hist:
+                # sanity check the distribution of the baseline values, is it close enough to gaussian?
+                plot_BaselineHistograms_perZScore('CannyEdgeDetector', zscored, 'edge counts', 'all', pool_of_observed_baseline_values, zscored, baseline_buckets, today_dateTime, plots_folder)
+            mean_baseline_this_freq = np.nanmean(pool_of_observed_baseline_values[zscored])
+            std_baseline_this_freq = np.nanstd(pool_of_observed_baseline_values[zscored])
+            baseline_stats['mean'][zscored] = mean_baseline_this_freq
+            baseline_stats['std'][zscored] = std_baseline_this_freq
         #######################################################
         ### ------------ PLOT THE ZSCORED DATA ------------ ###
         #######################################################
@@ -1514,7 +1555,7 @@ if __name__=='__main__':
                 # without labels
                 plot_allA_allFreq_ShuffledDiffMeans_noLabels('ProcessCuttlePython_noLabel', preprocess_type, 'power at frequency', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB, pw005sig_LB, global005sig_UB, global005sig_LB, shuff_DiffMeans, firstCrossing_P005sig, TGB_bucket_raw, baseline_frames, plots_folder, today_dateTime)
             if 'ZScored' in preprocess_type:
-                plot_allA_Canny_ShuffledDiffMeans('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
+                plot_allA_Canny_ShuffledDiffMeans('CannyEdgeDetector', preprocess_type, 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
                 # without labels
-                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
+                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector', preprocess_type, 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
 # FIN
