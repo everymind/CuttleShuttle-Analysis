@@ -1350,8 +1350,8 @@ if __name__=='__main__':
         allA_allM_mean = {}
         Observed_DiffMeans = {}
         for preprocess_type in preprocessed_data_to_shuffleTest.keys():
-            for animal in preprocessed_data_to_shuffleTest[preprocess_type][0].keys():
-                if preprocess_type == 'Percent_Change':
+            if preprocess_type == 'Percent_Change':
+                for animal in preprocessed_data_to_shuffleTest[preprocess_type][0].keys():
                     for freq_band in preprocessed_data_to_shuffleTest[preprocess_type][0][animal].keys():
                         for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal][freq_band]:
                             allA_allC.setdefault(freq_band,[]).append(trial)
@@ -1361,10 +1361,11 @@ if __name__=='__main__':
                         allA_allC_mean[freq_band] = np.nanmean(allA_allC[freq_band], axis=0)
                         allA_allM_mean[freq_band] = np.nanmean(allA_allM[freq_band], axis=0)
                         Observed_DiffMeans[freq_band] = allA_allC_mean[freq_band] - allA_allM_mean[freq_band]
-                if 'ZScored' in preprocess_type:
-                    for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal].keys():
+            if 'ZScored' in preprocess_type:
+                for animal in preprocessed_data_to_shuffleTest[preprocess_type][0]:
+                    for trial in preprocessed_data_to_shuffleTest[preprocess_type][0][animal]:
                         allA_allC.setdefault(preprocess_type,[]).append(trial)
-                    for trial in preprocessed_data_to_shuffleTest[preprocess_type][1][animal][freq_band]:
+                    for trial in preprocessed_data_to_shuffleTest[preprocess_type][1][animal]:
                         allA_allM.setdefault(preprocess_type,[]).append(trial)
                     allA_allC_mean[preprocess_type] = np.nanmean(allA_allC[preprocess_type], axis=0)
                     allA_allM_mean[preprocess_type] = np.nanmean(allA_allM[preprocess_type], axis=0)
@@ -1445,7 +1446,7 @@ if __name__=='__main__':
                         plt.show()
             if 'ZScored' in preprocess_type:
                 shuffledDiffMeans[preprocess_type] = {}
-                shuffMeans_traces[preprocess_type] = {}
+                shuffMeans_traces[preprocess_type] = []
                 global005sig_UB[preprocess_type] = {}
                 global005sig_LB[preprocess_type] = {}
                 firstCrossing_globalP005sig[preprocess_type] = {}
@@ -1470,7 +1471,6 @@ if __name__=='__main__':
                     N_violations_UBcorrected, N_violations_LBcorrected = check_violations_sigBounds(shuffMeans_traces[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type])
                     if N_violations_UBcorrected>=50 or N_violations_LBcorrected>=50:
                         no_violations = False
-                        break
                     if no_violations:
                         logging.info('Upper bound corrected to %f, Lower bound corrected to %f' % (UB_corrected, LB_corrected))
                         print('Upper bound corrected to %f, Lower bound corrected to %f' % (UB_corrected, LB_corrected))
