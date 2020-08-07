@@ -939,7 +939,7 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
     plt.plot((firstSigTB, firstSigTB), (ymin, 0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
-    plt.text(firstSigTB, ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame boxstyle='round,pad=0.35'))
+    plt.text(firstSigTB, ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save and show fig
     plt.savefig(figure_path)
@@ -1482,16 +1482,16 @@ if __name__=='__main__':
                     if Observed_DiffMeans[preprocess_type][tb]>global005sig_UB[preprocess_type][tb] or Observed_DiffMeans[preprocess_type][tb]<global005sig_LB[preprocess_type][tb]:
                         firstCrossing_globalP005sig[preprocess_type] = tb
                         break
-                    if firstCrossing_globalP005sig[preprocess_type][tb] != len(Observed_DiffMeans[preprocess_type][tb])-1:
-                        for tb in range(baseline_buckets,firstCrossing_globalP005sig[preprocess_type]):
-                            if Observed_DiffMeans[preprocess_type][firstCrossing_globalP005sig[preprocess_type]]>global005sig_UB[preprocess_type][firstCrossing_globalP005sig[preprocess_type]] and Observed_DiffMeans[preprocess_type][tb]>pw005sig_UB[preprocess_type][tb]:
-                                firstCrossing_P005sig[preprocess_type] = tb
-                                break
-                            elif Observed_DiffMeans[preprocess_type][firstCrossing_globalP005sig[preprocess_type]]<global005sig_LB[preprocess_type][firstCrossing_globalP005sig[preprocess_type]] and Observed_DiffMeans[preprocess_type][tb]<pw005sig_LB[preprocess_type][tb]:
-                                firstCrossing_P005sig[preprocess_type] = tb
-                                break
-                    else:
-                        firstCrossing_P005sig[preprocess_type] = None
+                if firstCrossing_globalP005sig[preprocess_type] != len(Observed_DiffMeans[preprocess_type])-1:
+                    for tb in range(baseline_buckets,firstCrossing_globalP005sig[preprocess_type]):
+                        if Observed_DiffMeans[preprocess_type][firstCrossing_globalP005sig[preprocess_type]]>global005sig_UB[preprocess_type][firstCrossing_globalP005sig[preprocess_type]] and Observed_DiffMeans[preprocess_type][tb]>pw005sig_UB[preprocess_type][tb]:
+                            firstCrossing_P005sig[preprocess_type] = tb
+                            break
+                        elif Observed_DiffMeans[preprocess_type][firstCrossing_globalP005sig[preprocess_type]]<global005sig_LB[preprocess_type][firstCrossing_globalP005sig[preprocess_type]] and Observed_DiffMeans[preprocess_type][tb]<pw005sig_LB[preprocess_type][tb]:
+                            firstCrossing_P005sig[preprocess_type] = tb
+                            break
+                else:
+                    firstCrossing_P005sig[preprocess_type] = None
                 # visualize
                 if visualize_random_traces:
                     for shuff_trace in shuffMeans_traces[preprocess_type]:
