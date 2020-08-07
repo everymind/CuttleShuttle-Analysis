@@ -20,6 +20,8 @@ Optional flags:
 import os
 import glob
 import numpy as np
+import scipy
+import scipy.signal
 import matplotlib.pyplot as plt
 import cv2
 import datetime
@@ -121,6 +123,50 @@ def categorize_by_animal_catchVmiss(TGB_files, unit_type):
             if TGB_type == "miss": 
                 miss_dict.setdefault(TGB_animal,[]).append(TGB_moment)
     return catch_dict, miss_dict
+
+def filtered_basesub_count(TS_dict, prey_type, baseline_len, savgol_filter_window):
+    basesub_filtered_TS = {}
+    # make baseline for each animal, catch vs miss
+    for animal in TS_dict: 
+        basesub_filtered_TS[animal] = {}
+        try:
+            # baseline subtract each trial, then apply sav-gol filter
+            all_filtered_basesub_trials = []
+            for trial in TS_dict[animal]:
+                filtered_trial = scipy.signal.savgol_filter(trial, savgol_filter_window, 3)
+                baseline = np.nanmean(filtered_trial[0:baseline_len])
+                filtered_basesub_trial = [float(x-baseline) for x in filtered_trial]
+                all_filtered_basesub_trials.append(filtered_basesub_trial)
+            basesub_filtered_mean_byTB = np.nanmean(all_filtered_basesub_trials, axis=0)
+            basesub_filtered_mean_bySess = np.nanmean(all_filtered_basesub_trials)
+            basesub_filtered_std_byTB = np.nanstd(all_filtered_basesub_trials, axis=0, ddof=1)
+            basesub_filtered_std_bySess = np.nanstd(all_filtered_basesub_trials, ddof=1)
+            basesub_filtered_TS[animal]['trials'] = all_filtered_basesub_trials
+            basesub_filtered_TS[animal]['mean tb'] = basesub_filtered_mean_byTB
+            basesub_filtered_TS[animal]['mean trial'] = basesub_filtered_mean_bySess
+            basesub_filtered_TS[animal]['std tb'] = basesub_filtered_std_byTB
+            basesub_filtered_TS[animal]['std trial'] = basesub_filtered_std_bySess
+        except Exception:
+            print("{a} made no tentacle shots during {p} prey movement type".format(a=animal, p=prey_type))
+    return basesub_filtered_TS
+
+def zScored_count(Zscore_type, dict_to_Zscore, dict_for_mean_std):
+    zScored_dict = {}
+    for animal in dict_to_Zscore:
+        zScored_dict[animal] = []
+        for trial in dict_to_Zscore[animal]['trials']:
+            trial_array = np.array(trial)
+            if Zscore_type=='timebin':
+                trial_zscored = (trial_array - dict_for_mean_std[animal]['mean tb'])/dict_for_mean_std[animal]['std tb']
+            if Zscore_type=='trial':
+                trial_zscored = []
+                for timebin in trial:
+                    tb_zscored = (timebin - dict_for_mean_std[animal]['mean trial'])/dict_for_mean_std[animal]['std trial']
+                    trial_zscored.append(tb_zscored)
+            zScored_dict[animal].append(trial_zscored)
+    return zScored_dict
+
+
 
 def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
     baseSub_TS = {}
@@ -851,7 +897,6 @@ if __name__=='__main__':
                 TGB_causal.append(TGB_file)
             else: 
                 TGB_patterned.append(TGB_file)
-    # organize power-at-frequency-band data
     # categorize daily sessions by animal
     all_TS_daily = {}
     all_catches_daily = {}
@@ -859,9 +904,9 @@ if __name__=='__main__':
     for session_date in TGB_daily:
         all_TS_daily[session_date] = categorize_by_animal(TGB_daily[session_date], units)
         all_catches_daily[session_date], all_misses_daily[session_date] = categorize_by_animal_catchVmiss(TGB_daily[session_date], units)
-    # collect all power-at-frequency-band data and categorize by animal
+    # collect all data and categorize by animal
     all_TS = categorize_by_animal(all_data, units)
-    # collect all power-at-frequency-band data and categorize by animal and type (catch vs miss)
+    # collect all data and categorize by animal and type (catch vs miss)
     all_catches, all_misses = categorize_by_animal_catchVmiss(all_data, units)
     all_raw = [all_catches, all_misses]
     ########################################################
@@ -875,38 +920,40 @@ if __name__=='__main__':
     #########################################################################################
     # baseline subtraction
     if units=='zscore':
-        # baseline subtract, all TS
-        dailyTS_baseSub = {}
+        baseline_buckets = baseline_frames
+        # sav-gol filter and baseline subtract, all TS
+        savgol_window = 15
+        dailyTS_filtBaseSub = {}
         for session_date in all_TS_daily:
-            dailyTS_baseSub[session_date] = baseSub_powerAtFreq(all_TS_daily[session_date], 'all', baseline_frames)
-        allTS_baseSub = baseSub_powerAtFreq(all_TS, 'all', baseline_frames)
-        # baseline subtract, catch vs miss
-        dailyCatches_baseSub = {}
-        dailyMisses_baseSub = {}
+            dailyTS_filtBaseSub[session_date] = filtered_basesub_count(all_TS_daily[session_date], 'all', baseline_buckets, savgol_window)
+        allTS_filtBaseSub = filtered_basesub_count(all_TS, 'all', baseline_buckets, savgol_window)
+        # sav-gol filter and baseline subtract, catches versus misses
+        dailyCatches_filtBaseSub = {}
+        dailyMisses_filtBaseSub = {}
         for session_date in all_catches_daily:
-            dailyCatches_baseSub[session_date] = baseSub_powerAtFreq(all_catches_daily[session_date], 'all', baseline_frames)
+            dailyCatches_filtBaseSub[session_date] = filtered_basesub_count(all_catches_daily[session_date], 'all', baseline_buckets, savgol_window)
         for session_date in all_misses_daily:
-            dailyMisses_baseSub[session_date] = baseSub_powerAtFreq(all_misses_daily[session_date], 'all', baseline_frames)
-        allCatches_baseSub = baseSub_powerAtFreq(all_catches, 'all', baseline_frames)
-        allMisses_baseSub = baseSub_powerAtFreq(all_misses, 'all', baseline_frames)
+            dailyMisses_filtBaseSub[session_date] = filtered_basesub_count(all_misses_daily[session_date], 'all', baseline_buckets, savgol_window)
+        allCatches_filtBaseSub = filtered_basesub_count(all_catches, 'all', baseline_buckets, savgol_window)
+        allMisses_filtBaseSub = filtered_basesub_count(all_misses, 'all', baseline_buckets, savgol_window)
         # zscore each animal in order to pool all trials into a "superanimal"
-        allTS_baseSub_Zscored = zScored_powerAtFreq('frame', allTS_baseSub, allTS_baseSub)
-        allCatches_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allCatches_baseSub, allTS_baseSub)
-        allMisses_baseSub_Zscored_Frame = zScored_powerAtFreq('frame', allMisses_baseSub, allTS_baseSub)
-        allTS_baseSub_Zscored_Frame_Trial = zScored_powerAtFreq('trial', allTS_baseSub, allTS_baseSub)
-        allCatches_baseSub_Zscored_Trial = zScored_powerAtFreq('trial', allCatches_baseSub, allTS_baseSub)
-        allMisses_baseSub_Zscored_Trial = zScored_powerAtFreq('trial', allMisses_baseSub, allTS_baseSub)
-        # zscore full trial for each animal to characterize dynamics during entire tentacle shot clip
-        dailyTS_baseSub_Zscored_Trial = {}
-        for session_date in dailyTS_baseSub:
-            dailyTS_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyTS_baseSub[session_date], dailyTS_baseSub[session_date])
-        dailyCatches_baseSub_Zscored_Trial = {}
-        dailyMisses_baseSub_Zscored_Trial = {}
-        for session_date in dailyCatches_baseSub:
-            dailyCatches_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyCatches_baseSub[session_date], dailyTS_baseSub[session_date])
-        for session_date in dailyMisses_baseSub:
-            dailyMisses_baseSub_Zscored_Trial[session_date] = zScored_powerAtFreq('trial', dailyMisses_baseSub[session_date], dailyTS_baseSub[session_date])
-        preprocessed_data_to_shuffleTest = {'ZScored_by_frame_baseSub':[allCatches_baseSub_Zscored_Frame,allMisses_baseSub_Zscored_Frame], 'ZScored_by_trial_baseSub':[allCatches_baseSub_Zscored_Trial,allMisses_baseSub_Zscored_Trial]}
+        allTS_filtBaseSub_Zscored = zScored_count('timebin', allTS_filtBaseSub, allTS_filtBaseSub)
+        allCatches_filtBaseSub_Zscored_TB = zScored_count('timebin', allCatches_filtBaseSub, allTS_filtBaseSub)
+        allMisses_filtBaseSub_Zscored_TB = zScored_count('timebin', allMisses_filtBaseSub, allTS_filtBaseSub)
+        allTS_filtBaseSub_Zscored_trial = zScored_count('trial', allTS_filtBaseSub, allTS_filtBaseSub)
+        allCatches_filtBaseSub_Zscored_trial = zScored_count('trial', allCatches_filtBaseSub, allTS_filtBaseSub)
+        allMisses_filtBaseSub_Zscored_trial = zScored_count('trial', allMisses_filtBaseSub, allTS_filtBaseSub)
+        # zscore daily sessions for each animal to characterize session dynamics
+        dailyTS_filtBaseSub_Zscored_trial = {}
+        for session_date in dailyTS_filtBaseSub:
+            dailyTS_filtBaseSub_Zscored_trial[session_date] = zScored_count('trial', dailyTS_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+        dailyCatches_filtBaseSub_Zscored_trial = {}
+        dailyMisses_filtBaseSub_Zscored_trial = {}
+        for session_date in dailyCatches_filtBaseSub:
+            dailyCatches_filtBaseSub_Zscored_trial[session_date] = zScored_count('trial', dailyCatches_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+        for session_date in dailyMisses_filtBaseSub:
+            dailyMisses_filtBaseSub_Zscored_trial[session_date] = zScored_count('trial', dailyMisses_filtBaseSub[session_date], dailyTS_filtBaseSub[session_date])
+        preprocessed_data_to_shuffleTest = {'ZScored_TB':[allCatches_filtBaseSub_Zscored_TB,allMisses_filtBaseSub_Zscored_TB], 'ZScored_trial':[allCatches_filtBaseSub_Zscored_trial,allMisses_filtBaseSub_Zscored_trial]}
         #######################################################
         ### ------------ PLOT THE ZSCORED DATA ------------ ###
         #######################################################
