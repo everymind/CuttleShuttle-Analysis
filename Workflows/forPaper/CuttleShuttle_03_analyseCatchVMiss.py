@@ -989,6 +989,7 @@ if __name__=='__main__':
     No_of_Shuffles = 20000
     logging.info('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
     print('Starting Shuffle Tests, Number of Shuffles: %i' % (No_of_Shuffles))
+    Shuffle_Tests = {}
     ### POOL ACROSS ALL ANIMALS, make a shuffle test for each metric
     for preprocess_type in preprocessed_data_to_shuffleTest.keys():
         logging.info('Shuffle Tests of {p} data...'.format(p=preprocess_type))
@@ -1008,6 +1009,7 @@ if __name__=='__main__':
                     Group1String = 'AllCatches-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
                     Group2String = 'AllMisses-{p}-Frame{f}-Freq{fb}'.format(p=preprocess_type, f=frame, fb=freq_band)
                     allFreq_shuffleTest[freq_band][frame]['SPerf'], allFreq_shuffleTest[freq_band][frame]['pval'], allFreq_shuffleTest[freq_band][frame]['mean'] = shuffle_test(allFreq_shuffleTest[freq_band][frame]['catch'], allFreq_shuffleTest[freq_band][frame]['miss'], No_of_Shuffles, Group1String, Group2String, allA_allFreq_catches_N, allA_allFreq_misses_N, plot_shuffle_tests, plots_folder, today_dateTime)
+            Shuffle_Tests[preprocess_type] = allFreq_shuffleTest
         if 'ZScored' in preprocess_type:
             allA_Zscored_C, allA_Zscored_C_N, allA_Zscored_M, allA_Zscored_M_N = pool_acrossA_keepTemporalStructure(preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], 0, -1 , "all")
             Zscores_shuffleTest = {}
@@ -1021,6 +1023,7 @@ if __name__=='__main__':
                 Group1String = 'AllCatches-{p}-Frame{tb}'.format(p=preprocess_type, tb=timebin)
                 Group2String = 'AllMisses-{p}-Frame{tb}'.format(p=preprocess_type, tb=timebin)
                 Zscores_shuffleTest[timebin]['SPerf'], Zscores_shuffleTest[timebin]['pval'], Zscores_shuffleTest[timebin]['mean'] = shuffle_test(Zscores_shuffleTest[timebin]['catch'], Zscores_shuffleTest[timebin]['miss'], No_of_Shuffles, Group1String, Group2String, allA_Zscored_C_N, allA_Zscored_M_N, plot_shuffle_tests, plots_folder, today_dateTime)
+            Shuffle_Tests[preprocess_type] = Zscores_shuffleTest
         #######################################################
         ### -- CALCULATE UPPER & LOWER BOUNDS FOR P<0.05 -- ###
         #######################################################
@@ -1031,13 +1034,21 @@ if __name__=='__main__':
         LB_pointwise = 2.5
         pw005sig_UB = {}
         pw005sig_LB = {}
-        for freq_band in allFreq_shuffleTest.keys():
-            pw005sig_UB[freq_band], pw005sig_LB[freq_band] = find_bounds_for_sig(allFreq_shuffleTest[freq_band], UB_pointwise, LB_pointwise)
-        # collect shuffled mean of each frame
-        shuff_DiffMeans = {}
-        for freq_band in allFreq_shuffleTest.keys():
-            for frame in sorted(allFreq_shuffleTest[freq_band].keys()):
-                shuff_DiffMeans.setdefault(freq_band,[]).append(allFreq_shuffleTest[freq_band][frame]['mean'])
+        for preprocess_type in Shuffle_Tests:
+            if preprocess_type == 'Percent_Change':
+                for freq_band in Shuffle_Tests[preprocess_type].keys():
+                    pw005sig_UB[freq_band], pw005sig_LB[freq_band] = find_bounds_for_sig(Shuffle_Tests[preprocess_type][freq_band], UB_pointwise, LB_pointwise)
+                # collect shuffled mean of each frame
+                shuff_DiffMeans = {}
+                for freq_band in Shuffle_Tests[preprocess_type].keys():
+                    for frame in sorted(Shuffle_Tests[preprocess_type][freq_band].keys()):
+                        shuff_DiffMeans.setdefault(freq_band,[]).append(Shuffle_Tests[preprocess_type][freq_band][frame]['mean'])
+            if 'ZScored' in preprocess_type:
+                pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type] = find_bounds_for_sig(Shuffle_Tests[preprocess_type], UB_pointwise, LB_pointwise)
+                # collect shuffled mean of each time bin
+                shuff_DiffMeans = {}
+                for timebin in sorted(Shuffle_Tests[preprocess_type].keys()):
+                    shuff_DiffMeans.setdefault(preprocess_type,[]).append(Shuffle_Tests[preprocess_type][timebin]['mean'])
         #######################################################
         ### -- CALCULATE REAL/OBSERVED DIFF OF MEANS -- ###
         #######################################################
