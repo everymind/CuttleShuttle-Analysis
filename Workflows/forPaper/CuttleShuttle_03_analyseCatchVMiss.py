@@ -1088,7 +1088,7 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
     plt.plot((firstSigTB, firstSigTB), (ymin, 0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
-    #plt.text(firstSigTB, ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame boxstyle='round,pad=0.35'))
+    #plt.text(firstSigTB, ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save and show fig
     plt.savefig(figure_path)
@@ -1516,5 +1516,5 @@ if __name__=='__main__':
             if 'ZScored' in preprocess_type:
                 plot_allA_Canny_ShuffledDiffMeans('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
                 # without labels
-                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', allCatchespreprocessed_data_to_shuffleTest[preprocess_type][0]_filtBaseSub_Zscored_Sess, preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
+                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector', 'ZscoredSess_SavGol_BaseSub', 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, todays_datetime)
 # FIN
