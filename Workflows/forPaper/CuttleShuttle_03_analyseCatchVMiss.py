@@ -884,7 +884,7 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
     plot_xticks = np.arange(0, x_range, step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
     plt.ylim(-2.5,3.0)
-    label_pos_mult = 1
+    label_pos_mult = 1.5
     #plt.xlim(0,180)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
@@ -956,12 +956,12 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
     plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color=color_firstSigFrame_fill)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
-    plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+    plt.text(baseline_len, ymax-0.85*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-    plt.plot((firstSigTB, firstSigTB), (ymin, 0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
-    plt.text(firstSigTB, ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+    plt.text(firstSigTB, ymax-0.85*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save and show fig
     plt.savefig(figure_path)
@@ -1033,7 +1033,7 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     plot_xticks = np.arange(0, x_range, step=60)
     plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
     plt.ylim(-2.5,3.0)
-    label_pos_mult = 1
+    label_pos_mult = 1.5
     #plt.xlim(0,180)
     plt.xlabel("Seconds")
     plt.grid(b=True, which='major', linestyle='-')
@@ -1105,12 +1105,12 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color=color_firstSigFrame_fill)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
-    #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+    #plt.text(baseline_len, ymax-0.85*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-    plt.plot((firstSigTB, firstSigTB), (ymin, 0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
-    #plt.text(firstSigTB, ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+    #plt.text(firstSigTB, ymax-0.85*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
     plt.legend(loc='upper left')
     # save and show fig
     plt.savefig(figure_path)
@@ -1557,5 +1557,5 @@ if __name__=='__main__':
             if 'ZScored' in preprocess_type:
                 plot_allA_Canny_ShuffledDiffMeans('CannyEdgeDetector', preprocess_type, 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
                 # without labels
-                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector', preprocess_type, 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
+                plot_allA_Canny_ShuffledDiffMeans_noLabels('CannyEdgeDetector_noLabel', preprocess_type, 'edge counts', 'all', preprocessed_data_to_shuffleTest[preprocess_type][0], preprocessed_data_to_shuffleTest[preprocess_type][1], baseline_stats, pw005sig_UB[preprocess_type], pw005sig_LB[preprocess_type], global005sig_UB[preprocess_type], global005sig_LB[preprocess_type], shuff_DiffMeans[preprocess_type], firstCrossing_P005sig[preprocess_type], TGB_bucket_raw, baseline_buckets, plots_folder, today_dateTime)
 # FIN
