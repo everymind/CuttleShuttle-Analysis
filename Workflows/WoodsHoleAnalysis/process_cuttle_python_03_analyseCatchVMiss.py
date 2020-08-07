@@ -51,12 +51,14 @@ logging.basicConfig(filename="process_cuttle_python_03_" + today_dateTime + ".lo
 ##########################################################
 def load_data(run_type='prototype'):
     if run_type == 'prototype':
-        data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+        data_dir_percentChange = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+        data_dir_canny = r'C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_20191025'
         plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
     elif run_type == 'collab':
-        data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+        data_dir_percentChange = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+        data_dir_canny = r'C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_20191025'
         plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
-    return data_dir, plots_dir
+    return data_dir_percentChange, data_dir_canny, plots_dir
 ##########################################################
 
 def categorize_by_animal(TGB_files):
@@ -773,9 +775,9 @@ if __name__=='__main__':
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
     ###################################
-    data_folder, plots_folder = load_data(args.run_type)
-    logging.info('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
-    print('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
+    data_folder_percentChange, data_folder_canny, plots_folder = load_data(args.run_type)
+    logging.info('DATA FOLDER 1: %s \n DATA FOLDER 2: %s \n PLOTS FOLDER: %s' % (data_folder_percentChange, data_folder_canny, plots_folder))
+    print('DATA FOLDER 1: %s \n DATA FOLDER 2: %s \n PLOTS FOLDER: %s' % (data_folder_percentChange, data_folder_canny, plots_folder))
     ###################################
     # PLOT TOGGLES
     ###################################
@@ -787,6 +789,10 @@ if __name__=='__main__':
     # ANALYSIS METRIC TOGGLES
     ###################################
     units = args.units
+    if units == 'percent_change':
+        data_folder = data_folder_percentChange
+    if units == 'zscore':
+        data_folder = data_folder_canny
     ###################################
     # COLLECT DATA FROM DATA_FOLDER
     ###################################
