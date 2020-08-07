@@ -61,44 +61,65 @@ def load_data(run_type='prototype'):
     return data_dir_percentChange, data_dir_canny, plots_dir
 ##########################################################
 
-def categorize_by_animal(TGB_files):
+def categorize_by_animal(TGB_files, unit_type):
     all_animals_dict = {}
-    # collect all canny counts and categorize by animal and type (catch vs miss)
-    for TGB_file in TGB_files: 
-        TGB_name = os.path.basename(TGB_file)
-        TGB_animal = TGB_name.split("_")[1]
-        TGB_type = TGB_name.split("_")[4]
-        TS_bandEnergies = np.load(TGB_file)
-        # extract power at each frequency band for every frame
-        all_bands = range(TS_bandEnergies.shape[1])
-        power_at_each_frequency = {key:[] for key in all_bands}
-        for frame in TS_bandEnergies:
-            for band in frame:
-                i, = np.where(frame == band)[0]
-                power_at_each_frequency[i].append(band)
-        all_animals_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
+    if unit_type == 'percent_change':
+        # collect all power-at-freq and categorize by animal and type (catch vs miss)
+        for TGB_file in TGB_files: 
+            TGB_name = os.path.basename(TGB_file)
+            TGB_animal = TGB_name.split("_")[1]
+            TGB_type = TGB_name.split("_")[4]
+            TS_bandEnergies = np.load(TGB_file)
+            # extract power at each frequency band for every frame
+            all_bands = range(TS_bandEnergies.shape[1])
+            power_at_each_frequency = {key:[] for key in all_bands}
+            for frame in TS_bandEnergies:
+                for band in frame:
+                    i, = np.where(frame == band)[0]
+                    power_at_each_frequency[i].append(band)
+            all_animals_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
+    if unit_type == 'zscore':
+        # collect all canny counts and categorize by animal and type (catch vs miss)
+        for TGB_file in TGB_files: 
+            TGB_name = TGB_file.split(os.sep)[-1]
+            TGB_animal = TGB_name.split("_")[1]
+            TGB_type = TGB_name.split("_")[4]
+            TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
+            all_animals_dict.setdefault(TGB_animal,[]).append(TGB_moment)
     return all_animals_dict
 
-def categorize_by_animal_catchVmiss(TGB_files):
+def categorize_by_animal_catchVmiss(TGB_files, unit_type):
     catch_dict = {}
     miss_dict = {}
-    # collect all canny counts and categorize by animal and type (catch vs miss)
-    for TGB_file in TGB_files: 
-        TGB_name = os.path.basename(TGB_file)
-        TGB_animal = TGB_name.split("_")[1]
-        TGB_type = TGB_name.split("_")[4]
-        TS_bandEnergies = np.load(TGB_file)
-        # extract power at each frequency band for every frame
-        all_bands = range(TS_bandEnergies.shape[1])
-        power_at_each_frequency = {key:[] for key in all_bands}
-        for frame in TS_bandEnergies:
-            for band in frame:
-                i, = np.where(frame == band)[0]
-                power_at_each_frequency[i].append(band)
-        if TGB_type == "catch":
-            catch_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
-        if TGB_type == "miss": 
-            miss_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
+    if unit_type == 'percent_change':
+        # collect all canny counts and categorize by animal and type (catch vs miss)
+        for TGB_file in TGB_files: 
+            TGB_name = os.path.basename(TGB_file)
+            TGB_animal = TGB_name.split("_")[1]
+            TGB_type = TGB_name.split("_")[4]
+            TS_bandEnergies = np.load(TGB_file)
+            # extract power at each frequency band for every frame
+            all_bands = range(TS_bandEnergies.shape[1])
+            power_at_each_frequency = {key:[] for key in all_bands}
+            for frame in TS_bandEnergies:
+                for band in frame:
+                    i, = np.where(frame == band)[0]
+                    power_at_each_frequency[i].append(band)
+            if TGB_type == "catch":
+                catch_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
+            if TGB_type == "miss": 
+                miss_dict.setdefault(TGB_animal,[]).append(power_at_each_frequency)
+    if unit_type == 'zscore':
+        # collect all canny counts and categorize by animal and type (catch vs miss)
+        for TGB_file in TGB_files: 
+            TGB_name = TGB_file.split(os.sep)[-1]
+            TGB_animal = TGB_name.split("_")[1]
+            TGB_type = TGB_name.split("_")[4]
+            TGB_moment = np.genfromtxt(TGB_file, dtype=np.float, delimiter=",")
+            if TGB_type == "catch":
+                catch_dict.setdefault(TGB_animal,[]).append(TGB_moment)
+            if TGB_type == "miss": 
+                miss_dict.setdefault(TGB_animal,[]).append(TGB_moment)
     return catch_dict, miss_dict
 
 def baseSub_powerAtFreq(TS_dict, prey_type, baseline_len):
@@ -789,15 +810,17 @@ if __name__=='__main__':
     # ANALYSIS METRIC TOGGLES
     ###################################
     units = args.units
-    if units == 'percent_change':
-        data_folder = data_folder_percentChange
-    if units == 'zscore':
-        data_folder = data_folder_canny
     ###################################
     # COLLECT DATA FROM DATA_FOLDER
     ###################################
-    # collect all binary files with power-at-freq-band data
-    all_data = glob.glob(data_folder + os.sep + "*.npy")
+    if units == 'percent_change':
+        data_folder = data_folder_percentChange
+        # collect all binary files with power-at-freq-band data
+        all_data = glob.glob(data_folder + os.sep + "*.npy")
+    if units == 'zscore':
+        data_folder = data_folder_canny
+        # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
+        all_data = glob.glob(data_folder + os.sep + "*.csv")
     ########################################################
     ### ------ ORGANIZE DATA ------ ###
     ########################################################
@@ -807,27 +830,39 @@ if __name__=='__main__':
     TGB_causal = []
     TGB_daily = {}
     for TGB_file in all_data: 
-        trial_date = os.path.basename(TGB_file).split('_')[2]
-        sorted_by_session = TGB_daily.setdefault(trial_date,[]).append(TGB_file)
-        trial_datetime = datetime.datetime.strptime(trial_date, '%Y-%m-%d')
-        if trial_datetime < datetime.datetime(2014, 9, 13, 0, 0):
-            TGB_natural.append(TGB_file)
-        elif trial_datetime > datetime.datetime(2014, 10, 18, 0, 0):
-            TGB_causal.append(TGB_file)
-        else: 
-            TGB_patterned.append(TGB_file)
+        if units == 'percent_change':
+            trial_date = os.path.basename(TGB_file).split('_')[2]
+            sorted_by_session = TGB_daily.setdefault(trial_date,[]).append(TGB_file)
+            trial_datetime = datetime.datetime.strptime(trial_date, '%Y-%m-%d')
+            if trial_datetime < datetime.datetime(2014, 9, 13, 0, 0):
+                TGB_natural.append(TGB_file)
+            elif trial_datetime > datetime.datetime(2014, 10, 18, 0, 0):
+                TGB_causal.append(TGB_file)
+            else: 
+                TGB_patterned.append(TGB_file)
+        if units == 'zscore':
+            csv_name = TGB_file.split(os.sep)[-1]
+            trial_date = csv_name.split('_')[2]
+            sorted_by_session = TGB_daily.setdefault(trial_date,[]).append(TGB_file)
+            trial_datetime = datetime.datetime.strptime(trial_date, '%Y-%m-%d')
+            if trial_datetime < datetime.datetime(2014, 9, 13, 0, 0):
+                TGB_natural.append(TGB_file)
+            elif trial_datetime > datetime.datetime(2014, 10, 18, 0, 0):
+                TGB_causal.append(TGB_file)
+            else: 
+                TGB_patterned.append(TGB_file)
     # organize power-at-frequency-band data
     # categorize daily sessions by animal
     all_TS_daily = {}
     all_catches_daily = {}
     all_misses_daily = {}
     for session_date in TGB_daily:
-        all_TS_daily[session_date] = categorize_by_animal(TGB_daily[session_date])
-        all_catches_daily[session_date], all_misses_daily[session_date] = categorize_by_animal_catchVmiss(TGB_daily[session_date])
+        all_TS_daily[session_date] = categorize_by_animal(TGB_daily[session_date], units)
+        all_catches_daily[session_date], all_misses_daily[session_date] = categorize_by_animal_catchVmiss(TGB_daily[session_date], units)
     # collect all power-at-frequency-band data and categorize by animal
-    all_TS = categorize_by_animal(all_data)
+    all_TS = categorize_by_animal(all_data, units)
     # collect all power-at-frequency-band data and categorize by animal and type (catch vs miss)
-    all_catches, all_misses = categorize_by_animal_catchVmiss(all_data)
+    all_catches, all_misses = categorize_by_animal_catchVmiss(all_data, units)
     all_raw = [all_catches, all_misses]
     ########################################################
     ### ------ TIMING INFO/MOMENTS OF INTEREST ------ ###
