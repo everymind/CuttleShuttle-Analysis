@@ -755,7 +755,7 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         plt.fill_between(x_frames, this_freq_baseline_3sigma_upper, this_freq_baseline_3sigma_lower, color=color_baseline_3sigma)
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+        plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
         #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
         #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
@@ -805,11 +805,11 @@ def plot_allA_allFreq_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_s
         if firstSigFrame[freq_band] is not None:
             sig_x = range(firstSigFrame[freq_band], 360)
             plt.fill_between(sig_x, ObservedDiff_allF[freq_band][firstSigFrame[freq_band]:], sigUB[freq_band][firstSigFrame[freq_band]:], color=color_firstSigFrame_fill)
-            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+            plt.plot((firstSigFrame[freq_band], firstSigFrame[freq_band]), (ymin, ymax), linestyle='--', linewidth=2, color=color_firstSigFrame)
             #plt.text(firstSigFrame[freq_band], ymax-0.8*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds after TGB".format(s=(firstSigFrame[freq_band]/60)-3), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
         # label events
         ymin, ymax = plt.ylim()
-        plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+        plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
         #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
         plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
         #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
@@ -1066,7 +1066,7 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     plt.fill_between(x_tbs, this_baseline_3sigma_upper, this_baseline_3sigma_lower, color=color_baseline_3sigma)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
     #plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
@@ -1080,7 +1080,7 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     if this_C_reEntry != 360:
         plt.plot((this_C_reEntry, this_C_reEntry), (ymin, ymax), linestyle='-.', linewidth=1, color=color_meanC)
         #plt.text(this_C_reEntry, ymin+0.5*label_pos_mult, "Catch trials return \nto baseline at \n{s:.2f} seconds after TGB".format(s=(this_C_reEntry/60)-3), fontsize='small', ha='left', bbox=dict(facecolor='white', edgecolor=color_meanC, boxstyle='round,pad=0.35'))
-    plt.legend()
+    #plt.legend()
     #subplot: difference of observed means vs shuffled diff of means
     plt.subplot(2,1,2)
     plt.title('Significance of the Difference of means (catch vs miss), Number of shuffles = 20000', fontsize=10, color='grey', style='italic')
@@ -1105,13 +1105,13 @@ def plot_allA_Canny_ShuffledDiffMeans_noLabels(analysis_type_str, preprocess_str
     plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color=color_firstSigFrame_fill)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
     #plt.text(baseline_len, ymax-0.85*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     #plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-    plt.plot((firstSigTB, firstSigTB), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax), linestyle='--', linewidth=2, color=color_firstSigFrame)
     #plt.text(firstSigTB, ymax-0.85*label_pos_mult, "Difference between \n catches and misses becomes \nsignificant at {s:.2f} seconds".format(s=firstSigTB/60), fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_firstSigFrame, boxstyle='round,pad=0.35'))
-    plt.legend(loc='upper left')
+    #plt.legend(loc='upper left')
     # save and show fig
     plt.savefig(figure_path)
     plt.show(block=False)
