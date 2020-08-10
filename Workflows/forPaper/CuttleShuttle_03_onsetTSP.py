@@ -215,32 +215,6 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
     plt.pause(1)
     plt.close()
 
-def find_onset_TSP(pooled_dict, ts_category_str, plot_3sigCI, first_exits_dict, first_exits_yScatter, baseline_stats_dict, baseline_len, TGB_bucket):
-    for freq_band in baseline_stats_dict['mean']:
-        all_trials_this_freq_band = pooled_dict[ts_category_str]['pooled trials'][freq_band]
-        #N_trials = len(all_trials_this_freq_band)
-        #print('Number of trials: {n}'.format(n=str(N_trials)))
-        # visualize distribution of onset of tentacle shot pattern
-        if plot_3sigCI:
-            plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket)
-        # numerically calculate when each individual trace leaves the 3sigCI
-        this_fb_mean = baseline_stats_dict['mean'][freq_band]
-        this_fb_3sig = baseline_stats_dict['std'][freq_band]*3
-        this_fb_3sigCI_upper = this_fb_mean + this_fb_3sig
-        this_fb_3sigCI_lower = this_fb_mean - this_fb_3sig
-        this_fb_earliest_exits = []
-        this_fb_y = []
-        for t, trial in enumerate(all_trials_this_freq_band):
-            for i, timebucket in enumerate(trial):
-                if timebucket>this_fb_3sigCI_upper or timebucket<this_fb_3sigCI_lower:
-                    this_fb_earliest_exits.append(i)
-                    this_fb_y.append(freq_band+1)
-                    #print('Found first exit for trial {t} at timebucket {i}'.format(t=t, i=i))
-                    break
-        #print('Number of first exits found: {N}'.format(N=len(this_fb_earliest_exits)))
-        first_exits_dict[ts_category_str].append(this_fb_earliest_exits)
-        first_exits_yScatter[ts_category_str].append(this_fb_y)
-
 def plot_firstExitDistributions_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, first_exits_dict, freq_band, baseline_len, todays_dt, plots_dir):  
     # set fig path and title
     figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+tentacle_shot_type+'_FreqBand'+str(freq_band)+'_firstExitHistSanityCheck_'+todays_dt+'.png'
@@ -445,9 +419,53 @@ for freq_band in range(3):
     print('Freq band: {fb}, lower bound: {lb}, upper bound: {ub}'.format(fb=freq_band, lb=lower_bound, ub = upper_bound))
 first_exits_3sigCI = {'all': [], 'catches': [], 'misses': []}
 first_exits_y_scatter = {'all': [], 'catches': [], 'misses': []}
-find_onset_TSP(percentChange_pooledAnimals, 'all', plot_3sigCI, first_exits_3sigCI, first_exits_y_scatter, baseline_stats, baseline_frames, TGB_bucket_raw)
-#find_onset_TSP(percentChange_pooledAnimals, 'catches', plot_3sigCI, first_exits_3sigCI, first_exits_y_scatter, baseline_stats, baseline_frames, TGB_bucket_raw)
-#find_onset_TSP(percentChange_pooledAnimals, 'misses', plot_3sigCI, first_exits_3sigCI, first_exits_y_scatter, baseline_stats, baseline_frames, TGB_bucket_raw)
+first_reEntry_3sigCI = {'all': [], 'catches': [], 'misses': []}
+real_exit_window = 15 #frames/timebuckets
+find_TSP_dynamics(percentChange_pooledAnimals, 'all', plot_3sigCI, real_exit_window, first_exits_3sigCI, first_exits_y_scatter, first_reEntry_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
+find_TSP_dynamics(percentChange_pooledAnimals, 'catches', plot_3sigCI, real_exit_window, first_exits_3sigCI, first_exits_y_scatter, first_reEntry_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
+find_TSP_dynamics(percentChange_pooledAnimals, 'misses', plot_3sigCI, real_exit_window, first_exits_3sigCI, first_exits_y_scatter, first_reEntry_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
+
+def find_TSP_dynamics(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, first_exits_dict, first_exits_yScatter, first_reEntry_dict, baseline_stats_dict, baseline_len, TGB_bucket):
+    for freq_band in baseline_stats_dict['mean']:
+        all_trials_this_freq_band = pooled_dict[ts_category_str]['pooled trials'][freq_band]
+        #N_trials = len(all_trials_this_freq_band)
+        #print('Number of trials: {n}'.format(n=str(N_trials)))
+        # visualize distribution of onset of tentacle shot pattern
+        if plot_3sigCI:
+            plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket)
+        # numerically calculate when each individual trace leaves the 3sigCI
+        this_fb_mean = baseline_stats_dict['mean'][freq_band]
+        this_fb_3sig = baseline_stats_dict['std'][freq_band]*3
+        this_fb_3sigCI_upper = this_fb_mean + this_fb_3sig
+        this_fb_3sigCI_lower = this_fb_mean - this_fb_3sig
+        this_fb_earliest_exits = []
+        this_fb_y = []
+        this_fb_reEntries = []
+        for t, trial in enumerate(all_trials_this_freq_band):
+            exit_candidate = None
+            for i, timebucket in enumerate(trial):
+                if exit_candidate is None:
+                    if timebucket>this_fb_3sigCI_upper or timebucket<this_fb_3sigCI_lower:
+                        exit_candidate = i
+                        continue
+                elif exit_candidate is not None:
+                    if this_fb_3sigCI_lower<timebucket<this_fb_3sigCI_upper:
+                        exit_window = i-exit_candidate
+                        if exit_window>=real_exit_window_tbs:
+                            this_fb_earliest_exits.append(exit_candidate)
+                            this_fb_y.append(freq_band+1)
+                            this_fb_reEntries.append(i)
+                            #print('Found first exit for trial {t} at timebucket {i}'.format(t=t, i=i))
+                            break
+                        else:
+                            exit_candidate = None
+                    elif i==len(trial)-1:
+                        this_fb_reEntries.append(i)
+        #print('Number of first exits found: {N}'.format(N=len(this_fb_earliest_exits)))
+        first_exits_dict[ts_category_str].append(this_fb_earliest_exits)
+        first_exits_yScatter[ts_category_str].append(this_fb_y)
+        first_reEntry_dict[ts_category_str].append(this_fb_reEntries)
+
 # find median frame at which first exit happens
 N_freqBands_to_plot = 3
 median_first_exits = {'all': [], 'catches': [], 'misses': []}
@@ -464,8 +482,8 @@ if check_first_exit_distribution:
         plot_firstExitDistributions_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', first_exits_3sigCI, freq_band, baseline_frames, today_dateTime, plots_folder)
     for freq_band in range(len(first_exits_3sigCI['misses'])):
         plot_firstExitDistributions_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', first_exits_3sigCI, freq_band, baseline_frames, today_dateTime, plots_folder)
-
 # make boxplots to show distribution of "onset of tentacle shot pattern"
 boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', first_exits_3sigCI, first_exits_y_scatter, median_first_exits, N_freqBands_to_plot, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+# find mean and std of appearance and disappearance of TSP
 
 # FIN
