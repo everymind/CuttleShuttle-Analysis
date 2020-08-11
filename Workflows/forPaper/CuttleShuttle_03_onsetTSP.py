@@ -159,9 +159,9 @@ def pool_across_animals(collected_dict, pooled_dict, pooled_by_tb, ts_category_s
         pooled_dict[ts_category_str]['pooled N'][freq_band] = pooled_N_this_fb
         pooled_dict[ts_category_str]['pooled trials'][freq_band] = pooled_trials
 
-def smooth_pooled_trials(pooled_dict, smoothing_window_tbs, smoothed_trials_dict):
+def smooth_pooled_trials(pooled_dict, smoothing_window_tbs, smoothed_trials_dict, N_of_freq_bands_to_smooth):
     for ts_type in pooled_dict:
-        for freq_band in pooled_dict[ts_type]['pooled trials']:
+        for freq_band in range(N_of_freq_bands_to_smooth):
             for t, trial in enumerate(pooled_dict[ts_type]['pooled trials'][freq_band]):
                 try:
                     smoothed_trial = scipy.signal.savgol_filter(trial, smoothing_window, 3)
@@ -332,9 +332,10 @@ for freq_band in pool_of_observed_baseline_values:
     baseline_stats['mean'][freq_band] = mean_baseline_this_freq
     baseline_stats['std'][freq_band] = std_baseline_this_freq
 # smooth individual trials for easier TSP detection
+N_freqBands = 3
 smoothing_window = 15 #timebuckets/frames
 smoothed_pooledAnimals = {'all': {}, 'catches': {}, 'misses': {}}
-smooth_pooled_trials(percentChange_pooledAnimals, smoothing_window, smoothed_pooledAnimals)
+smooth_pooled_trials(percentChange_pooledAnimals, smoothing_window, smoothed_pooledAnimals, N_freqBands)
 # visually and numerically check when mantle pattern deviates significantly from baseline
 for freq_band in range(3):
     lower_bound = baseline_stats['mean'][freq_band] - 3*baseline_stats['std'][freq_band]
@@ -360,10 +361,9 @@ baseline_stats_dict = baseline_stats
 baseline_len = baseline_frames
 TGB_bucket = TGB_bucket_raw
 
-# still to be resolved - does TSP detector need to account for TSP trend (going above baseline versus below baseline) for each freq band?
 def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, onsets_dict, onsets_yScatter, offsets_dict, baseline_stats_dict, baseline_len, TGB_bucket):
     for freq_band in baseline_stats_dict['mean']:
-        all_trials_this_freq_band = pooled_dict[ts_category_str]['pooled trials'][freq_band]
+        all_trials_this_freq_band = pooled_dict[ts_category_str][freq_band]
         #N_trials = len(all_trials_this_freq_band)
         #print('Number of trials: {n}'.format(n=str(N_trials)))
         # visualize distribution of onset of tentacle shot pattern
@@ -379,35 +379,68 @@ def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs
         this_fb_offsets = []
         for t, trial in enumerate(all_trials_this_freq_band):
             onset_candidate = None
+            best_onset = None
+            shortest_time_from_TGB = None
+            best_offset = None
+            ### FIND EXIT THAT IS CLOSEST (ABS VALUE) TO TGB ###
             for i, timebucket in enumerate(trial):
                 if onset_candidate is None:
-                    if timebucket>this_fb_3sigCI_upper or timebucket<this_fb_3sigCI_lower:
-                        onset_candidate = i
-                        #print('Exit candidate at timebucket {i}'.format(i=i))
+                    if freq_band==0:
+                        if timebucket<this_fb_3sigCI_lower:
+                            onset_candidate = i
+                            print('Onset candidate at timebucket {i}...'.format(i=i))
+                            continue
+                    else:
+                        if timebucket>this_fb_3sigCI_upper:
+                            onset_candidate = i
+                            print('Onset candidate at timebucket {i}...'.format(i=i))
+                            continue
                 if onset_candidate is not None:
                     if this_fb_3sigCI_lower<timebucket<this_fb_3sigCI_upper:
-                        exit_window = i-onset_candidate
-                        #print('Re-entered after {w} frames...'.format(w=exit_window))
-                        if exit_window>=real_exit_window_tbs and i>TGB_bucket:
-                            this_fb_onsets.append(onset_candidate)
-                            this_fb_y.append(freq_band)
-                            this_fb_offsets.append(i)
-                            #print('Found first real exit for trial {t} at timebucket {exit}, with re-entry at timebucket {i}'.format(t=t, exit=onset_candidate, i=i))
-                            break
+                        print('Re-entered at frame {i}...'.format(i=i))
+                        if i>TGB_bucket:
+                            time_from_TGB = abs(onset_candidate-TGB_bucket)
+                            print('Current time from TGB = {t}, Shortest time from TGB = {st}'.format(t=time_from_TGB, st=shortest_time_from_TGB))
+                            if shortest_time_from_TGB is None:
+                                best_onset = onset_candidate
+                                best_offset = i
+                                shortest_time_from_TGB = time_from_TGB
+                                onset_candidate = None
+                                print('First best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
+                                continue
+                            elif time_from_TGB<=shortest_time_from_TGB:
+                                best_onset = onset_candidate
+                                best_offset = i
+                                shortest_time_from_TGB = time_from_TGB
+                                onset_candidate = None
+                                print('New best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
+                                continue
+                            elif time_from_TGB>shortest_time_from_TGB:
+                                onset_candidate = None
+                                print('Current best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
+                                continue
                         else:
                             onset_candidate = None
+                            continue
                 if i==len(trial)-1:
-                    if onset_candidate is not None:
-                        exit_window = i-onset_candidate
-                        if exit_window>=real_exit_window_tbs:
+                    if best_offset is None:
+                        if onset_candidate is None:
+                            print('NO REAL EXIT found for trial {t}'.format(t=t))
+                        elif best_onset is None:
                             this_fb_onsets.append(onset_candidate)
                             this_fb_y.append(freq_band)
                             this_fb_offsets.append(np.nan)
-                            #print('Found first real exit for trial {t} at timebucket {exit}, with no re-entry by end of trial'.format(t=t, exit=onset_candidate, i=i))
-                        #else:
-                        #    print('No real exit found for trial {t}'.format(t=t))
-                    #else:
-                    #    print('No real exit found for trial {t}'.format(t=t))
+                            print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=onset_candidate))
+                        else:
+                            this_fb_onsets.append(best_onset)
+                            this_fb_y.append(freq_band)
+                            this_fb_offsets.append(np.nan)
+                            print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=best_onset)) 
+                    else:
+                        this_fb_onsets.append(best_onset)
+                        this_fb_y.append(freq_band)
+                        this_fb_offsets.append(best_offset)
+                        print('FOUND first real exit for trial {t} at timebucket {on}, with re-entry at timebucket {off}'.format(t=t, on=best_onset, off=best_offset))
         #print('Number of first exits found: {N}'.format(N=len(this_fb_onsets)))
         onsets_dict[ts_category_str].append(this_fb_onsets)
         onsets_yScatter[ts_category_str].append(this_fb_y)
@@ -415,7 +448,7 @@ def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs
 
 # sanity check for function TSP_detector
 for t,trial in enumerate(all_trials_this_freq_band):
-    plt.title('Trial {t}'.format(t=t))
+    plt.title('Trial {t}, frequency band {f}'.format(t=t, f=freq_band))
     plt.fill_between(range(360), this_fb_3sigCI_upper, this_fb_3sigCI_lower, color='r', alpha=0.05)
     plt.plot(trial)
     plt.show()
@@ -474,18 +507,17 @@ if plot_TSP_dynamics_hist:
     for freq_band in range(len(TSP_onsets_3sigCI['misses'])):
         plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
 # find median frame at which first exit happens
-N_freqBands_to_plot = 3
-median_first_exits = {'all': [], 'catches': [], 'misses': []}
+mean_onset_TSP = {'all': [], 'catches': [], 'misses': []}
 median_reEntries = {'all': [], 'catches': [], 'misses': []}
-for freq_band in range(len(TSP_onsets_3sigCI['all'][:N_freqBands_to_plot])):
-    median_first_exits['all'].append(np.median(TSP_onsets_3sigCI['all'][freq_band]))
-    median_first_exits['catches'].append(np.median(TSP_onsets_3sigCI['catches'][freq_band]))
-    median_first_exits['misses'].append(np.median(TSP_onsets_3sigCI['misses'][freq_band]))
+for freq_band in range(len(TSP_onsets_3sigCI['all'])):
+    mean_onset_TSP['all'].append(np.nanmean(TSP_onsets_3sigCI['all'][freq_band]))
+    mean_onset_TSP['catches'].append(np.nanmean(TSP_onsets_3sigCI['catches'][freq_band]))
+    mean_onset_TSP['misses'].append(np.nanmean(TSP_onsets_3sigCI['misses'][freq_band]))
     median_reEntries['all'].append(np.median(TSP_offsets_3sigCI['all'][freq_band]))
     median_reEntries['catches'].append(np.median(TSP_offsets_3sigCI['catches'][freq_band]))
     median_reEntries['misses'].append(np.median(TSP_offsets_3sigCI['misses'][freq_band]))
 # make boxplots to show distribution of "onset of tentacle shot pattern"
-boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, median_first_exits, N_freqBands_to_plot, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, mean_onset_TSP, N_freqBands_to_plot, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
 
 def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, median_exits_dict, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir):
     N_TS_str = 'Number of tentacle shots: '
