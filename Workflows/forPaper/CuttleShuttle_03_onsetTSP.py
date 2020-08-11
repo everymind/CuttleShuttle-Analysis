@@ -226,6 +226,136 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
     plt.pause(1)
     plt.close()
 
+def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, onsets_dict, onsets_yScatter, offsets_dict, baseline_stats_dict, baseline_len, TGB_bucket):
+    for freq_band in pooled_dict[ts_category_str]:
+        all_trials_this_freq_band = pooled_dict[ts_category_str][freq_band]
+        #N_trials = len(all_trials_this_freq_band)
+        #print('Number of trials: {n}'.format(n=str(N_trials)))
+        # visualize distribution of onset of tentacle shot pattern
+        if plot_3sigCI:
+            plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket)
+        # numerically calculate when each individual trace leaves the 3sigCI
+        this_fb_mean = baseline_stats_dict['mean'][freq_band]
+        this_fb_3sig = baseline_stats_dict['std'][freq_band]*3
+        this_fb_3sigCI_upper = this_fb_mean + this_fb_3sig
+        this_fb_3sigCI_lower = this_fb_mean - this_fb_3sig
+        this_fb_onsets = []
+        this_fb_y = []
+        this_fb_offsets = []
+        for t, trial in enumerate(all_trials_this_freq_band):
+            onset_candidate = None
+            best_onset = None
+            shortest_time_from_TGB = None
+            best_offset = None
+            ### FIND EXIT THAT IS CLOSEST (ABS VALUE) TO TGB ###
+            for i, timebucket in enumerate(trial):
+                if onset_candidate is None:
+                    if freq_band==0:
+                        if timebucket<this_fb_3sigCI_lower:
+                            onset_candidate = i
+                            #print('Onset candidate at timebucket {i}...'.format(i=i))
+                            continue
+                    else:
+                        if timebucket>this_fb_3sigCI_upper:
+                            onset_candidate = i
+                            #print('Onset candidate at timebucket {i}...'.format(i=i))
+                            continue
+                if onset_candidate is not None:
+                    if this_fb_3sigCI_lower<timebucket<this_fb_3sigCI_upper:
+                        #print('Re-entered at frame {i}...'.format(i=i))
+                        if i>TGB_bucket:
+                            time_from_TGB = abs(onset_candidate-TGB_bucket)
+                            #print('Current time from TGB = {t}, Shortest time from TGB = {st}'.format(t=time_from_TGB, st=shortest_time_from_TGB))
+                            if shortest_time_from_TGB is None:
+                                best_onset = onset_candidate
+                                best_offset = i
+                                shortest_time_from_TGB = time_from_TGB
+                                onset_candidate = None
+                                #print('First best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
+                                continue
+                            elif time_from_TGB<=shortest_time_from_TGB:
+                                best_onset = onset_candidate
+                                best_offset = i
+                                shortest_time_from_TGB = time_from_TGB
+                                onset_candidate = None
+                                #print('New best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
+                                continue
+                            elif time_from_TGB>shortest_time_from_TGB:
+                                onset_candidate = None
+                                #print('Current best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
+                                continue
+                        else:
+                            onset_candidate = None
+                            continue
+                if i==len(trial)-1:
+                    if best_offset is None:
+                        if onset_candidate is None:
+                            this_fb_onsets.append(np.nan)
+                            this_fb_y.append(np.nan)
+                            this_fb_offsets.append(np.nan)
+                            #print('NO REAL EXIT found for trial {t}'.format(t=t))
+                        elif best_onset is None:
+                            this_fb_onsets.append(onset_candidate)
+                            this_fb_y.append(freq_band)
+                            this_fb_offsets.append(np.nan)
+                            #print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=onset_candidate))
+                        else:
+                            this_fb_onsets.append(best_onset)
+                            this_fb_y.append(freq_band)
+                            this_fb_offsets.append(np.nan)
+                            #print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=best_onset)) 
+                    else:
+                        this_fb_onsets.append(best_onset)
+                        this_fb_y.append(freq_band)
+                        this_fb_offsets.append(best_offset)
+                        #print('FOUND first real exit for trial {t} at timebucket {on}, with re-entry at timebucket {off}'.format(t=t, on=best_onset, off=best_offset))
+        #print('Number of first exits found: {N}'.format(N=len(this_fb_onsets)))
+        onsets_dict[ts_category_str].append(this_fb_onsets)
+        onsets_yScatter[ts_category_str].append(this_fb_y)
+        offsets_dict[ts_category_str].append(this_fb_offsets)
+
+def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, onsets_dict, first_reEntries_dict, real_exit_window_tbs, freq_band, baseline_len, todays_dt, plots_dir):  
+    # set fig path and title
+    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+tentacle_shot_type+'_FreqBand'+str(freq_band)+'_TSP-firstAppearance_window'+str(real_exit_window_tbs)+'tbs_'+todays_dt+'.png'
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Histogram of first frame when {m} in ROI on cuttlefish mantle is greater than 3 sigma away from baseline mean for at least {w} milliseconds \n As detected by {at}, Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Tentacle Shot type: {ts}, pooled across all animals'.format(m=metric_str, w=str(1/60*real_exit_window_tbs), at=analysis_type_str, fb=str(freq_band), b=str(baseline_len/60), ts=tentacle_shot_type)
+    # setup fig
+    plt.figure(figsize=(16,16), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    # subplot: appearance of TSP
+    plt.subplot(2,1,1)
+    plt.title('Timing of first appearance of TSP relative to TGB (3 seconds)', fontsize=10, color='grey', style='italic')
+    plt.xlabel("Seconds")
+    plot_xticks = np.arange(0, 360, step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.hist(onsets_dict[tentacle_shot_type][freq_band], bins=90, normed=True)
+    # visual check to see if the distribution is gaussian
+    mean_exit = np.nanmean(onsets_dict[tentacle_shot_type][freq_band])
+    std_exit = np.nanstd(onsets_dict[tentacle_shot_type][freq_band])
+    x = np.linspace(min(onsets_dict[tentacle_shot_type][freq_band]), max(onsets_dict[tentacle_shot_type][freq_band]), 1000)
+    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
+    plt.plot(x,f, label='gaussian distribution')
+    plt.legend()
+    # subplot: disappearance of TSP
+    plt.subplot(2,1,2)
+    plt.title('Timing of disappearance of TSP relative to TGB (3 seconds)', fontsize=10, color='grey', style='italic')
+    plt.xlabel("Seconds")
+    plot_xticks = np.arange(0, 360, step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.hist(first_reEntries_dict[tentacle_shot_type][freq_band], bins=90, normed=True)
+    # visual check to see if the distribution is gaussian
+    mean_exit = np.nanmean(first_reEntries_dict[tentacle_shot_type][freq_band])
+    std_exit = np.nanstd(first_reEntries_dict[tentacle_shot_type][freq_band])
+    x = np.linspace(min(first_reEntries_dict[tentacle_shot_type][freq_band]), max(first_reEntries_dict[tentacle_shot_type][freq_band]), 1000)
+    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
+    plt.plot(x,f, label='gaussian distribution')
+    plt.legend()
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 ###################################
 # SOURCE DATA AND OUTPUT FILE LOCATIONS
 ###################################
@@ -348,155 +478,6 @@ real_exit_window = 15 #frames/timebuckets
 TSP_detector(smoothed_pooledAnimals, 'all', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
 TSP_detector(smoothed_pooledAnimals, 'catches', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
 TSP_detector(smoothed_pooledAnimals, 'misses', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
-
-# sanity check for TSP_detector
-pooled_dict = smoothed_pooledAnimals
-ts_category_str = 'all'
-plot_3sigCI = plot_3sigCI
-real_exit_window_tbs = real_exit_window
-onsets_dict = TSP_onsets_3sigCI
-onsets_yScatter = TSP_onsets_y_scatter
-offsets_dict = TSP_offsets_3sigCI
-baseline_stats_dict = baseline_stats
-baseline_len = baseline_frames
-TGB_bucket = TGB_bucket_raw
-
-def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, onsets_dict, onsets_yScatter, offsets_dict, baseline_stats_dict, baseline_len, TGB_bucket):
-    for freq_band in baseline_stats_dict['mean']:
-        all_trials_this_freq_band = pooled_dict[ts_category_str][freq_band]
-        #N_trials = len(all_trials_this_freq_band)
-        #print('Number of trials: {n}'.format(n=str(N_trials)))
-        # visualize distribution of onset of tentacle shot pattern
-        if plot_3sigCI:
-            plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket)
-        # numerically calculate when each individual trace leaves the 3sigCI
-        this_fb_mean = baseline_stats_dict['mean'][freq_band]
-        this_fb_3sig = baseline_stats_dict['std'][freq_band]*3
-        this_fb_3sigCI_upper = this_fb_mean + this_fb_3sig
-        this_fb_3sigCI_lower = this_fb_mean - this_fb_3sig
-        this_fb_onsets = []
-        this_fb_y = []
-        this_fb_offsets = []
-        for t, trial in enumerate(all_trials_this_freq_band):
-            onset_candidate = None
-            best_onset = None
-            shortest_time_from_TGB = None
-            best_offset = None
-            ### FIND EXIT THAT IS CLOSEST (ABS VALUE) TO TGB ###
-            for i, timebucket in enumerate(trial):
-                if onset_candidate is None:
-                    if freq_band==0:
-                        if timebucket<this_fb_3sigCI_lower:
-                            onset_candidate = i
-                            print('Onset candidate at timebucket {i}...'.format(i=i))
-                            continue
-                    else:
-                        if timebucket>this_fb_3sigCI_upper:
-                            onset_candidate = i
-                            print('Onset candidate at timebucket {i}...'.format(i=i))
-                            continue
-                if onset_candidate is not None:
-                    if this_fb_3sigCI_lower<timebucket<this_fb_3sigCI_upper:
-                        print('Re-entered at frame {i}...'.format(i=i))
-                        if i>TGB_bucket:
-                            time_from_TGB = abs(onset_candidate-TGB_bucket)
-                            print('Current time from TGB = {t}, Shortest time from TGB = {st}'.format(t=time_from_TGB, st=shortest_time_from_TGB))
-                            if shortest_time_from_TGB is None:
-                                best_onset = onset_candidate
-                                best_offset = i
-                                shortest_time_from_TGB = time_from_TGB
-                                onset_candidate = None
-                                print('First best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
-                                continue
-                            elif time_from_TGB<=shortest_time_from_TGB:
-                                best_onset = onset_candidate
-                                best_offset = i
-                                shortest_time_from_TGB = time_from_TGB
-                                onset_candidate = None
-                                print('New best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
-                                continue
-                            elif time_from_TGB>shortest_time_from_TGB:
-                                onset_candidate = None
-                                print('Current best offset at timebucket {off}, best onset at timebucket {on}, shortest time from TGB = {st}...'.format(off=best_offset, on=best_onset, st=shortest_time_from_TGB))
-                                continue
-                        else:
-                            onset_candidate = None
-                            continue
-                if i==len(trial)-1:
-                    if best_offset is None:
-                        if onset_candidate is None:
-                            print('NO REAL EXIT found for trial {t}'.format(t=t))
-                        elif best_onset is None:
-                            this_fb_onsets.append(onset_candidate)
-                            this_fb_y.append(freq_band)
-                            this_fb_offsets.append(np.nan)
-                            print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=onset_candidate))
-                        else:
-                            this_fb_onsets.append(best_onset)
-                            this_fb_y.append(freq_band)
-                            this_fb_offsets.append(np.nan)
-                            print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=best_onset)) 
-                    else:
-                        this_fb_onsets.append(best_onset)
-                        this_fb_y.append(freq_band)
-                        this_fb_offsets.append(best_offset)
-                        print('FOUND first real exit for trial {t} at timebucket {on}, with re-entry at timebucket {off}'.format(t=t, on=best_onset, off=best_offset))
-        #print('Number of first exits found: {N}'.format(N=len(this_fb_onsets)))
-        onsets_dict[ts_category_str].append(this_fb_onsets)
-        onsets_yScatter[ts_category_str].append(this_fb_y)
-        offsets_dict[ts_category_str].append(this_fb_offsets)
-
-# sanity check for function TSP_detector
-for t,trial in enumerate(all_trials_this_freq_band):
-    plt.title('Trial {t}, frequency band {f}'.format(t=t, f=freq_band))
-    plt.fill_between(range(360), this_fb_3sigCI_upper, this_fb_3sigCI_lower, color='r', alpha=0.05)
-    plt.plot(trial)
-    plt.show()
-
-
-def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, onsets_dict, first_reEntries_dict, real_exit_window_tbs, freq_band, baseline_len, todays_dt, plots_dir):  
-    # set fig path and title
-    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+tentacle_shot_type+'_FreqBand'+str(freq_band)+'_TSP-firstAppearance_window'+str(real_exit_window_tbs)+'tbs_'+todays_dt+'.png'
-    figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Histogram of first frame when {m} in ROI on cuttlefish mantle is greater than 3 sigma away from baseline mean for at least {w} milliseconds \n As detected by {at}, Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Tentacle Shot type: {ts}, pooled across all animals'.format(m=metric_str, w=str(1/60*real_exit_window_tbs), at=analysis_type_str, fb=str(freq_band), b=str(baseline_len/60), ts=tentacle_shot_type)
-    # setup fig
-    plt.figure(figsize=(16,16), dpi=200)
-    plt.suptitle(figure_title, fontsize=12, y=0.99)
-    # subplot: appearance of TSP
-    plt.subplot(2,1,1)
-    plt.title('Timing of first appearance of TSP relative to TGB (3 seconds)', fontsize=10, color='grey', style='italic')
-    plt.xlabel("Seconds")
-    plot_xticks = np.arange(0, 360, step=60)
-    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    plt.hist(onsets_dict[tentacle_shot_type][freq_band], bins=90, normed=True)
-    # visual check to see if the distribution is gaussian
-    mean_exit = np.nanmean(onsets_dict[tentacle_shot_type][freq_band])
-    std_exit = np.nanstd(onsets_dict[tentacle_shot_type][freq_band])
-    x = np.linspace(min(onsets_dict[tentacle_shot_type][freq_band]), max(onsets_dict[tentacle_shot_type][freq_band]), 1000)
-    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
-    plt.plot(x,f, label='gaussian distribution')
-    plt.legend()
-    # subplot: disappearance of TSP
-    plt.subplot(2,1,2)
-    plt.title('Timing of disappearance of TSP relative to TGB (3 seconds)', fontsize=10, color='grey', style='italic')
-    plt.xlabel("Seconds")
-    plot_xticks = np.arange(0, 360, step=60)
-    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    plt.hist(first_reEntries_dict[tentacle_shot_type][freq_band], bins=90, normed=True)
-    # visual check to see if the distribution is gaussian
-    mean_exit = np.nanmean(first_reEntries_dict[tentacle_shot_type][freq_band])
-    std_exit = np.nanstd(first_reEntries_dict[tentacle_shot_type][freq_band])
-    x = np.linspace(min(first_reEntries_dict[tentacle_shot_type][freq_band]), max(first_reEntries_dict[tentacle_shot_type][freq_band]), 1000)
-    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
-    plt.plot(x,f, label='gaussian distribution')
-    plt.legend()
-    # save fig
-    plt.savefig(figure_path)
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
-
-
 # check distribution of first exits
 plot_TSP_dynamics_hist = True
 if plot_TSP_dynamics_hist:
