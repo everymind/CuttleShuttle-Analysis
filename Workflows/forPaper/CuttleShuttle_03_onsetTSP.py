@@ -166,7 +166,7 @@ def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metri
     # setup fig
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
-    plt.hist(observed_baseline_dict[freq_band], bins=140, normed=True)
+    plt.hist(observed_baseline_dict[freq_band], bins=90, normed=True)
     # visual check to see if the distribution is gaussian
     mean_baseline = np.nanmean(observed_baseline_dict[freq_band])
     std_baseline = np.nanstd(observed_baseline_dict[freq_band])
@@ -209,28 +209,6 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
     plt.text(baseline_len, ymax, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     plt.text(TGB_bucket, ymax, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-    # save fig
-    plt.savefig(figure_path)
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
-
-def plot_firstExitDistributions_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, first_exits_dict, freq_band, baseline_len, todays_dt, plots_dir):  
-    # set fig path and title
-    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+tentacle_shot_type+'_FreqBand'+str(freq_band)+'_firstExitHistSanityCheck_'+todays_dt+'.png'
-    figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Histogram of first frame when {m} in ROI on cuttlefish mantle is greater than 3 sigma away from baseline mean \n As detected by {at}, Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Tentacle Shot type: {ts}, pooled across all animals'.format(m=metric_str, at=analysis_type_str, fb=str(freq_band), b=str(baseline_len/60), ts=tentacle_shot_type)
-    # setup fig
-    plt.figure(figsize=(16,9), dpi=200)
-    plt.suptitle(figure_title, fontsize=12, y=0.99)
-    plt.hist(first_exits_dict[tentacle_shot_type][freq_band], bins=140, normed=True)
-    # visual check to see if the distribution is gaussian
-    mean_exit = np.nanmean(first_exits_dict[tentacle_shot_type][freq_band])
-    std_exit = np.nanstd(first_exits_dict[tentacle_shot_type][freq_band])
-    x = np.linspace(min(first_exits_dict[tentacle_shot_type][freq_band]), max(first_exits_dict[tentacle_shot_type][freq_band]), 100)
-    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
-    plt.plot(x,f, label='gaussian distribution')
-    plt.legend()
     # save fig
     plt.savefig(figure_path)
     plt.show(block=False)
@@ -319,7 +297,7 @@ plot_indiv_animals = False
 plot_pooled_animals = False
 plot_pooled_percentchange = False
 plot_baseline_hist = False
-plot_3sigCI = True
+plot_3sigCI = False
 ###################################
 # COLLECT DATA FROM DATA_FOLDER
 ###################################
@@ -425,6 +403,19 @@ find_TSP_dynamics(percentChange_pooledAnimals, 'all', plot_3sigCI, real_exit_win
 find_TSP_dynamics(percentChange_pooledAnimals, 'catches', plot_3sigCI, real_exit_window, first_exits_3sigCI, first_exits_y_scatter, first_reEntry_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
 find_TSP_dynamics(percentChange_pooledAnimals, 'misses', plot_3sigCI, real_exit_window, first_exits_3sigCI, first_exits_y_scatter, first_reEntry_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
 
+# sanity check for find_TSP_dynamics
+pooled_dict = percentChange_pooledAnimals
+ts_category_str = 'all'
+plot_3sigCI = plot_3sigCI
+real_exit_window_tbs = real_exit_window
+first_exits_dict = first_exits_3sigCI
+first_exits_yScatter = first_exits_y_scatter
+first_reEntry_dict = first_reEntry_3sigCI
+baseline_stats_dict = baseline_stats
+baseline_len = baseline_frames
+TGB_bucket = TGB_bucket_raw
+
+# still to be resolved - does TSP detector need to account for TSP trend (going above baseline versus below baseline) for each freq band?
 def find_TSP_dynamics(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, first_exits_dict, first_exits_yScatter, first_reEntry_dict, baseline_stats_dict, baseline_len, TGB_bucket):
     for freq_band in baseline_stats_dict['mean']:
         all_trials_this_freq_band = pooled_dict[ts_category_str]['pooled trials'][freq_band]
@@ -447,25 +438,96 @@ def find_TSP_dynamics(pooled_dict, ts_category_str, plot_3sigCI, real_exit_windo
                 if exit_candidate is None:
                     if timebucket>this_fb_3sigCI_upper or timebucket<this_fb_3sigCI_lower:
                         exit_candidate = i
-                        continue
-                elif exit_candidate is not None:
+                        print('Exit candidate at timebucket {i}'.format(i=i))
+                if exit_candidate is not None:
                     if this_fb_3sigCI_lower<timebucket<this_fb_3sigCI_upper:
                         exit_window = i-exit_candidate
-                        if exit_window>=real_exit_window_tbs:
+                        print('Re-entered after {w} frames...'.format(w=exit_window))
+                        if exit_window>=real_exit_window_tbs and i>TGB_bucket:
                             this_fb_earliest_exits.append(exit_candidate)
-                            this_fb_y.append(freq_band+1)
+                            this_fb_y.append(freq_band)
                             this_fb_reEntries.append(i)
-                            #print('Found first exit for trial {t} at timebucket {i}'.format(t=t, i=i))
+                            print('Found first real exit for trial {t} at timebucket {exit}, with re-entry at timebucket {i}'.format(t=t, exit=exit_candidate, i=i))
                             break
                         else:
                             exit_candidate = None
-                    elif i==len(trial)-1:
-                        this_fb_reEntries.append(i)
+                if i==len(trial)-1:
+                    if exit_candidate is None:
+                        print('No real exit found for trial {t}'.format(t=t))
+                    else:
+                        exit_window = i-exit_candidate
+                        if exit_window>=real_exit_window_tbs:
+                            this_fb_earliest_exits.append(exit_candidate)
+                            this_fb_y.append(freq_band)
+                            this_fb_reEntries.append(np.nan)
+                            print('Found first real exit for trial {t} at timebucket {exit}, with no re-entry by end of trial'.format(t=t, exit=exit_candidate, i=i))
+                        else:
+                            print('No real exit found for trial {t}'.format(t=t))
         #print('Number of first exits found: {N}'.format(N=len(this_fb_earliest_exits)))
         first_exits_dict[ts_category_str].append(this_fb_earliest_exits)
         first_exits_yScatter[ts_category_str].append(this_fb_y)
         first_reEntry_dict[ts_category_str].append(this_fb_reEntries)
 
+# sanity check for function find_TSP_dynamics
+for t,trial in enumerate(all_trials_this_freq_band):
+    plt.title('Trial {t}'.format(t=t))
+    plt.fill_between(range(360), this_fb_3sigCI_upper, this_fb_3sigCI_lower, color='r', alpha=0.05)
+    plt.plot(trial)
+    plt.show()
+
+
+def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, first_exits_dict, first_reEntries_dict, real_exit_window_tbs, freq_band, baseline_len, todays_dt, plots_dir):  
+    # set fig path and title
+    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+tentacle_shot_type+'_FreqBand'+str(freq_band)+'_TSP-firstAppearance_window'+str(real_exit_window_tbs)+'tbs_'+todays_dt+'.png'
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Histogram of first frame when {m} in ROI on cuttlefish mantle is greater than 3 sigma away from baseline mean for at least {w} milliseconds \n As detected by {at}, Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Tentacle Shot type: {ts}, pooled across all animals'.format(m=metric_str, w=str(1/60*real_exit_window_tbs), at=analysis_type_str, fb=str(freq_band), b=str(baseline_len/60), ts=tentacle_shot_type)
+    # setup fig
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    # subplot: appearance of TSP
+    plt.subplot(2,1,1)
+    plt.title('Timing of first appearance of TSP relative to TGB (0 seconds)', fontsize=10, color='grey', style='italic')
+    plt.xlabel("Seconds")
+    plot_xticks = np.arange(-180, 180, step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.hist(first_exits_dict[tentacle_shot_type][freq_band], bins=90, normed=True)
+    # visual check to see if the distribution is gaussian
+    mean_exit = np.nanmean(first_exits_dict[tentacle_shot_type][freq_band])
+    std_exit = np.nanstd(first_exits_dict[tentacle_shot_type][freq_band])
+    x = np.linspace(min(first_exits_dict[tentacle_shot_type][freq_band]), max(first_exits_dict[tentacle_shot_type][freq_band]), 1000)
+    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
+    plt.plot(x,f, label='gaussian distribution')
+    plt.legend()
+    # subplot: disappearance of TSP
+    plt.subplot(2,1,2)
+    plt.title('Timing of disappearance of TSP relative to TGB (0 seconds)', fontsize=10, color='grey', style='italic')
+    plt.xlabel("Seconds")
+    plot_xticks = np.arange(-180, 180, step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    plt.hist(first_reEntries_dict[tentacle_shot_type][freq_band], bins=90, normed=True)
+    # visual check to see if the distribution is gaussian
+    mean_exit = np.nanmean(first_reEntries_dict[tentacle_shot_type][freq_band])
+    std_exit = np.nanstd(first_reEntries_dict[tentacle_shot_type][freq_band])
+    x = np.linspace(min(first_reEntries_dict[tentacle_shot_type][freq_band]), max(first_reEntries_dict[tentacle_shot_type][freq_band]), 1000)
+    f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
+    plt.plot(x,f, label='gaussian distribution')
+    plt.legend()
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
+
+# check distribution of first exits
+plot_TSP_dynamics_hist = True
+if plot_TSP_dynamics_hist:
+    for freq_band in range(len(first_exits_3sigCI['all'])):
+        plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', first_exits_3sigCI, first_reEntry_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
+    for freq_band in range(len(first_exits_3sigCI['catches'])):
+        plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', first_exits_3sigCI, first_reEntry_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
+    for freq_band in range(len(first_exits_3sigCI['misses'])):
+        plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', first_exits_3sigCI, first_reEntry_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
 # find median frame at which first exit happens
 N_freqBands_to_plot = 3
 median_first_exits = {'all': [], 'catches': [], 'misses': []}
@@ -473,15 +535,6 @@ for freq_band in range(len(first_exits_3sigCI['all'][:N_freqBands_to_plot])):
     median_first_exits['all'].append(np.median(first_exits_3sigCI['all'][freq_band]))
     median_first_exits['catches'].append(np.median(first_exits_3sigCI['catches'][freq_band]))
     median_first_exits['misses'].append(np.median(first_exits_3sigCI['misses'][freq_band]))
-# check distribution of first exits
-check_first_exit_distribution = True
-if check_first_exit_distribution:
-    for freq_band in range(len(first_exits_3sigCI['all'])):
-        plot_firstExitDistributions_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', first_exits_3sigCI, freq_band, baseline_frames, today_dateTime, plots_folder)
-    for freq_band in range(len(first_exits_3sigCI['catches'])):
-        plot_firstExitDistributions_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', first_exits_3sigCI, freq_band, baseline_frames, today_dateTime, plots_folder)
-    for freq_band in range(len(first_exits_3sigCI['misses'])):
-        plot_firstExitDistributions_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', first_exits_3sigCI, freq_band, baseline_frames, today_dateTime, plots_folder)
 # make boxplots to show distribution of "onset of tentacle shot pattern"
 boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', first_exits_3sigCI, first_exits_y_scatter, median_first_exits, N_freqBands_to_plot, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
 # find mean and std of appearance and disappearance of TSP
