@@ -15,7 +15,7 @@ Optional flags:
 "--plot_pooled_percentchange": False (default) or True
 "--plot_baseline_hist": False (default) or True
 "--plot_3sigCI": False (default) or True
-"--N_freqBands": 4 (default) or any integer value from 1-7
+"--N_freqBands": 4 (default) or any integer value from 1-7, determines how many frequency bands will be included in TSP characterisation
 "--smoothing_window": 15 (default), used for parameter "windown_length" in python function scipy.signal.savgol_filter()
 
 @author: Danbee Kim and Adam R Kampff
