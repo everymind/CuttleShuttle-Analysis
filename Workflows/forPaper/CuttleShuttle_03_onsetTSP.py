@@ -589,7 +589,7 @@ if __name__=='__main__':
     smoothed_pooledAnimals = {'all': {}, 'catches': {}, 'misses': {}}
     smooth_pooled_trials(percentChange_pooledAnimals, smoothing_window, smoothed_pooledAnimals, N_freqBands)
     # visually and numerically check when mantle pattern deviates significantly from baseline
-    for freq_band in range(3):
+    for freq_band in range(N_freqBands):
         lower_bound = baseline_stats['mean'][freq_band] - 3*baseline_stats['std'][freq_band]
         upper_bound = baseline_stats['mean'][freq_band] + 3*baseline_stats['std'][freq_band]
         print('Freq band: {fb}, lower bound: {lb}, upper bound: {ub}'.format(fb=freq_band, lb=lower_bound, ub = upper_bound))
