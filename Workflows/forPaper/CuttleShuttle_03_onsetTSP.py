@@ -390,9 +390,9 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
     median_offset_str = 'Median offset of TSP (seconds relative to TGB): '
     for i, m_offset in enumerate(offsets_stats[ts_category_str]):
         if i == len(offsets_stats[ts_category_str])-1:
-            median_offset_str = median_offset_str+'{m:.3f} (Freq Band {i})'.format(m=m_offset, i=i)
+            median_offset_str = median_offset_str+'{m:.3f} (Freq Band {i})'.format(m=(m_offset/60)-3, i=i)
         else:
-            median_offset_str = median_offset_str+'{m:.3f} (Freq Band {i}), '.format(m=m_offset, i=i)
+            median_offset_str = median_offset_str+'{m:.3f} (Freq Band {i}), '.format(m=(m_offset/60)-3, i=i)
     # set colors
     color_baseline = [0.0, 0.53333, 0.215686, 1.0]
     color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
