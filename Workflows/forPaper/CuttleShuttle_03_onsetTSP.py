@@ -460,6 +460,7 @@ if __name__=='__main__':
     parser.add_argument("--plot_pooled_percentchange", nargs='?', default=False)
     parser.add_argument("--plot_baseline_hist", nargs='?', default=False)
     parser.add_argument("--plot_3sigCI", nargs='?', default=False)
+    parser.add_argument("--plot_TSP_dynamics_hist", nargs='?', default=False)
     parser.add_argument("--N_freqBands", nargs='?', default=4)
     parser.add_argument("--smoothing_window", nargs='?', default=15)
     args = parser.parse_args()
