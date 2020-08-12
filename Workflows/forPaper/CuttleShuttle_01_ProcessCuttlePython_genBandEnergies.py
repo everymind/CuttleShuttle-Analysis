@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-process_cuttle_python Python Workflow
+Step 1 of process_cuttle_python Python Workflow
 
-Process cropped and aligned video of cuttlefish, measure contrast in multiple spatial bands
-Generate intermediate files with power of each spatial band for each frame
+Processes cropped and aligned video of cuttlefish, measures contrast (aka granularity) in multiple spatial bands. 
+Generate intermediate files with power at 7 spatial frequency bands for each frame.
 
 Optional flags:
 "--display": False (default) or True
@@ -165,11 +165,14 @@ def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, ban
 # BEGIN SCRIPT
 ##########################################################
 if __name__=='__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='''Step 1 of process_cuttle_python Python Workflow.
+        Processes cropped and aligned video of cuttlefish, measures contrast (aka granularity) in multiple spatial bands. 
+        Generate intermediate files with power at 7 spatial frequency bands for each frame.''')
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--display", nargs='?', default=False)
-    parser.add_argument("--saveVid", nargs='?', default=False)
-    parser.add_argument("--ROI", nargs='?', default='backOnly')
+    parser.add_argument("--display", nargs='?', default=False, help="Set to 'True' to display frame by frame analysis as script is running.")
+    parser.add_argument("--saveVid", nargs='?', default=False, help="Set to 'True' to save video of bandpass filtered images at each spatial frequency.")
+    parser.add_argument("--ROI", nargs='?', default='backOnly', help="Change which part of the video frame to analyse. Options: 'backOnly' (default), 'entireCuttlefish' ")
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
