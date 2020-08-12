@@ -6,7 +6,6 @@ Process cropped and aligned video of cuttlefish, measure contrast in multiple sp
 Generate intermediate files with power of each spatial band for each frame
 
 Optional flags:
-"--run_type": 'prototype' (default) or 'collab'
 "--display": False (default) or True
 "--saveVid": False (default) or True
 "--ROI": 'backOnly' (default) or 'entireCuttlefish'
@@ -44,13 +43,9 @@ logging.basicConfig(filename="process_cuttle_python_01_" + now.strftime("%Y-%m-%
 # 2) plots_folder (parent folder for all plots output from analysis scripts)
 ### Current default uses a debugging source dataset
 ##########################################################
-def load_data(run_type='prototype'):
-    if run_type == 'prototype':
-        video_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots'
-        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots\intermediates'
-    elif run_type == 'collab':
-        video_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots'
-        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots\intermediates'
+def load_data():
+    video_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots'
+    plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots\intermediates'
     return video_dir, plots_dir
 ##########################################################
 
@@ -172,7 +167,6 @@ def computeFilteredVid(N_frames, N_bands, TS_video, TS_video_path, crop_roi, ban
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--run_type", nargs='?', default='prototype')
     parser.add_argument("--display", nargs='?', default=False)
     parser.add_argument("--saveVid", nargs='?', default=False)
     parser.add_argument("--ROI", nargs='?', default='backOnly')
@@ -180,7 +174,7 @@ if __name__=='__main__':
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
     ###################################
-    video_folder, plots_folder = load_data(args.run_type)
+    video_folder, plots_folder = load_data()
     logging.info('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (video_folder, plots_folder))
     print('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (video_folder, plots_folder))
     ###################################

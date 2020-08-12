@@ -8,7 +8,6 @@ Baseline and normalise band energies, pool across animals categorized by catch v
 Make a shuffle test of the data and plot
 
 Optional flags:
-"--run_type": 'prototype' (default) or 'collab'
 "--units": 'percent_change' (default) or 'zscore'
 "--baseline": 60 (default) or any integer value from 1-179
 "--plotZScore": False (default) or True
@@ -53,15 +52,10 @@ logging.basicConfig(filename="process_cuttle_python_03_" + today_dateTime + ".lo
 # 2) plots_folder (parent folder for all plots output from analysis scripts)
 ### Current default uses a debugging source dataset
 ##########################################################
-def load_data(run_type='prototype'):
-    if run_type == 'prototype':
-        data_dir_percentChange = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-        data_dir_canny = r'C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_20191025'
-        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
-    elif run_type == 'collab':
-        data_dir_percentChange = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-        data_dir_canny = r'C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_20191025'
-        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
+def load_data():
+    data_dir_percentChange = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+    data_dir_canny = r'C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\CannyCount_20191025'
+    plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
     return data_dir_percentChange, data_dir_canny, plots_dir
 ##########################################################
 
@@ -723,7 +717,6 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--run_type", nargs='?', default='prototype')
     parser.add_argument("--units", nargs='?', default='percent_change')
     parser.add_argument("--baseline", nargs='?', default=60)
     parser.add_argument("--plotZScore", nargs='?', default=False)
@@ -735,7 +728,7 @@ if __name__=='__main__':
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
     ###################################
-    data_folder_percentChange, data_folder_canny, plots_folder = load_data(args.run_type)
+    data_folder_percentChange, data_folder_canny, plots_folder = load_data()
     logging.info('DATA FOLDER 1: %s \n DATA FOLDER 2: %s \n PLOTS FOLDER: %s' % (data_folder_percentChange, data_folder_canny, plots_folder))
     print('DATA FOLDER 1: %s \n DATA FOLDER 2: %s \n PLOTS FOLDER: %s' % (data_folder_percentChange, data_folder_canny, plots_folder))
     ###################################

@@ -8,7 +8,6 @@ Calculate 3 sigma bounds from mean pooled baseline
 Characterise dynamics of the Tentacle Shot Pattern (TSP)
 
 Optional flags:
-"--run_type": 'prototype'(default) or 'collab'
 "--baseline": 60 (default) or any integer value from 1-179
 "--plot_indiv_animals": False (default) or True
 "--plot_pooled_animals": False (default) or True
@@ -55,13 +54,9 @@ logging.basicConfig(filename="process_cuttle_python_02_" + today_dateTime + ".lo
 # 2) plots_folder (parent folder for all plots output from analysis scripts)
 ### Current default uses a debugging source dataset
 ##########################################################
-def load_data(run_type='prototype'):
-    if run_type == 'prototype':
-        data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
-    elif run_type == 'collab':
-        data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
-        plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\plots'
+def load_data():
+    data_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\data'
+    plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\WoodsHoleAnalysis\draftPlots'
     return data_dir, plots_dir
 ##########################################################
 
@@ -391,10 +386,10 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
     mean_onset_str = 'Mean onset of TSP (seconds relative to TGB): '
     for i, m_onset in enumerate(onset_stats_dict[ts_category_str]['mean']):
         std = onset_stats_dict[ts_category_str]['std'][i]
-        if i == len(onset_stats_dict[ts_category_str]['mean']):
+        if i == len(onset_stats_dict[ts_category_str]['mean'])-1:
             mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i})'.format(m=(m_onset/60)-3, std=(std/60), i=i)
         else:
-            mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i}), '.format(m=(m_onset/60), std=(std/60), i=i)
+            mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i}), '.format(m=(m_onset/60)-3, std=(std/60), i=i)
     # set colors
     color_baseline = [0.0, 0.53333, 0.215686, 1.0]
     color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
@@ -460,7 +455,6 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--run_type", nargs='?', default='prototype')
     parser.add_argument("--baseline", nargs='?', default=60)
     parser.add_argument("--plot_indiv_animals", nargs='?', default=False)
     parser.add_argument("--plot_pooled_animals", nargs='?', default=False)
@@ -475,7 +469,7 @@ if __name__=='__main__':
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
     ###################################
-    data_folder, plots_folder = load_data(args.run_type)
+    data_folder, plots_folder = load_data()
     logging.info('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
     print('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (data_folder, plots_folder))
     ###################################
