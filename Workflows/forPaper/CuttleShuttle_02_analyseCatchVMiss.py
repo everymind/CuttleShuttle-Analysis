@@ -726,7 +726,7 @@ if __name__=='__main__':
     parser.add_argument("--plotZScore", nargs='?', default=False, help="Set to 'True' to plot Z-scored individual traces when using edginess measure.")
     parser.add_argument("--plotRandomTraces", nargs='?', default=False, help="Set to 'True' to plot random traces used to correct threshold for p<0.05 in shuffle test.")
     parser.add_argument("--plotShuffles", nargs='?', default=False, help="Set to 'True' to plot histograms of shuffle tests.")
-    parser.add_argument("--plotBaselineHist", nargs='?', default=False, help="Set to 'True' to plot histogram of baseline values (to check distribution).")
+    parser.add_argument("--plotBaselineHist", nargs='?', default=False, help="Set to 'True' to plot histogram of pooled baseline values (to check distribution).")
     parser.add_argument("--plot_labels", nargs='?', default=False, help="Set to 'True' to plot event labels in final plot of shuffle test.")
     args = parser.parse_args()
     ###################################
