@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-process_cuttle_python.py
+process_cuttle_python Python Workflow
 
 Process cropped and aligned video of cuttlefish, measure contrast in multiple spatial bands
 Generate intermediate files with power of each spatial band for each frame
