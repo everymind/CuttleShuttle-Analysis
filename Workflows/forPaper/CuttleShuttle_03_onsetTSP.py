@@ -289,17 +289,12 @@ def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs
                             continue
                 if i==len(trial)-1:
                     if best_offset is None:
-                        if onset_candidate is None:
-                            this_fb_onsets.append(np.nan)
-                            this_fb_y.append(np.nan)
-                            this_fb_offsets.append(np.nan)
-                            #print('NO REAL EXIT found for trial {t}'.format(t=t))
-                        elif best_onset is None:
+                        if onset_candidate is not None and best_onset is None:
                             this_fb_onsets.append(onset_candidate)
                             this_fb_y.append(freq_band)
                             this_fb_offsets.append(np.nan)
                             #print('FOUND first real exit for trial {t} at timebucket {on}, with no re-entry by end of trial'.format(t=t, on=onset_candidate))
-                        else:
+                        if onset_candidate is not None and best_onset is not None:
                             this_fb_onsets.append(best_onset)
                             this_fb_y.append(freq_band)
                             this_fb_offsets.append(np.nan)
@@ -356,6 +351,79 @@ def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_
     plt.pause(1)
     plt.close()
 
+def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, onset_stats_dict, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir):
+    N_TS_str = 'Number of tentacle shots: '
+    for f, freq_band in enumerate(range(N_fb_to_plot)):
+        N_TS_thisFB = len(onsets_dict[ts_category_str][freq_band])
+        if f == N_fb_to_plot:
+            N_TS_str = N_TS_str+'{n} (Freq Band {f})'.format(n=N_TS_thisFB, f=f)
+        else:
+            N_TS_str = N_TS_str+'{n} (Freq Band {f}), '.format(n=N_TS_thisFB, f=f)
+    mean_onset_str = 'Mean onset of TSP (seconds relative to TGB): '
+    for i, m_onset in enumerate(onset_stats_dict[ts_category_str]['mean']):
+        std = onset_stats_dict[ts_category_str]['std'][i]
+        if i == len(onset_stats_dict[ts_category_str]['mean']):
+            mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i})'.format(m=(m_onset/60)-3, std=(std/60), i=i)
+        else:
+            mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i}), '.format(m=(m_onset/60), std=(std/60), i=i)
+    # set colors
+    color_baseline = [0.0, 0.53333, 0.215686, 1.0]
+    color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
+    color_catch = [0.2706, 0.4588, 0.70588, 1.0]
+    color_miss = [0.8431, 0.1882, 0.1529, 1.0]
+    color_meanline = [0.9137, 0.470588, 0.1529, 1.0]
+    # set properties for boxplots
+    medianprops = dict(linewidth=0)
+    meanlineprops = dict(linestyle='-', linewidth=3, color=color_meanline)
+    # set fig path and title
+    figure_name = analysis_type_str+'_'+preprocess_str+'_onsetTSP_'+ts_category_str+'TS_FreqBand0-'+str(N_fb_to_plot)+todays_dt+'.png'
+    figure_path = os.path.join(plots_dir, figure_name)
+    figure_title = 'Boxplots showing distribution of TSP onset, as detected by {at}, Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Pooled across all animals, {Nts} \n {MOstr}'.format(ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), Nts=N_TS_str, MOstr=mean_onset_str)
+    # setup fig
+    plt.figure(figsize=(16,9), dpi=200)
+    plt.suptitle(figure_title, fontsize=12, y=0.99)
+    # setup points to plot
+    first_exits_toPlot = onsets_dict[ts_category_str][:N_fb_to_plot]
+    y_scatter_toPlot = y_scatter_dict[ts_category_str][:N_fb_to_plot]
+    plt.boxplot(first_exits_toPlot, vert=False, meanline=True, showmeans=True, medianprops=medianprops, meanprops=meanlineprops)
+    for freq_band in range(len(first_exits_toPlot)):
+        if ts_category_str == 'all':
+            first_exits_plot_catch = onsets_dict['catches'][:N_fb_to_plot]
+            first_exits_plot_miss = onsets_dict['misses'][:N_fb_to_plot]
+            y_scatter_plot_catch = y_scatter_dict['catches'][:N_fb_to_plot]
+            y_scatter_plot_miss = y_scatter_dict['misses'][:N_fb_to_plot]
+            jitter_for_plotting_catch = np.random.normal([x+1 for x in y_scatter_plot_catch[freq_band]], 0.08, size=len(first_exits_plot_catch[freq_band]))
+            jitter_for_plotting_miss = np.random.normal([x+1 for x in y_scatter_plot_miss[freq_band]], 0.08, size=len(first_exits_plot_miss[freq_band]))
+            plt.plot(first_exits_plot_catch[freq_band], jitter_for_plotting_catch, '.', color=color_catch)
+            plt.plot(first_exits_plot_miss[freq_band], jitter_for_plotting_miss, '.', color=color_miss)
+        else:
+            if ts_category_str == 'catches':
+                color_to_plot = color_catch
+            elif ts_category_str == 'misses':
+                color_to_plot = color_miss
+            jitter_for_plotting = np.random.normal([x+1 for x in y_scatter_toPlot[freq_band]], 0.08, size=len(first_exits_toPlot[freq_band]))
+            plt.plot(first_exits_toPlot[freq_band], jitter_for_plotting, '.', color=color_to_plot)
+    # adjust axes labels
+    plt.ylabel("Frequency bands")
+    plt.ylim(0.5,N_fb_to_plot+0.5)
+    plot_yticks = np.arange(1, N_fb_to_plot+1, 1)
+    plt.yticks(plot_yticks, ['%d'%(y-1) for y in plot_yticks])
+    plt.xlabel("Seconds")
+    plt.xlim(-10,360)
+    plot_xticks = np.arange(0, 360, step=60)
+    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
+    # plot events
+    ymin, ymax = plt.ylim()
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
+    #plt.text(baseline_len, ymax-0.15, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
+    #plt.text(TGB_bucket, ymax-0.15, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
+    # save fig
+    plt.savefig(figure_path)
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
+
 ###################################
 # SOURCE DATA AND OUTPUT FILE LOCATIONS
 ###################################
@@ -368,7 +436,10 @@ plot_indiv_animals = False
 plot_pooled_animals = False
 plot_pooled_percentchange = False
 plot_baseline_hist = False
-plot_3sigCI = False
+plot_3sigCI = True
+plot_TSP_dynamics_hist = False
+N_freqBands = 4 # for final plots
+smoothing_window = 15 # timebuckets/frames, for TSP detection
 ###################################
 # COLLECT DATA FROM DATA_FOLDER
 ###################################
@@ -461,9 +532,10 @@ for freq_band in pool_of_observed_baseline_values:
     std_baseline_this_freq = np.nanstd(pool_of_observed_baseline_values[freq_band])
     baseline_stats['mean'][freq_band] = mean_baseline_this_freq
     baseline_stats['std'][freq_band] = std_baseline_this_freq
+########################################################
+### ------ TSP DETECTION AND CHARACTERISATION ------ ###
+########################################################
 # smooth individual trials for easier TSP detection
-N_freqBands = 3
-smoothing_window = 15 #timebuckets/frames
 smoothed_pooledAnimals = {'all': {}, 'catches': {}, 'misses': {}}
 smooth_pooled_trials(percentChange_pooledAnimals, smoothing_window, smoothed_pooledAnimals, N_freqBands)
 # visually and numerically check when mantle pattern deviates significantly from baseline
@@ -479,7 +551,6 @@ TSP_detector(smoothed_pooledAnimals, 'all', plot_3sigCI, real_exit_window, TSP_o
 TSP_detector(smoothed_pooledAnimals, 'catches', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
 TSP_detector(smoothed_pooledAnimals, 'misses', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
 # check distribution of first exits
-plot_TSP_dynamics_hist = True
 if plot_TSP_dynamics_hist:
     for freq_band in range(len(TSP_onsets_3sigCI['all'])):
         plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
@@ -487,93 +558,19 @@ if plot_TSP_dynamics_hist:
         plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
     for freq_band in range(len(TSP_onsets_3sigCI['misses'])):
         plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
-# find median frame at which first exit happens
-mean_onset_TSP = {'all': [], 'catches': [], 'misses': []}
-median_reEntries = {'all': [], 'catches': [], 'misses': []}
-for freq_band in range(len(TSP_onsets_3sigCI['all'])):
-    mean_onset_TSP['all'].append(np.nanmean(TSP_onsets_3sigCI['all'][freq_band]))
-    mean_onset_TSP['catches'].append(np.nanmean(TSP_onsets_3sigCI['catches'][freq_band]))
-    mean_onset_TSP['misses'].append(np.nanmean(TSP_onsets_3sigCI['misses'][freq_band]))
-    median_reEntries['all'].append(np.median(TSP_offsets_3sigCI['all'][freq_band]))
-    median_reEntries['catches'].append(np.median(TSP_offsets_3sigCI['catches'][freq_band]))
-    median_reEntries['misses'].append(np.median(TSP_offsets_3sigCI['misses'][freq_band]))
+# find mean onset, std of onset
+onset_TSP = {'all': {}, 'catches': {}, 'misses': {}}
+for ts_type in onset_TSP:
+    onset_TSP[ts_type] = {'mean': [], 'std': []}
+    for freq_band in range(len(TSP_onsets_3sigCI['all'])):
+        onset_TSP[ts_type]['mean'].append(np.nanmean(TSP_onsets_3sigCI[ts_type][freq_band]))
+        onset_TSP[ts_type]['std'].append(np.nanstd(TSP_onsets_3sigCI[ts_type][freq_band]))
+####################################################
+### ------ PLOT DISTRIBUTION OF TSP ONSET ------ ###
+####################################################
 # make boxplots to show distribution of "onset of tentacle shot pattern"
-boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, mean_onset_TSP, N_freqBands_to_plot, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
-
-def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, median_exits_dict, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir):
-    N_TS_str = 'Number of tentacle shots: '
-    for f, freq_band in enumerate(range(N_fb_to_plot)):
-        N_TS_thisFB = len(onsets_dict[ts_category_str][freq_band])
-        if f == N_fb_to_plot:
-            N_TS_str = N_TS_str+'{n} (Freq Band {f})'.format(n=N_TS_thisFB, f=f)
-        else:
-            N_TS_str = N_TS_str+'{n} (Freq Band {f}), '.format(n=N_TS_thisFB, f=f)
-    median_exits_str = 'Median first frame of significant deviation from baseline: '
-    for i, m_exit in enumerate(median_exits_dict[ts_category_str]):
-        if i == len(median_exits_dict[ts_category_str]):
-            median_exits_str = median_exits_str+'{frame} (Freq Band {i})'.format(frame=m_exit, i=i)
-        else:
-            median_exits_str = median_exits_str+'{frame} (Freq Band {i}), '.format(frame=m_exit, i=i)
-    # set colors
-    color_baseline = [0.0, 0.53333, 0.215686, 1.0]
-    color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
-    color_catch = [0.2706, 0.4588, 0.70588, 1.0]
-    color_miss = [0.8431, 0.1882, 0.1529, 1.0]
-    # set fig path and title
-    figure_name = analysis_type_str+'_'+preprocess_str+'_onsetTSP_'+ts_category_str+'TS_FreqBand0-'+str(N_fb_to_plot)+todays_dt+'.png'
-    figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Boxplots showing distribution of when {m} in ROI on cuttlefish mantle first deviates significantly from baseline, as detected by {at}\n Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Pooled across all animals, {Nts} \n {MEstr}'.format(m=metric_str, ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), b=str(baseline_len/60), Nts=N_TS_str, MEstr=median_exits_str)
-    # setup fig
-    plt.figure(figsize=(16,16), dpi=200)
-    plt.suptitle(figure_title, fontsize=12, y=0.99)
-    # subplot: appearance of TSP
-    plt.subplot(2,1,1)
-    plt.title('First appearance of TSP relative to TGB', fontsize=10, color='grey', style='italic')
-    plt.xlabel('Seconds')
-    plot_xticks = np.arange(0, 360, step=60)
-    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    # setup points to plot
-    first_exits_toPlot = onsets_dict[ts_category_str][:N_fb_to_plot]
-    y_scatter_toPlot = y_scatter_dict[ts_category_str][:N_fb_to_plot]
-    plt.boxplot(first_exits_toPlot, vert=False)
-    for freq_band in range(len(first_exits_toPlot)):
-        if ts_category_str == 'all':
-            first_exits_plot_catch = onsets_dict['catches'][:N_fb_to_plot]
-            first_exits_plot_miss = onsets_dict['misses'][:N_fb_to_plot]
-            y_scatter_plot_catch = y_scatter_dict['catches'][:N_fb_to_plot]
-            y_scatter_plot_miss = y_scatter_dict['misses'][:N_fb_to_plot]
-            jitter_for_plotting_catch = np.random.normal(y_scatter_plot_catch[freq_band], 0.08, size=len(first_exits_plot_catch[freq_band]))
-            jitter_for_plotting_miss = np.random.normal(y_scatter_plot_miss[freq_band], 0.08, size=len(first_exits_plot_miss[freq_band]))
-            plt.plot(first_exits_plot_catch[freq_band], jitter_for_plotting_catch, '.', color=color_catch)
-            plt.plot(first_exits_plot_miss[freq_band], jitter_for_plotting_miss, '.', color=color_miss)
-        else:
-            if ts_category_str == 'catches':
-                color_to_plot = color_catch
-            elif ts_category_str == 'misses':
-                color_to_plot = color_miss
-            jitter_for_plotting = np.random.normal(y_scatter_toPlot[freq_band], 0.08, size=len(first_exits_toPlot[freq_band]))
-            plt.plot(first_exits_toPlot[freq_band], jitter_for_plotting, '.', color=color_to_plot)
-    # adjust axes labels
-    plt.ylabel("Frequency bands")
-    plt.ylim(0,N_fb_to_plot+1)
-    plot_yticks = np.arange(0, N_fb_to_plot, 1)
-    plt.yticks(plot_yticks, ['%d'%(y) for y in plot_yticks])
-    plt.xlabel("Seconds")
-    plt.xlim(-10,360)
-    plot_xticks = np.arange(0, 360, step=60)
-    plt.xticks(plot_xticks, ['%.1f'%(x/60) for x in plot_xticks])
-    # plot events
-    ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
-    plt.text(baseline_len, ymax-0.25, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
-    plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
-    plt.text(TGB_bucket, ymax-0.25, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
-    # save fig
-    plt.savefig(figure_path)
-    plt.show(block=False)
-    plt.pause(1)
-    plt.close()
-
-
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
 
 # FIN
