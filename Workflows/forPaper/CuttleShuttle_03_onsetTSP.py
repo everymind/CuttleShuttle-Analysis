@@ -372,7 +372,7 @@ def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_
     plt.pause(1)
     plt.close()
 
-def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, onset_stats_dict, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir, plot_labels):
+def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, onset_stats_dict, offsets_stats, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir, plot_labels):
     N_TS_str = 'Number of tentacle shots: '
     for f, freq_band in enumerate(range(N_fb_to_plot)):
         N_TS_thisFB = len(onsets_dict[ts_category_str][freq_band])
@@ -387,6 +387,12 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
             mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i})'.format(m=(m_onset/60)-3, std=(std/60), i=i)
         else:
             mean_onset_str = mean_onset_str+'{m:.3f}+-{std:.3f} (Freq Band {i}), '.format(m=(m_onset/60)-3, std=(std/60), i=i)
+    median_offset_str = 'Median offset of TSP (seconds relative to TGB): '
+    for i, m_offset in enumerate(offsets_stats[ts_category_str]):
+        if i == len(offsets_stats[ts_category_str])-1:
+            median_offset_str = median_offset_str+'{m:.3f} (Freq Band {i})'.format(m=m_offset, i=i)
+        else:
+            median_offset_str = median_offset_str+'{m:.3f} (Freq Band {i}), '.format(m=m_offset, i=i)
     # set colors
     color_baseline = [0.0, 0.53333, 0.215686, 1.0]
     color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
@@ -399,7 +405,7 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
     # set fig path and title
     figure_name = analysis_type_str+'_'+preprocess_str+'_onsetTSP_'+ts_category_str+'TS_FreqBand0-'+str(N_fb_to_plot)+todays_dt+'.png'
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Boxplots showing distribution of TSP onset, as detected by {at}, Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Pooled across all animals, {Nts} \n {MOstr}'.format(ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), Nts=N_TS_str, MOstr=mean_onset_str)
+    figure_title = 'Boxplots showing distribution of TSP onset, as detected by {at}, Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Pooled across all animals, {Nts} \n {MOnstr} \n {MOffstr}'.format(ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), Nts=N_TS_str, MOnstr=mean_onset_str, MOffster=median_offset_str)
     # setup fig
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
@@ -599,12 +605,16 @@ if __name__=='__main__':
         for freq_band in range(len(TSP_onsets_3sigCI['misses'])):
             plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder, args.plot_labels)
     # find mean onset, std of onset
+    # find median offset
     onset_TSP = {'all': {}, 'catches': {}, 'misses': {}}
+    offset_TSP = {'all': {}, 'catches': {}, 'misses': {}}
     for ts_type in onset_TSP:
         onset_TSP[ts_type] = {'mean': [], 'std': []}
+        offset_TSP[ts_type] = []
         for freq_band in range(len(TSP_onsets_3sigCI['all'])):
             onset_TSP[ts_type]['mean'].append(np.nanmean(TSP_onsets_3sigCI[ts_type][freq_band]))
             onset_TSP[ts_type]['std'].append(np.nanstd(TSP_onsets_3sigCI[ts_type][freq_band]))
+            offset_TSP[ts_type].append(np.nanmedian(TSP_offsets_3sigCI[ts_type][freq_band]))
     ####################################################
     ### ------ PLOT DISTRIBUTION OF TSP ONSET ------ ###
     ####################################################
@@ -614,3 +624,4 @@ if __name__=='__main__':
     boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
 
 # FIN
+
