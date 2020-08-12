@@ -619,9 +619,9 @@ if __name__=='__main__':
     ### ------ PLOT DISTRIBUTION OF TSP ONSET ------ ###
     ####################################################
     # make boxplots to show distribution of "onset of tentacle shot pattern"
-    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
-    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
-    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, offset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, offset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, offset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
 
 # FIN
 
