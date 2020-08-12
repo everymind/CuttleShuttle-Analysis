@@ -113,7 +113,7 @@ def process(value):
               <io:FileName>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots\CA_L1-H2013-02_2014-09-16_TS01_catch_60fpsCannyCount.csv</io:FileName>
               <io:Append>false</io:Append>
               <io:Overwrite>false</io:Overwrite>
-              <io:Suffix>Timestamp</io:Suffix>
+              <io:Suffix>None</io:Suffix>
               <io:IncludeHeader>false</io:IncludeHeader>
               <io:Selector />
             </Expression>
@@ -146,7 +146,7 @@ def process(value):
               <io:FileName>C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-ManuallyAligned\CroppedAligned\MantleZoom\TentacleShots\CA_L1-H2013-02_2014-09-16_TS01_catch_60fpsPixelSum.csv</io:FileName>
               <io:Append>false</io:Append>
               <io:Overwrite>false</io:Overwrite>
-              <io:Suffix>Timestamp</io:Suffix>
+              <io:Suffix>None</io:Suffix>
               <io:IncludeHeader>false</io:IncludeHeader>
               <io:Selector />
             </Expression>
