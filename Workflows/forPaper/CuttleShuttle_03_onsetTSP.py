@@ -405,7 +405,7 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
     # set fig path and title
     figure_name = analysis_type_str+'_'+preprocess_str+'_onsetTSP_'+ts_category_str+'TS_FreqBand0-'+str(N_fb_to_plot)+todays_dt+'.png'
     figure_path = os.path.join(plots_dir, figure_name)
-    figure_title = 'Boxplots showing distribution of TSP onset, as detected by {at}, Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Pooled across all animals, {Nts} \n {MOnstr} \n {MOffstr}'.format(ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), Nts=N_TS_str, MOnstr=mean_onset_str, MOffster=median_offset_str)
+    figure_title = 'Boxplots showing distribution of TSP onset, as detected by {at}, Frequency Bands 0 to {fb} during {ts_cat} tentacle shots \n Pooled across all animals, {Nts} \n {MOnstr} \n {MOffstr}'.format(ts_cat=ts_category_str, at=analysis_type_str, fb=str(N_fb_to_plot-1), Nts=N_TS_str, MOnstr=mean_onset_str, MOffstr=median_offset_str)
     # setup fig
     plt.figure(figsize=(16,9), dpi=200)
     plt.suptitle(figure_title, fontsize=12, y=0.99)
