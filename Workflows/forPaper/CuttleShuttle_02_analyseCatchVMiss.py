@@ -756,7 +756,7 @@ if __name__=='__main__':
     if units == 'zscore':
         data_folder = data_folder_canny
         # in canny_counts_folder, list all csv files for TGB moments ("Tentacles Go Ballistic")
-        all_data = glob.glob(data_folder + os.sep + "*.csv")
+        all_data = glob.glob(data_folder + os.sep + "*CannyCount.csv")
     ########################################################
     ### ------ ORGANIZE DATA ------ ###
     ########################################################
