@@ -673,7 +673,7 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
     plt.fill_between(x_tbs, UpperBound_C, LowerBound_C, color=color_stdC)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.8*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
     if plot_labels:
         plt.text(baseline_len, ymax-0.8*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
@@ -703,9 +703,9 @@ def plot_allA_Canny_ShuffledDiffMeans(analysis_type_str, preprocess_str, metric_
     plt.fill_between(sig_x, ObservedDiff[firstSigTB:], sigUB[firstSigTB:], color=color_firstSigFrame_fill)
     # label events
     ymin, ymax = plt.ylim()
-    plt.plot((baseline_len, baseline_len), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_baseline)
+    plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
-    plt.plot((firstSigTB, firstSigTB), (ymin, ymax-0.85*label_pos_mult), linestyle='--', linewidth=2, color=color_firstSigFrame)
+    plt.plot((firstSigTB, firstSigTB), (ymin, ymax), linestyle='--', linewidth=2, color=color_firstSigFrame)
     if plot_labels:
         plt.text(baseline_len, ymax-0.85*label_pos_mult, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
         plt.text(TGB_bucket, ymax-0.3*label_pos_mult, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
