@@ -15,8 +15,10 @@ Optional flags:
 "--plot_pooled_percentchange": False (default) or True
 "--plot_baseline_hist": False (default) or True
 "--plot_3sigCI": False (default) or True
+"--plot_TSP_dynamics_hist": False (default) or True
 "--N_freqBands": 4 (default) or any integer value from 1-7, determines how many frequency bands will be included in TSP characterisation
 "--smoothing_window": 15 (default), used for parameter "windown_length" in python function scipy.signal.savgol_filter()
+"--plot_labels": False (default) or True
 
 @author: Danbee Kim and Adam R Kampff
 """
@@ -192,7 +194,7 @@ def smooth_pooled_trials(pooled_dict, smoothing_window_tbs, smoothed_trials_dict
                 except:
                     print('Trial {t} failed'.format(t=t))
 
-def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, observed_baseline_dict, freq_band, baseline_len, todays_dt, plots_dir):
+def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, observed_baseline_dict, freq_band, baseline_len, todays_dt, plots_dir, plot_labels):
     # set fig path and title
     figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_FreqBand'+str(freq_band)+'_baselineHistSanityCheck_'+todays_dt+'.png'
     figure_path = os.path.join(plots_dir, figure_name)
@@ -207,14 +209,15 @@ def plot_BaselineHistograms_perFreqBand(analysis_type_str, preprocess_str, metri
     x = np.linspace(min(observed_baseline_dict[freq_band]), max(observed_baseline_dict[freq_band]), 100)
     f = np.exp(-(1/2)*np.power((x - mean_baseline)/std_baseline,2)) / (std_baseline*np.sqrt(2*np.pi))
     plt.plot(x,f, label='gaussian distribution')
-    plt.legend()
+    if plot_labels:
+        plt.legend()
     # save fig
     plt.savefig(figure_path)
     plt.show(block=False)
     plt.pause(1)
     plt.close()
 
-def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, ts_category_str, freq_band, pooled_trials_this_fb, baseline_stats_dict, baseline_len, TGB_bucket):
+def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, metric_str, prey_type_str, ts_category_str, freq_band, pooled_trials_this_fb, baseline_stats_dict, baseline_len, TGB_bucket, todays_dt, plots_dir, plot_labels):
     N_TS = len(pooled_trials_this_fb)
     # set colors
     color_individualTS = [0.8431, 0.1882, 0.1529, 0.05]
@@ -222,8 +225,8 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
     color_baseline_3sigma = [0.0, 0.533, 0.2157, 0.1]
     color_TGB = [0.4627, 0.1647, 0.5137, 1.0]
     # set fig path and title
-    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+ts_category_str+'_FreqBand'+str(freq_band)+'_3sigCI_'+today_dateTime+'.png'
-    figure_path = os.path.join(plots_folder, figure_name)
+    figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+ts_category_str+'_FreqBand'+str(freq_band)+'_3sigCI_'+todays_dt+'.png'
+    figure_path = os.path.join(plots_dir, figure_name)
     figure_title = 'Distribution of percent change from mean baseline of {m} in ROI on cuttlefish mantle during {ts_cat} tentacle shots, as detected by {at}\n Frequency Band {fb} \n Baseline: mean of {m} from t=0 to t={b} second(s) for each trial \n Prey Movement type: {p}, pooled across all animals\n Number of tentacle shots: {Nts}'.format(m=metric_str, ts_cat=ts_category_str, at=analysis_type_str, fb=str(freq_band), b=str(baseline_frames/60), p=prey_type_str, Nts=str(N_TS))
     # setup fig
     plt.figure(figsize=(16,9), dpi=200)
@@ -240,23 +243,24 @@ def plot_3sigCI_individualTS_per_FreqBand(analysis_type_str, preprocess_str, met
     # plot events
     ymin, ymax = plt.ylim()
     plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
-    plt.text(baseline_len, ymax, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
-    plt.text(TGB_bucket, ymax, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
+    if plot_labels:
+        plt.text(baseline_len, ymax, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
     # save fig
     plt.savefig(figure_path)
     plt.show(block=False)
     plt.pause(1)
     plt.close()
 
-def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, onsets_dict, onsets_yScatter, offsets_dict, baseline_stats_dict, baseline_len, TGB_bucket):
+def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs, onsets_dict, onsets_yScatter, offsets_dict, baseline_stats_dict, baseline_len, TGB_bucket, todays_dt, plots_dir, plot_labels):
     for freq_band in pooled_dict[ts_category_str]:
         all_trials_this_freq_band = pooled_dict[ts_category_str][freq_band]
         #N_trials = len(all_trials_this_freq_band)
         #print('Number of trials: {n}'.format(n=str(N_trials)))
         # visualize distribution of onset of tentacle shot pattern
         if plot_3sigCI:
-            plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket)
+            plot_3sigCI_individualTS_per_FreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', ts_category_str, freq_band, all_trials_this_freq_band, baseline_stats_dict, baseline_len, TGB_bucket, todays_dt, plots_dir, plot_labels)
         # numerically calculate when each individual trace leaves the 3sigCI
         this_fb_mean = baseline_stats_dict['mean'][freq_band]
         this_fb_3sig = baseline_stats_dict['std'][freq_band]*3
@@ -332,7 +336,7 @@ def TSP_detector(pooled_dict, ts_category_str, plot_3sigCI, real_exit_window_tbs
         onsets_yScatter[ts_category_str].append(this_fb_y)
         offsets_dict[ts_category_str].append(this_fb_offsets)
 
-def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, onsets_dict, first_reEntries_dict, real_exit_window_tbs, freq_band, baseline_len, todays_dt, plots_dir):  
+def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_str, tentacle_shot_type, onsets_dict, first_reEntries_dict, real_exit_window_tbs, freq_band, baseline_len, todays_dt, plots_dir, plot_labels):  
     # set fig path and title
     figure_name = analysis_type_str+'_'+preprocess_str+'_pooledAnimals_'+tentacle_shot_type+'_FreqBand'+str(freq_band)+'_TSP-firstAppearance_window'+str(real_exit_window_tbs)+'tbs_'+todays_dt+'.png'
     figure_path = os.path.join(plots_dir, figure_name)
@@ -353,7 +357,8 @@ def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_
     x = np.linspace(min(onsets_dict[tentacle_shot_type][freq_band]), max(onsets_dict[tentacle_shot_type][freq_band]), 1000)
     f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
     plt.plot(x,f, label='gaussian distribution')
-    plt.legend()
+    if plot_labels:
+        plt.legend()
     # subplot: disappearance of TSP
     plt.subplot(2,1,2)
     plt.title('Timing of disappearance of TSP relative to TGB (3 seconds)', fontsize=10, color='grey', style='italic')
@@ -367,14 +372,15 @@ def plot_TSPdynamics_hist_perFreqBand(analysis_type_str, preprocess_str, metric_
     x = np.linspace(min(first_reEntries_dict[tentacle_shot_type][freq_band]), max(first_reEntries_dict[tentacle_shot_type][freq_band]), 1000)
     f = np.exp(-(1/2)*np.power((x - mean_exit)/std_exit,2)) / (std_exit*np.sqrt(2*np.pi))
     plt.plot(x,f, label='gaussian distribution')
-    plt.legend()
+    if plot_labels:
+        plt.legend()
     # save fig
     plt.savefig(figure_path)
     plt.show(block=False)
     plt.pause(1)
     plt.close()
 
-def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, onset_stats_dict, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir):
+def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_category_str, onsets_dict, y_scatter_dict, onset_stats_dict, N_fb_to_plot, baseline_len, TGB_bucket, todays_dt, plots_dir, plot_labels):
     N_TS_str = 'Number of tentacle shots: '
     for f, freq_band in enumerate(range(N_fb_to_plot)):
         N_TS_thisFB = len(onsets_dict[ts_category_str][freq_band])
@@ -438,9 +444,10 @@ def boxplots_of_TSP_onset(analysis_type_str, preprocess_str, metric_str, ts_cate
     # plot events
     ymin, ymax = plt.ylim()
     plt.plot((baseline_len, baseline_len), (ymin, ymax), linestyle='--', linewidth=2, color=color_baseline)
-    #plt.text(baseline_len, ymax-0.15, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
     plt.plot((TGB_bucket, TGB_bucket), (ymin, ymax), linestyle='--', linewidth=2, color=color_TGB)
-    #plt.text(TGB_bucket, ymax-0.15, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
+    if plot_labels:
+        plt.text(baseline_len, ymax-0.15, "End of \nbaseline period", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_baseline, boxstyle='round,pad=0.35'))
+        plt.text(TGB_bucket, ymax-0.15, "Tentacles Go Ballistic\n(TGB)", fontsize='small', ha='center', bbox=dict(facecolor='white', edgecolor=color_TGB, boxstyle='round,pad=0.35'))
     # save fig
     plt.savefig(figure_path)
     plt.show(block=False)
@@ -463,6 +470,7 @@ if __name__=='__main__':
     parser.add_argument("--plot_TSP_dynamics_hist", nargs='?', default=False)
     parser.add_argument("--N_freqBands", nargs='?', default=4)
     parser.add_argument("--smoothing_window", nargs='?', default=15)
+    parser.add_argument("--plot_labels", nargs='?', default=False)
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
@@ -481,6 +489,7 @@ if __name__=='__main__':
     plot_TSP_dynamics_hist = args.plot_TSP_dynamics_hist
     N_freqBands = args.N_freqBands
     smoothing_window = args.smoothing_window
+    plot_labels = args.plot_labels
     ###################################
     # COLLECT DATA FROM DATA_FOLDER
     ###################################
@@ -568,7 +577,7 @@ if __name__=='__main__':
     for freq_band in pool_of_observed_baseline_values:
         if plot_baseline_hist:
             # sanity check the distribution of the baseline values, is it close enough to gaussian?
-            plot_BaselineHistograms_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', pool_of_observed_baseline_values, freq_band, baseline_frames, today_dateTime, plots_folder)
+            plot_BaselineHistograms_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', pool_of_observed_baseline_values, freq_band, baseline_frames, today_dateTime, plots_folder, args.plot_labels)
         mean_baseline_this_freq = np.nanmean(pool_of_observed_baseline_values[freq_band])
         std_baseline_this_freq = np.nanstd(pool_of_observed_baseline_values[freq_band])
         baseline_stats['mean'][freq_band] = mean_baseline_this_freq
@@ -588,17 +597,17 @@ if __name__=='__main__':
     TSP_onsets_y_scatter = {'all': [], 'catches': [], 'misses': []}
     TSP_offsets_3sigCI = {'all': [], 'catches': [], 'misses': []}
     real_exit_window = 15 #frames/timebuckets
-    TSP_detector(smoothed_pooledAnimals, 'all', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
-    TSP_detector(smoothed_pooledAnimals, 'catches', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
-    TSP_detector(smoothed_pooledAnimals, 'misses', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw)
+    TSP_detector(smoothed_pooledAnimals, 'all', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    TSP_detector(smoothed_pooledAnimals, 'catches', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    TSP_detector(smoothed_pooledAnimals, 'misses', plot_3sigCI, real_exit_window, TSP_onsets_3sigCI, TSP_onsets_y_scatter, TSP_offsets_3sigCI, baseline_stats, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
     # check distribution of first exits
     if plot_TSP_dynamics_hist:
         for freq_band in range(len(TSP_onsets_3sigCI['all'])):
-            plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
+            plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder, args.plot_labels)
         for freq_band in range(len(TSP_onsets_3sigCI['catches'])):
-            plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
+            plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder, args.plot_labels)
         for freq_band in range(len(TSP_onsets_3sigCI['misses'])):
-            plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder)
+            plot_TSPdynamics_hist_perFreqBand('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_offsets_3sigCI, 15, freq_band, baseline_frames, today_dateTime, plots_folder, args.plot_labels)
     # find mean onset, std of onset
     onset_TSP = {'all': {}, 'catches': {}, 'misses': {}}
     for ts_type in onset_TSP:
@@ -610,8 +619,8 @@ if __name__=='__main__':
     ### ------ PLOT DISTRIBUTION OF TSP ONSET ------ ###
     ####################################################
     # make boxplots to show distribution of "onset of tentacle shot pattern"
-    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
-    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
-    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder)
+    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'all', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'catches', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
+    boxplots_of_TSP_onset('ProcessCuttlePython', 'PercentChange', 'power at frequency', 'misses', TSP_onsets_3sigCI, TSP_onsets_y_scatter, onset_TSP, N_freqBands, baseline_frames, TGB_bucket_raw, today_dateTime, plots_folder, args.plot_labels)
 
 # FIN
