@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Step 1 of process_cuttle_python Python Workflow
+Paper: "An experimental method for evoking and characterizing dynamic color patterning of cuttlefish during prey capture" by Danbee Kim, Kendra Buresch, Roger Hanlon, and Adam R. Kampff
+Analysis: Step 1 of process_cuttle_python Python Workflow
 
 Processes cropped and aligned video of cuttlefish, measures contrast (aka granularity) in multiple spatial bands. 
 Generate intermediate files with power at 7 spatial frequency bands for each frame.
