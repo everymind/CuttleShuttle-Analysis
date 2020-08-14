@@ -170,7 +170,7 @@ if __name__=='__main__':
         Calculate the probability of an MOI happening after 1st, 2nd, or 3rd previous MOI (i.e. catch happening after tentacle shot, tentacle shot happening after orientation, etc).
         Used in paper to calculate results section "Accuracy of Prey Capture". ''')
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--MOI", nargs='+', type=str, default='catches', help="Choose at least one from the following list of MOIs: 'catches' (default), 'tentacle-shots', 'orients', 'homebase'")
+    parser.add_argument("--MOI", nargs='+', type=str, default='catches', help="Choose at least one from the following list of MOIs: catches (default), tentacle-shots, orients, homebase")
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
