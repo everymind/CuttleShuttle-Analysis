@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Paper: "An experimental method for evoking and characterizing dynamic color patterning of cuttlefish during prey capture" by Danbee Kim, Kendra Buresch, Roger Hanlon, and Adam R. Kampff
-Analysis: Accuracy of Prey Capture
+Analysis: Probability of MOI
 
 Collects csv files of all moments of interest (MOI) from full, primary experimental dataset. 
-Calculate the probability of a catch happening after 1st, 2nd, or 3rd tentacle shot. 
+Calculate the probability of an MOI happening after 1st, 2nd, or 3rd previous MOI (i.e. catch happening after tentacle shot, tentacle shot happening after orientation, etc).
+Used in paper to calculate results section "Accuracy of Prey Capture". 
 
 Optional flags:
 "--display": False (default) or True
@@ -164,10 +165,12 @@ def plot_probMOIseq(probMOIseq_dict, MOI_str, prevMOI_str, plots_dir, todays_dt)
 ##########################################################
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        description='''Accuracy of Prey Capture.
+        description='''Probability of MOI.
         Collects csv files of all moments of interest (MOI) from full, primary experimental dataset. 
-        Calculate the probability of a catch happening after 1st, 2nd, or 3rd tentacle shot. ''')
+        Calculate the probability of an MOI happening after 1st, 2nd, or 3rd previous MOI (i.e. catch happening after tentacle shot, tentacle shot happening after orientation, etc).
+        Used in paper to calculate results section "Accuracy of Prey Capture". ''')
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
+    parser.add_argument("--MOI", nargs='?', default='catches', help="Pick MOI to")
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
