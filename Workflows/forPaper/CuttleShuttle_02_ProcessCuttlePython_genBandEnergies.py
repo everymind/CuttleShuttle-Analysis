@@ -41,7 +41,7 @@ logging.basicConfig(filename="process_cuttle_python_01_" + now.strftime("%Y-%m-%
 #### MODIFY THIS FIRST FUNCTION BASED ON THE LOCATIONS OF:
 # 1) video_dir (parent folder with all TGB videos)
 # AND
-# 2) plots_dir (parent folder for all plots output by this scripts)
+# 2) plots_dir (parent folder for all plots output by this script)
 ### Current default uses a debugging source dataset
 ##########################################################
 def load_data():
