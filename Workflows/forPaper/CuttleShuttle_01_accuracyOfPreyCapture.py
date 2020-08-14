@@ -3,8 +3,8 @@
 Paper: "An experimental method for evoking and characterizing dynamic color patterning of cuttlefish during prey capture" by Danbee Kim, Kendra Buresch, Roger Hanlon, and Adam R. Kampff
 Analysis: Accuracy of Prey Capture
 
-Processes cropped and aligned video of cuttlefish, measures contrast (aka granularity) in multiple spatial bands. 
-Generate intermediate files with power at 7 spatial frequency bands for each frame.
+Collects csv files of all moments of interest (MOI) from full, primary experimental dataset. 
+Calculate the probability of a catch happening after 1st, 2nd, or 3rd tentacle shot. 
 
 Optional flags:
 "--display": False (default) or True
@@ -15,22 +15,43 @@ Optional flags:
 """
 import os
 import glob
-import cv2
 import datetime
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
-from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-import math
-import sys
-import itertools
-import scipy
-import scipy.signal
-from scipy import stats
+import logging
+import pdb
+import argparse
 
-### FUNCTIONS ###
+###################################
+# SET CURRENT WORKING DIRECTORY
+###################################
+cwd = os.getcwd()
+###################################
+# SCRIPT LOGGER
+###################################
+# grab today's date
+now = datetime.datetime.now()
+today_dateTime = now.strftime("%Y-%m-%d_%H-%M-%S")
+logging.basicConfig(filename="accuracy_preyCapture_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
+###################################
+# FUNCTIONS
+###################################
+
+##########################################################
+#### MODIFY THIS FIRST FUNCTION BASED ON THE LOCATIONS OF:
+# 1) dataset_dir (folder with full, primary experimental dataset)
+# AND
+# 2) plots_dir (parent folder for all plots output by this script)
+### Current default uses a debugging source dataset
+##########################################################
+def load_data():
+    dataset_dir = r"C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-VideoDataset-Raw"
+    plots_dir = r'C:\Users\taunsquared\Dropbox\CuttleShuttle\analysis\forPaper\plots'
+    return dataset_dir, plots_dir
+##########################################################
+
 def convert_timestamps_to_secs_from_start(allA_timestamps_dict, list_of_MOIs):
     converted_dict = {}
     for animal in allA_timestamps_dict:
@@ -73,106 +94,6 @@ def convert_timestamps_to_secs_from_start(allA_timestamps_dict, list_of_MOIs):
         for moi in range(len(list_of_MOIs)):
             converted_dict[animal][list_of_MOIs[moi]] = all_mois[moi]
     return converted_dict
-
-def plot_timeline_MOIs(dict_allAnimals_allMOIs, list_of_MOIs, animal_names_dict, plots_dir, todays_dt):
-    for animal in dict_allAnimals_allMOIs:
-        all_session_lens = dict_allAnimals_allMOIs[animal]['session durations']
-        all_session_dates = dict_allAnimals_allMOIs[animal]['session dates']
-        # prepare for possible MOIs
-        all_homebases = []
-        all_orientations = []
-        all_tentacle_shots = []
-        all_food_offerings = []
-        all_catches = []
-        for moi in list_of_MOIs:
-            if moi=='homebase':
-                all_homebases = dict_allAnimals_allMOIs[animal]['homebase']
-            if moi=='orients':
-                all_orientations = dict_allAnimals_allMOIs[animal]['orients']
-            if moi=='tentacle shots':
-                all_tentacle_shots = dict_allAnimals_allMOIs[animal]['tentacle shots']
-            if moi=='food offerings':
-                all_food_offerings = dict_allAnimals_allMOIs[animal]['food offerings']
-            if moi=='catches':
-                all_catches = dict_allAnimals_allMOIs[animal]['catches']
-        # remove habituation session
-        all_session_dates = all_session_dates[1:]
-        all_homebases = all_homebases[1:]
-        all_orientations = all_orientations[1:]
-        all_tentacle_shots = all_tentacle_shots[1:]
-        all_food_offerings = all_food_offerings[1:]
-        # reverse lists of MOI times so that first session appears at the top of the plot
-        all_session_dates_reversed = all_session_dates[::-1]
-        all_homebases_reversed = all_homebases[::-1]
-        all_orientations_reversed = all_orientations[::-1]
-        all_tentacle_shots_reversed = all_tentacle_shots[::-1]
-        all_food_offerings_reversed = all_food_offerings[::-1]
-        all_catches_reversed = all_catches[::-1]
-        session_len_mins = 37
-        plotting_session_len = session_len_mins*60
-        # find number of each MOI
-        hb_count = sum([len(session) for session in all_homebases_reversed])
-        orients_count = sum([len(session) for session in all_orientations_reversed])
-        ts_count = sum([len(session) for session in all_tentacle_shots_reversed])
-        c_count = sum([len(session) for session in all_catches_reversed])
-        fo_count = sum([len(session) for session in all_food_offerings_reversed])
-        # set colors
-        food_offerings_color = [1.0, 0.0, 1.0, 0.5]
-        homebase_color = [1.0, 0.0, 0.0, 0.5]
-        orientations_color = [1.0, 0.647, 0.0, 0.6]
-        tentacle_shots_color = [0.0, 1.0, 0.0, 0.5]
-        catches_color = [0.0, 0.0, 1.0, 0.4]
-        # set figure save path and title
-        figure_name = 'MomentsOfInterest_'+ animal + '_' + todays_dt + '.png'
-        figure_path = os.path.join(plots_dir, figure_name)
-        figure_title = 'Moments of interest during hunting session of ' + animal + ', aka ' + animal_names_dict[animal] + '\nReturns to home base: ' + str(hb_count) + '\nNumber of Orientations: ' + str(orients_count) + '\n Number of Tentacle Shots: ' + str(ts_count) + ', Number of Catches: ' + str(c_count)
-        # set axes and other figure properties
-        ax = plt.figure(figsize=(16,9), dpi=200)
-        plt.suptitle(figure_title, fontsize=12, y=0.98)
-        plt.xlim(-60,plotting_session_len+60)
-        plt.ylim(-1, len(all_session_lens))
-        plot_yticks = np.arange(0, len(all_session_lens), 1)
-        ytick_labels = ['Day '+str(x+1) for x in range(len(all_session_dates_reversed))]
-        plt.yticks(plot_yticks, ytick_labels[::-1])
-        plt.ylabel("Session Number")
-        plot_xticks = np.arange(0, plotting_session_len, step=60)
-        plt.xticks(plot_xticks, ['%d'%(x/60) for x in plot_xticks])
-        plt.xlabel("Minute from start of hunting session")
-        #plt.xlabel("Frame number, original framerate = 60fps")
-        plt.grid(b=True, which='major', linestyle='-')
-        # draw moments of interest
-        for session in range(len(all_food_offerings_reversed)):
-            if len(all_food_offerings_reversed[session]) > 0:
-                for time_diff in all_food_offerings_reversed[session]:
-                    plt.plot(time_diff, session, Marker='|', markersize=7, color=food_offerings_color)
-        for session in range(len(all_homebases_reversed)):
-            if len(all_homebases_reversed[session]) > 0:
-                for time_diff in all_homebases_reversed[session]:
-                    plt.plot(time_diff, session, Marker='d', markersize=7, color=homebase_color)
-        for session in range(len(all_orientations_reversed)):
-            if len(all_orientations_reversed[session]) > 0:
-                for time_diff in all_orientations_reversed[session]:
-                    plt.plot(time_diff, session, Marker='^', markersize=7, color=orientations_color)
-        for session in range(len(all_tentacle_shots_reversed)):
-            if len(all_tentacle_shots_reversed[session]) > 0:
-                for time_diff in all_tentacle_shots_reversed[session]:
-                    plt.plot(time_diff, session, Marker='*', markersize=7, color=tentacle_shots_color)
-        for session in range(len(all_catches_reversed)):
-            if len(all_catches_reversed[session]) > 0:
-                for time_diff in all_catches_reversed[session]:
-                    plt.plot(time_diff, session, Marker='*', markersize=7, color=catches_color)
-        # create custom legend
-        legend_elements = [Line2D([0], [0], marker='|', color=food_offerings_color, label='Food offerings', markerfacecolor=food_offerings_color, markersize=10),
-                        Line2D([0], [0], marker='d', color=homebase_color, label='Returns to homebase', markerfacecolor=homebase_color, markersize=10),
-                        Line2D([0], [0], marker='^', color=orientations_color, label='Orientations', markerfacecolor=orientations_color, markersize=10),
-                        Line2D([0], [0], marker='*', color=tentacle_shots_color, label='Tentacle Shots', markerfacecolor=tentacle_shots_color, markersize=10),
-                        Line2D([0], [0], marker='*', color=catches_color, label='Catches', markerfacecolor=catches_color, markersize=10)]
-        ax.legend(handles=legend_elements, loc='upper right')
-        # save and display fig
-        plt.savefig(figure_path)
-        plt.show(block=False)
-        plt.pause(1)
-        plt.close()
 
 def calc_prob_MOI_sequence(secsFromStart_dict, MOI, prevMOI):
     MOIProb_dict = {}
@@ -232,115 +153,124 @@ def plot_probMOIseq(probMOIseq_dict, MOI_str, prevMOI_str, plots_dir, todays_dt)
     plt.bar(x + 2*width, allA_probMOIseq[4], width, label='L7-H2013-02')
     # Add legend
     ax.legend()
-    # create custom legend
-    #legend_elements = [Line2D([0], [0], marker='|', color=food_offerings_color, label='Food offerings', markerfacecolor=food_offerings_color, markersize=10)]
-    #ax.legend(handles=legend_elements, loc='upper right')
     # save and display fig
     plt.savefig(figure_path)
     plt.show(block=False)
     plt.pause(1)
     plt.close()
 
-### BEGIN ANALYSIS ###
-# grab today's date
-now = datetime.datetime.now()
-todays_datetime = datetime.datetime.today().strftime('%Y%m%d-%H%M%S')
-current_working_directory = os.getcwd()
-# List relevant data locations: these are for KAMPFF-LAB
-#root_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows"
-#raw_dataset_folder = r"C:\Users\Kampff_Lab\Dropbox\CuttleShuttle\CuttleShuttle-VideoDataset-Raw"
-#plots_folder = r"C:\Users\Kampff_Lab\Documents\Github\CuttleShuttle-Analysis\Workflows\plots"
+##########################################################
+# BEGIN SCRIPT
+##########################################################
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description='''Accuracy of Prey Capture.
+        Collects csv files of all moments of interest (MOI) from full, primary experimental dataset. 
+        Calculate the probability of a catch happening after 1st, 2nd, or 3rd tentacle shot. ''')
+    parser.add_argument("--a", nargs='?', default="check_string_for_empty")
+    args = parser.parse_args()
+    ###################################
+    # SOURCE DATA AND OUTPUT FILE LOCATIONS 
+    ###################################
+    raw_dataset_folder, plots_folder = load_data()
+    logging.info('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (raw_dataset_folder, plots_folder))
+    print('DATA FOLDER: %s \n PLOTS FOLDER: %s' % (raw_dataset_folder, plots_folder))
+    ###################################
+    # COLLECT CSV FILES FOR MOI
+    ###################################
+    animals = ['L1-H2013-01', 'L1-H2013-02', 'L1-H2013-03', 'L7-H2013-01', 'L7-H2013-02', 'L7-H2013-03']
+    allMOI_allA = {}
+    # extract data from csv and put into dictionary
+    logging.info('Extracting raw data from csv...')
+    print('Extracting raw data from csv...')
+    for animal in animals:
+        print('Working on animal {a}'.format(a=animal))
+        allMOI_allA[animal] = {}
+        MOI_homebase = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "homebase*.csv")
+        MOI_orients = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "orients*.csv")
+        MOI_TS = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "tentacle_shots*.csv")
+        MOI_catches = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "catches*.csv")
+        food_offerings = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "food_available*.csv")
+        session_vids = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "session_video*.csv")
+        all_MOI = [MOI_homebase, MOI_orients, MOI_TS, MOI_catches, food_offerings, session_vids]
+        for MOI_type in range(len(all_MOI)):
+            for csv_file in all_MOI[MOI_type]:
+                if os.path.getsize(csv_file)>0:
+                    csv_name = csv_file.split(os.sep)[-1]
+                    csv_date = csv_file.split(os.sep)[-2]
+                    csv_animal = csv_file.split(os.sep)[-3]
+                    current_dict_level = allMOI_allA[animal].setdefault(csv_date,{})
+                    # read csv file and convert timestamps into datetime objects
+                    str2date = lambda x: datetime.datetime.strptime(x.decode("utf-8").split('+')[0][:-1], '%Y-%m-%dT%H:%M:%S.%f')
+                    csv_MOI = np.genfromtxt(csv_file, dtype=None, delimiter=",", converters={0:str2date})
+                    if MOI_type == 0:
+                        allMOI_allA[animal][csv_date]['homebase'] = csv_MOI
+                    if MOI_type == 1:
+                        allMOI_allA[animal][csv_date]['orients'] = csv_MOI
+                    if MOI_type == 2:
+                        allMOI_allA[animal][csv_date]['tentacle shots'] = csv_MOI
+                    if MOI_type == 3:
+                        allMOI_allA[animal][csv_date]['catches'] = csv_MOI
+                    if MOI_type == 4:
+                        allMOI_allA[animal][csv_date]['food offerings'] = csv_MOI
+                    if MOI_type == 5:
+                        allMOI_allA[animal][csv_date]['session vids'] = csv_MOI
+    print('Finished extracting csv data!')
+    logging.info('Finished extracting csv data!')
+    ###################################
+    # CONVERT TIMESTAMPS AND ANIMAL NUMBERS
+    ###################################
+    # convert timestamp obj's into ints (microseconds from start)
+    MOIs = ['food offerings','homebase','orients','tentacle shots','catches']
+    logging.info('Converting timestamps to microseconds from start...')
+    print('Converting timestamps to microseconds from start...')
+    allMOI_allA_converted = convert_timestamps_to_secs_from_start(allMOI_allA, MOIs)
+    # convert animal numbers into names
+    animal_names = {'L1-H2013-01':'Dora','L1-H2013-02':'Scar','L1-H2013-03':'Ender','L7-H2013-01':'Old Tom','L7-H2013-02':'Plato','L7-H2013-03':'Blaise'}
+    ##################################################################################
+    ### ---- PROBABILITY OF MOIS HAPPENING AFTER 1ST/2ND/3RD/4TH PREVIOUS MOI ---- ###
+    ##################################################################################
+    MOIs = ['catches', 'tentacle shots']
+    previous_MOIs = ['tentacle shots', 'orients']
+    for i,MOI in enumerate(MOIs):
+        logging.info('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=previous_MOIs[i]))
+        print('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=previous_MOIs[i]))
+        allA_probMOI = calc_prob_MOI_sequence(allMOI_allA_converted, MOI, previous_MOIs[i])
+        # summary stats
+        first_MOI_prob = {}
+        second_MOI_prob = {}
+        third_MOI_prob = {}
+        for animal in allA_probMOI:
+            if bool(allA_probMOI[animal]):
+                total_prevMOIs = sum(allA_probMOI[animal].values())
+                first_attempt = allA_probMOI[animal].get(0, 0)
+                first_MOI_prob[animal] = first_attempt/total_prevMOIs
+                two_attempts_or_less = allA_probMOI[animal].get(0, 0) + allA_probMOI[animal].get(1, 0)
+                second_MOI_prob[animal] = two_attempts_or_less/total_prevMOIs
+                three_attempts_or_less = allA_probMOI[animal].get(0, 0) + allA_probMOI[animal].get(1, 0) + allA_probMOI[animal].get(2, 0)
+                third_MOI_prob[animal] = three_attempts_or_less/total_prevMOIs
+        for animal in first_MOI_prob:
+            logging.info('Probability of animal {a} making {m} after first {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after first {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
+        mean_first_attempt_success = np.mean([x for x in first_MOI_prob.values()])
+        var_first_attempt_success = np.var([x for x in first_MOI_prob.values()])
+        logging.info('Mean probability of all animals making {m} after first {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
+        print('Mean probability of all animals making {m} after first {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
+        for animal in second_MOI_prob:
+            logging.info('Probability of animal {a} making {m} after second {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after second {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
+        mean_second_attempt_success = np.mean([x for x in second_MOI_prob.values()])
+        var_second_attempt_success = np.var([x for x in second_MOI_prob.values()])
+        logging.info('Mean probability of all animals making {m} after second {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
+        print('Mean probability of all animals making {m} after second {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
+        for animal in third_MOI_prob:
+            logging.info('Probability of animal {a} making {m} after third {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after third {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
+        mean_third_attempt_success = np.mean([x for x in third_MOI_prob.values()])
+        var_third_attempt_success = np.var([x for x in third_MOI_prob.values()])
+        logging.info('Mean probability of all animals making {m} after third {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
+        print('Mean probability of all animals making {m} after third {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
+        # plot summary of catch accuracy
+        plot_probMOIseq(allA_probMOI, MOI, previous_MOIs[i], plots_folder, today_dateTime)
 
-# List relevant data locations: these are for taunsquared
-root_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows"
-raw_dataset_folder = r"C:\Users\taunsquared\Dropbox\CuttleShuttle\CuttleShuttle-VideoDataset-Raw"
-plots_folder = r"C:\Users\taunsquared\Documents\GitHub\CuttleShuttle-Analysis\Workflows\plots"
-
-# in raw dataset folder, list all csv files for moments of interest
-animals = ['L1-H2013-01', 'L1-H2013-02', 'L1-H2013-03', 'L7-H2013-01', 'L7-H2013-02', 'L7-H2013-03']
-allMOI_allA = {}
-# extract data from csv and put into dictionary
-print('Extracting raw data from csv...')
-for animal in animals:
-    print('Working on animal {a}'.format(a=animal))
-    allMOI_allA[animal] = {}
-    MOI_homebase = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "homebase*.csv")
-    MOI_orients = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "orients*.csv")
-    MOI_TS = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "tentacle_shots*.csv")
-    MOI_catches = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "catches*.csv")
-    food_offerings = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "food_available*.csv")
-    session_vids = glob.glob(raw_dataset_folder + os.sep + animal + os.sep + "*" + os.sep + "session_video*.csv")
-    all_MOI = [MOI_homebase, MOI_orients, MOI_TS, MOI_catches, food_offerings, session_vids]
-    for MOI_type in range(len(all_MOI)):
-        for csv_file in all_MOI[MOI_type]:
-            if os.path.getsize(csv_file)>0:
-                csv_name = csv_file.split(os.sep)[-1]
-                csv_date = csv_file.split(os.sep)[-2]
-                csv_animal = csv_file.split(os.sep)[-3]
-                current_dict_level = allMOI_allA[animal].setdefault(csv_date,{})
-                # read csv file and convert timestamps into datetime objects
-                str2date = lambda x: datetime.datetime.strptime(x.decode("utf-8").split('+')[0][:-1], '%Y-%m-%dT%H:%M:%S.%f')
-                csv_MOI = np.genfromtxt(csv_file, dtype=None, delimiter=",", converters={0:str2date})
-                if MOI_type == 0:
-                    allMOI_allA[animal][csv_date]['homebase'] = csv_MOI
-                if MOI_type == 1:
-                    allMOI_allA[animal][csv_date]['orients'] = csv_MOI
-                if MOI_type == 2:
-                    allMOI_allA[animal][csv_date]['tentacle shots'] = csv_MOI
-                if MOI_type == 3:
-                    allMOI_allA[animal][csv_date]['catches'] = csv_MOI
-                if MOI_type == 4:
-                    allMOI_allA[animal][csv_date]['food offerings'] = csv_MOI
-                if MOI_type == 5:
-                    allMOI_allA[animal][csv_date]['session vids'] = csv_MOI
-print('Finished extracting csv data!')
-
-# convert timestamp obj's into ints (microseconds from start)
-MOIs = ['food offerings','homebase','orients','tentacle shots','catches']
-print('Converting timestamps to microseconds from start...')
-allMOI_allA_converted = convert_timestamps_to_secs_from_start(allMOI_allA, MOIs)
-# convert animal numbers into names
-animal_names = {'L1-H2013-01':'Dora','L1-H2013-02':'Scar','L1-H2013-03':'Ender','L7-H2013-01':'Old Tom','L7-H2013-02':'Plato','L7-H2013-03':'Blaise'}
-
-########################################################
-### ---- CREATE TIMELINE OF MOI FOR EACH ANIMAL ---- ###
-########################################################
-
-print('Drawing timeline of MOIs...')
-plot_timeline_MOIs(allMOI_allA_converted, MOIs, animal_names, plots_folder, todays_datetime)
-
-##################################################################################
-### ---- PROBABILITY OF MOIS HAPPENING AFTER 1ST/2ND/3RD/4TH PREVIOUS MOI ---- ###
-##################################################################################
-
-print('Calculating probability of MOIs happening after previous MOI...')
-# how many tentacle shots before a catch?
-allA_shotsBeforeCatch = calc_prob_MOI_sequence(allMOI_allA_converted, 'catches', 'tentacle shots')
-# accuracy: probability of catch after first shot?
-first_shot_catch_prob = {}
-second_shot_catch_prob = {}
-third_shot_catch_prob = {}
-for animal in allA_shotsBeforeCatch:
-    if bool(allA_shotsBeforeCatch[animal]):
-        total_shots = sum(allA_shotsBeforeCatch[animal].values())
-        shots_without_error = allA_shotsBeforeCatch[animal].get(0, 0)
-        first_shot_catch_prob[animal] = shots_without_error/total_shots
-        two_attempts_or_less = allA_shotsBeforeCatch[animal].get(0, 0) + allA_shotsBeforeCatch[animal].get(1, 0)
-        second_shot_catch_prob[animal] = two_attempts_or_less/total_shots
-        three_attempts_or_less = allA_shotsBeforeCatch[animal].get(0, 0) + allA_shotsBeforeCatch[animal].get(1, 0) + allA_shotsBeforeCatch[animal].get(2, 0)
-        third_shot_catch_prob[animal] = three_attempts_or_less/total_shots
-mean_first_shot_catch = np.mean([x for x in first_shot_catch_prob.values()])
-var_first_shot_catch = np.var([x for x in first_shot_catch_prob.values()])
-mean_second_shot_catch = np.mean([x for x in second_shot_catch_prob.values()])
-var_second_shot_catch = np.var([x for x in second_shot_catch_prob.values()])
-mean_third_shot_catch = np.mean([x for x in third_shot_catch_prob.values()])
-var_third_shot_catch = np.var([x for x in third_shot_catch_prob.values()])
-# plot summary of catch accuracy
-plot_probMOIseq(allA_shotsBeforeCatch, 'catch', 'tentacle shots', plots_folder, todays_datetime)
-# how many orientations before a tentacle shot?
-allA_orientsBeforeTS = calc_prob_MOI_sequence(allMOI_allA_converted, 'tentacle shots', 'orients')
-plot_probMOIseq(allA_orientsBeforeTS, 'tentacle shot', 'orientations', plots_folder, todays_datetime)
-
-###########################################################
-### ---- FRAMES FROM TGB TO TENTACLES CONTACT PREY ---- ###
-###########################################################
+# FIN
