@@ -171,9 +171,9 @@ if __name__=='__main__':
         Processes cropped and aligned video of cuttlefish, measures contrast (aka granularity) in multiple spatial bands. 
         Generate intermediate files with power at 7 spatial frequency bands for each frame.''')
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--display", nargs='?', default=False, help="Set to 'True' to display frame by frame analysis as script is running.")
-    parser.add_argument("--saveVid", nargs='?', default=False, help="Set to 'True' to save video of bandpass filtered images at each spatial frequency.")
-    parser.add_argument("--ROI", nargs='?', default='backOnly', help="Change which part of the video frame to analyse. Options: 'backOnly' (default), 'entireCuttlefish' ")
+    parser.add_argument("--display", nargs=1, default=False, help="Set to 'True' to display frame by frame analysis as script is running.")
+    parser.add_argument("--saveVid", nargs=1, default=False, help="Set to 'True' to save video of bandpass filtered images at each spatial frequency.")
+    parser.add_argument("--ROI", nargs=1, default='backOnly', help="Change which part of the video frame to analyse. Options: 'backOnly' (default), 'entireCuttlefish'")
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
