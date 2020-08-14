@@ -32,7 +32,8 @@ cwd = os.getcwd()
 ###################################
 # grab today's date
 now = datetime.datetime.now()
-logging.basicConfig(filename="process_cuttle_python_01_" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".log", filemode='w', level=logging.INFO)
+today_dateTime = now.strftime("%Y-%m-%d_%H-%M-%S")
+logging.basicConfig(filename="process_cuttle_python_01_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
 ###################################
 # FUNCTIONS
 ###################################
