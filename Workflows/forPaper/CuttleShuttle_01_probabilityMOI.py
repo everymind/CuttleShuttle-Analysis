@@ -35,7 +35,7 @@ cwd = os.getcwd()
 # grab today's date
 now = datetime.datetime.now()
 today_dateTime = now.strftime("%Y-%m-%d_%H-%M-%S")
-logging.basicConfig(filename="accuracy_preyCapture_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
+logging.basicConfig(filename="probabilityMOIs_" + today_dateTime + ".log", filemode='w', level=logging.INFO)
 ###################################
 # FUNCTIONS
 ###################################
@@ -67,11 +67,11 @@ def convert_timestamps_to_secs_from_start(allA_timestamps_dict, list_of_MOIs):
         all_mois = [all_food_offerings, all_homebases, all_orientations, all_tentacle_shots, all_catches]
         for session_date in sorted(allA_timestamps_dict[animal].keys()):
             all_session_dates.append(session_date)
-            start_ts = allA_timestamps_dict[animal][session_date]['session vids'][0]
-            end_ts = allA_timestamps_dict[animal][session_date]['session vids'][-1]
+            start_ts = allA_timestamps_dict[animal][session_date]['session-vids'][0]
+            end_ts = allA_timestamps_dict[animal][session_date]['session-vids'][-1]
             session_len = (end_ts - start_ts).total_seconds()
             all_session_lens.append(session_len)
-            if len(allA_timestamps_dict[animal][session_date].keys())==1 and 'session vids' in allA_timestamps_dict[animal][session_date]:
+            if len(allA_timestamps_dict[animal][session_date].keys())==1 and 'session-vids' in allA_timestamps_dict[animal][session_date]:
                 print("No moments of interest for animal {a} on {s}".format(a=animal,s=session_date))
                 for moi in range(len(list_of_MOIs)):
                     all_mois[moi].append([])
@@ -170,7 +170,7 @@ if __name__=='__main__':
         Calculate the probability of an MOI happening after 1st, 2nd, or 3rd previous MOI (i.e. catch happening after tentacle shot, tentacle shot happening after orientation, etc).
         Used in paper to calculate results section "Accuracy of Prey Capture". ''')
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--MOI", nargs='?', default='catches', help="Pick MOI to")
+    parser.add_argument("--MOI", nargs='?', default='catches', help="Choose from the following list of MOIs: 'catches' (default), ")
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
@@ -211,20 +211,20 @@ if __name__=='__main__':
                     if MOI_type == 1:
                         allMOI_allA[animal][csv_date]['orients'] = csv_MOI
                     if MOI_type == 2:
-                        allMOI_allA[animal][csv_date]['tentacle shots'] = csv_MOI
+                        allMOI_allA[animal][csv_date]['tentacle-shots'] = csv_MOI
                     if MOI_type == 3:
                         allMOI_allA[animal][csv_date]['catches'] = csv_MOI
                     if MOI_type == 4:
-                        allMOI_allA[animal][csv_date]['food offerings'] = csv_MOI
+                        allMOI_allA[animal][csv_date]['food-offerings'] = csv_MOI
                     if MOI_type == 5:
-                        allMOI_allA[animal][csv_date]['session vids'] = csv_MOI
+                        allMOI_allA[animal][csv_date]['session-vids'] = csv_MOI
     print('Finished extracting csv data!')
     logging.info('Finished extracting csv data!')
     ###################################
     # CONVERT TIMESTAMPS AND ANIMAL NUMBERS
     ###################################
     # convert timestamp obj's into ints (microseconds from start)
-    MOIs = ['food offerings','homebase','orients','tentacle shots','catches']
+    MOIs = ['food-offerings','homebase','orients','tentacle-shots','catches']
     logging.info('Converting timestamps to microseconds from start...')
     print('Converting timestamps to microseconds from start...')
     allMOI_allA_converted = convert_timestamps_to_secs_from_start(allMOI_allA, MOIs)
@@ -233,8 +233,8 @@ if __name__=='__main__':
     ##################################################################################
     ### ---- PROBABILITY OF MOIS HAPPENING AFTER 1ST/2ND/3RD/4TH PREVIOUS MOI ---- ###
     ##################################################################################
-    MOIs = ['catches', 'tentacle shots']
-    previous_MOIs = ['tentacle shots', 'orients']
+    MOIs = ['catches', 'tentacle-shots']
+    previous_MOIs = ['tentacle-shots', 'orients']
     for i,MOI in enumerate(MOIs):
         logging.info('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=previous_MOIs[i]))
         print('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=previous_MOIs[i]))
@@ -253,26 +253,26 @@ if __name__=='__main__':
                 three_attempts_or_less = allA_probMOI[animal].get(0, 0) + allA_probMOI[animal].get(1, 0) + allA_probMOI[animal].get(2, 0)
                 third_MOI_prob[animal] = three_attempts_or_less/total_prevMOIs
         for animal in first_MOI_prob:
-            logging.info('Probability of animal {a} making {m} after first {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
-            print('Probability of animal {a} making {m} after first {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
+            logging.info('Probability of animal {a} making {m} after first {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after first {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
         mean_first_attempt_success = np.mean([x for x in first_MOI_prob.values()])
         var_first_attempt_success = np.var([x for x in first_MOI_prob.values()])
-        logging.info('Mean probability of all animals making {m} after first {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
-        print('Mean probability of all animals making {m} after first {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
+        logging.info('Mean probability of all animals making {m} after first {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
+        print('Mean probability of all animals making {m} after first {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
         for animal in second_MOI_prob:
-            logging.info('Probability of animal {a} making {m} after second {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
-            print('Probability of animal {a} making {m} after second {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
+            logging.info('Probability of animal {a} making {m} after second {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after second {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
         mean_second_attempt_success = np.mean([x for x in second_MOI_prob.values()])
         var_second_attempt_success = np.var([x for x in second_MOI_prob.values()])
-        logging.info('Mean probability of all animals making {m} after second {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
-        print('Mean probability of all animals making {m} after second {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
+        logging.info('Mean probability of all animals making {m} after second {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
+        print('Mean probability of all animals making {m} after second {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
         for animal in third_MOI_prob:
-            logging.info('Probability of animal {a} making {m} after third {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
-            print('Probability of animal {a} making {m} after third {pm}: {prob:.2f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
+            logging.info('Probability of animal {a} making {m} after third {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after third {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
         mean_third_attempt_success = np.mean([x for x in third_MOI_prob.values()])
         var_third_attempt_success = np.var([x for x in third_MOI_prob.values()])
-        logging.info('Mean probability of all animals making {m} after third {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
-        print('Mean probability of all animals making {m} after third {pm}: {mean:.2f} +/- {var:.2f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
+        logging.info('Mean probability of all animals making {m} after third {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
+        print('Mean probability of all animals making {m} after third {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
         # plot summary of catch accuracy
         plot_probMOIseq(allA_probMOI, MOI, previous_MOIs[i], plots_folder, today_dateTime)
 
