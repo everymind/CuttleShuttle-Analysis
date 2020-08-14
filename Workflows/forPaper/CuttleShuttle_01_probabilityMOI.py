@@ -170,7 +170,7 @@ if __name__=='__main__':
         Calculate the probability of an MOI happening after 1st, 2nd, or 3rd previous MOI (i.e. catch happening after tentacle shot, tentacle shot happening after orientation, etc).
         Used in paper to calculate results section "Accuracy of Prey Capture". ''')
     parser.add_argument("--a", nargs='?', default="check_string_for_empty")
-    parser.add_argument("--MOI", nargs='?', default='catches', help="Choose from the following list of MOIs: 'catches' (default), ")
+    parser.add_argument("--MOIs", nargs='+', default='catches', help="Choose at least one from the following list of MOIs: 'catches' (default), 'tentacle-shots', 'orients', 'homebase'")
     args = parser.parse_args()
     ###################################
     # SOURCE DATA AND OUTPUT FILE LOCATIONS 
@@ -233,12 +233,12 @@ if __name__=='__main__':
     ##################################################################################
     ### ---- PROBABILITY OF MOIS HAPPENING AFTER 1ST/2ND/3RD/4TH PREVIOUS MOI ---- ###
     ##################################################################################
-    MOIs = ['catches', 'tentacle-shots']
-    previous_MOIs = ['tentacle-shots', 'orients']
-    for i,MOI in enumerate(MOIs):
-        logging.info('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=previous_MOIs[i]))
-        print('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=previous_MOIs[i]))
-        allA_probMOI = calc_prob_MOI_sequence(allMOI_allA_converted, MOI, previous_MOIs[i])
+    MOI_to_prevMOI = {'catches': 'tentacle-shots', 'tentacle-shots': 'orients', 'orients': 'food-offerings', 'homebase': 'catches'}
+    MOIs = args.MOIs
+    for MOI in MOIs:
+        logging.info('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=MOI_to_prevMOI[MOI]))
+        print('Calculating probability of {m} happening after {pm}...'.format(m=MOI, pm=MOI_to_prevMOI[MOI]))
+        allA_probMOI = calc_prob_MOI_sequence(allMOI_allA_converted, MOI, MOI_to_prevMOI[MOI])
         # summary stats
         first_MOI_prob = {}
         second_MOI_prob = {}
@@ -253,27 +253,27 @@ if __name__=='__main__':
                 three_attempts_or_less = allA_probMOI[animal].get(0, 0) + allA_probMOI[animal].get(1, 0) + allA_probMOI[animal].get(2, 0)
                 third_MOI_prob[animal] = three_attempts_or_less/total_prevMOIs
         for animal in first_MOI_prob:
-            logging.info('Probability of animal {a} making {m} after first {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
-            print('Probability of animal {a} making {m} after first {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=first_MOI_prob[animal]))
+            logging.info('Probability of animal {a} making {m} after first {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=MOI_to_prevMOI[MOI], prob=first_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after first {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=MOI_to_prevMOI[MOI], prob=first_MOI_prob[animal]))
         mean_first_attempt_success = np.mean([x for x in first_MOI_prob.values()])
         var_first_attempt_success = np.var([x for x in first_MOI_prob.values()])
-        logging.info('Mean probability of all animals making {m} after first {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
-        print('Mean probability of all animals making {m} after first {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_first_attempt_success, var=var_first_attempt_success))
+        logging.info('Mean probability of all animals making {m} after first {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=MOI_to_prevMOI[MOI], mean=mean_first_attempt_success, var=var_first_attempt_success))
+        print('Mean probability of all animals making {m} after first {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=MOI_to_prevMOI[MOI], mean=mean_first_attempt_success, var=var_first_attempt_success))
         for animal in second_MOI_prob:
-            logging.info('Probability of animal {a} making {m} after second {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
-            print('Probability of animal {a} making {m} after second {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=second_MOI_prob[animal]))
+            logging.info('Probability of animal {a} making {m} after second {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=MOI_to_prevMOI[MOI], prob=second_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after second {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=MOI_to_prevMOI[MOI], prob=second_MOI_prob[animal]))
         mean_second_attempt_success = np.mean([x for x in second_MOI_prob.values()])
         var_second_attempt_success = np.var([x for x in second_MOI_prob.values()])
-        logging.info('Mean probability of all animals making {m} after second {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
-        print('Mean probability of all animals making {m} after second {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_second_attempt_success, var=var_second_attempt_success))
+        logging.info('Mean probability of all animals making {m} after second {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=MOI_to_prevMOI[MOI], mean=mean_second_attempt_success, var=var_second_attempt_success))
+        print('Mean probability of all animals making {m} after second {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=MOI_to_prevMOI[MOI], mean=mean_second_attempt_success, var=var_second_attempt_success))
         for animal in third_MOI_prob:
-            logging.info('Probability of animal {a} making {m} after third {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
-            print('Probability of animal {a} making {m} after third {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=previous_MOIs[i], prob=third_MOI_prob[animal]))
+            logging.info('Probability of animal {a} making {m} after third {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=MOI_to_prevMOI[MOI], prob=third_MOI_prob[animal]))
+            print('Probability of animal {a} making {m} after third {pm}: {prob:.4f}'.format(a=animal, m=MOI, pm=MOI_to_prevMOI[MOI], prob=third_MOI_prob[animal]))
         mean_third_attempt_success = np.mean([x for x in third_MOI_prob.values()])
         var_third_attempt_success = np.var([x for x in third_MOI_prob.values()])
-        logging.info('Mean probability of all animals making {m} after third {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
-        print('Mean probability of all animals making {m} after third {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=previous_MOIs[i], mean=mean_third_attempt_success, var=var_third_attempt_success))
+        logging.info('Mean probability of all animals making {m} after third {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=MOI_to_prevMOI[MOI], mean=mean_third_attempt_success, var=var_third_attempt_success))
+        print('Mean probability of all animals making {m} after third {pm}: {mean:.4f} +/- {var:.4f}'.format(m=MOI, pm=MOI_to_prevMOI[MOI], mean=mean_third_attempt_success, var=var_third_attempt_success))
         # plot summary of catch accuracy
-        plot_probMOIseq(allA_probMOI, MOI, previous_MOIs[i], plots_folder, today_dateTime)
+        plot_probMOIseq(allA_probMOI, MOI, MOI_to_prevMOI[MOI], plots_folder, today_dateTime)
 
 # FIN
