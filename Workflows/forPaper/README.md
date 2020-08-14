@@ -24,7 +24,7 @@ Our paper focuses on the "granularity" measure, and uses the "edginess" measure 
 
 ### To replicate Results section "Numerical characterisations of TSP dynamics":
 
-1) [Download the manually cropped and aligned videos of all tentacle shots made during the Cuttle Shuttle experiment](https://www.dropbox.com/sh/fdo6o3re0dzwqvg/AAApd9UYER2Jk164bvkilGjpa?dl=0) (referred to as "TGB videos") from the Harvard Dataverse. 
+1) [Download the manually cropped and aligned videos of all tentacle shots made during the Cuttle Shuttle experiment](https://www.dropbox.com/sh/8jv8ngtjk8ngsas/AAAQ22UsdnWxsszJ1nDJnI8Da?dl=0) (referred to as "TGB videos") from the Harvard Dataverse. 
 
 2) Open file `CuttleShuttle_02_ProcessCuttlePython_genBandEnergies.py` and find function `load_data` (line 47). Modify variable `video_dir` to point to the folder location where you saved the TGB videos. Modify variable `plots_dir` to point to a folder where you would like to save the output of this script (.png and .npy files). Save the file, then open a development environment set up to run python scripts, navigate to this folder, then run this script by typing `python CuttleShuttle_02_ProcessCuttlePython_genBandEnergies.py`. Type `python CuttleShuttle_02_ProcessCuttlePython_genBandEnergies.py -h` for more info/options. Note that this script will generate a logfile named `process_cuttle_python_01_[today's date and time].log`.
 
