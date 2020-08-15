@@ -11,8 +11,8 @@ if ((1>0)); then
 		if ((actualsize>maxsize)); then
 			filename=$(basename -s .avi "$file")
 			echo "$filename"
-			ffmpeg -i "$file" -ss 0 -t 900 -codec copy "$output_dir"/"$filename"_part1.avi
-			ffmpeg -i "$file" -ss 900 -codec copy "$output_dir"/"$filename"_part2.avi
+			ffmpeg -i "$file" -ss 0 -t 960 -codec copy "$output_dir"/"$filename"_part1.avi
+			ffmpeg -i "$file" -ss 960 -codec copy "$output_dir"/"$filename"_part2.avi
 		fi
 	done
 fi
